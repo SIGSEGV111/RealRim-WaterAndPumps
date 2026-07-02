@@ -84,7 +84,6 @@ namespace RealRim.WaterAndPumps
 
 		private sealed class RoomGroup
 		{
-			public Room room;
 			public string label;
 			public int area_m2;
 			public readonly List<ReportEntry> entries = new List<ReportEntry>();
@@ -170,7 +169,6 @@ namespace RealRim.WaterAndPumps
 					{
 						outdoors = new RoomGroup
 						{
-							room = null,
 							label = "RealRim_HeatingReportOutdoors".Translate(),
 							area_m2 = 0,
 						};
@@ -184,7 +182,6 @@ namespace RealRim.WaterAndPumps
 				{
 					group = new RoomGroup
 					{
-						room = room,
 						label = getRoomLabel(room),
 						area_m2 = room.CellCount,
 					};

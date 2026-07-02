@@ -31,7 +31,6 @@ namespace RealRim.WaterAndPumps
 				{ "airPipe", new Vector3(0.16f, 0f, 0.16f) },
 			};
 
-
 		public static bool tryPrintVisiblePipe(Thing thing, SectionLayer layer, Graphic_Linked linked_graphic)
 		{
 			if (thing?.def == null || layer == null || linked_graphic == null)
@@ -44,7 +43,6 @@ namespace RealRim.WaterAndPumps
 			{
 				return false;
 			}
-
 
 			Vector2 draw_size = Vector2.one;
 			if (thing.def.graphicData != null)
@@ -155,17 +153,14 @@ namespace RealRim.WaterAndPumps
 			return graphic;
 		}
 
-		public static HashSet<IntVec3> collectActiveCells(
-			MapComponent_FluidNetworks manager,
-			FluidNetworkType network_type)
+		public static HashSet<IntVec3> collectActiveCells(List<CompFluidNode> nodes)
 		{
 			HashSet<IntVec3> result = new HashSet<IntVec3>();
-			if (manager == null)
+			if (nodes == null)
 			{
 				return result;
 			}
 
-			List<CompFluidNode> nodes = manager.getAllActiveNodes(network_type);
 			for (int node_index = 0; node_index < nodes.Count; node_index++)
 			{
 				CompFluidNode node = nodes[node_index];
@@ -328,17 +323,18 @@ namespace RealRim.WaterAndPumps
 			ClearSubMeshes(MeshParts.All);
 
 			MapComponent_FluidNetworks manager = Map.GetComponent<MapComponent_FluidNetworks>();
-			HashSet<IntVec3> linked_cells = FluidNetworkVisuals.collectActiveCells(manager, network_type);
+			List<CompFluidNode> nodes = manager?.getAllActiveNodes(network_type);
+			HashSet<IntVec3> linked_cells = FluidNetworkVisuals.collectActiveCells(nodes);
 			if (linked_cells.Count > 0)
 			{
-				printLinkedPipes(manager, linked_cells);
+				printLinkedPipes(nodes, linked_cells);
 			}
 
 			FinalizeMesh(MeshParts.All);
 		}
 
 		private void printLinkedPipes(
-			MapComponent_FluidNetworks manager,
+			List<CompFluidNode> nodes,
 			HashSet<IntVec3> linked_cells)
 		{
 			Graphic_LinkedFluidOverlay overlay = new Graphic_LinkedFluidOverlay(
@@ -346,7 +342,6 @@ namespace RealRim.WaterAndPumps
 				Map,
 				linked_cells,
 				FluidNetworkVisuals.getOverlayOffset(network_type));
-			List<CompFluidNode> nodes = manager.getAllActiveNodes(network_type);
 			for (int index = 0; index < nodes.Count; index++)
 			{
 				CompFluidNode node = nodes[index];

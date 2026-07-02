@@ -1,23 +1,11 @@
-using System.Linq;
 using RimWorld;
 using UnityEngine;
 using Verse;
 
 namespace RealRim.WaterAndPumps
 {
-	public enum FixtureKind
-	{
-		Fountain,
-		Sink,
-		KitchenSink,
-		Toilet,
-		Shower,
-		Bath,
-	}
-
 	public sealed class CompProperties_Fixture : CompProperties
 	{
-		public FixtureKind kind;
 		public float water_per_use_liters = 1f;
 		public float desired_temperature_c = 12f;
 		public float waste_water_liters;
@@ -132,8 +120,7 @@ namespace RealRim.WaterAndPumps
 				: 0f;
 			bool hot_available = hot_network != null
 				&& hot_temperature > RealPhysics.COLD_WATER_TEMPERATURE_C + 0.1f
-				&& hot_network.getStoredHotWater() > 0.001f
-				&& hot_network.getComponents<CompHotWaterTank>().Any();
+				&& hot_network.getStoredHotWater() > 0.001f;
 			float requested_hot_liters = hot_available
 				? water_liters * requested_hot_fraction
 				: 0f;
@@ -213,19 +200,13 @@ namespace RealRim.WaterAndPumps
 				return false;
 			}
 
-			bool cold_water;
 			return tryUseVolume(
 				null,
 				water_liters,
 				water_liters,
 				sludge_kg,
 				false,
-				out cold_water);
-		}
-
-		public float drawDrinkingWater(float requested_liters)
-		{
-			return drawDrinkingWaterSample(requested_liters).liters;
+				out _);
 		}
 
 		public WaterSample drawDrinkingWaterSample(float requested_liters)

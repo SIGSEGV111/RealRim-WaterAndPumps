@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
 using Verse;
 
 namespace RealRim.WaterAndPumps
@@ -93,23 +91,27 @@ namespace RealRim.WaterAndPumps
 				return WaterSourceKind.RegularWell;
 			}
 
-			List<WaterSourceKind> kinds = new List<WaterSourceKind>();
+			bool found_surface_water = false;
 			foreach (IntVec3 cell in parent.OccupiedRect().ExpandedBy(1).Cells)
 			{
-				if (cell.InBounds(parent.MapHeld))
+				if (!cell.InBounds(parent.MapHeld))
 				{
-					kinds.Add(WaterPathogenUtility.classifyTerrain(parent.MapHeld, cell));
+					continue;
+				}
+
+				WaterSourceKind source_kind = WaterPathogenUtility.classifyTerrain(parent.MapHeld, cell);
+				if (source_kind == WaterSourceKind.MudWater)
+				{
+					return WaterSourceKind.MudWater;
+				}
+				if (source_kind == WaterSourceKind.SurfaceWater)
+				{
+					found_surface_water = true;
 				}
 			}
-			if (kinds.Contains(WaterSourceKind.MudWater))
-			{
-				return WaterSourceKind.MudWater;
-			}
-			if (kinds.Contains(WaterSourceKind.SurfaceWater))
-			{
-				return WaterSourceKind.SurfaceWater;
-			}
-			return WaterSourceKind.RegularWell;
+			return found_surface_water
+				? WaterSourceKind.SurfaceWater
+				: WaterSourceKind.RegularWell;
 		}
 
 		private static string getSourceLabel(WaterSourceKind source_kind)

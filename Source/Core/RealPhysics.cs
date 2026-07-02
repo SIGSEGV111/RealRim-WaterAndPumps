@@ -15,13 +15,7 @@ namespace RealRim.WaterAndPumps
 		public const float WATER_EMISSIVITY = 0.96f;
 		public const float COLD_WATER_TEMPERATURE_C = 12f;
 		public const float DEFAULT_HOT_WATER_MAX_C = 85f;
-		public const float KJ_PER_KWH = 3600f;
 		public const float RIMWORLD_HEAT_UNITS_PER_KW_SECOND = 1000f / 3025f;
-
-		public static float convertPowerToEnergy(float power_kw, float elapsed_seconds)
-		{
-			return power_kw * elapsed_seconds;
-		}
 
 		public static float calculateWaterEnergy(float liters, float temperature_delta)
 		{

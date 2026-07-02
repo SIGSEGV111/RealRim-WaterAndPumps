@@ -11,8 +11,6 @@ namespace RealRim.WaterAndPumps
 		public float infiltration_liters_per_day;
 		public float treatment_liters_per_day;
 		public float recovery_fraction = 0.95f;
-		public bool automatically_eject_sludge;
-		public float automatic_ejection_kg = 10f;
 
 		public CompProperties_WasteStorage()
 		{
@@ -22,9 +20,6 @@ namespace RealRim.WaterAndPumps
 
 	public sealed class CompWasteStorage : ThingComp, IFluidTickable
 	{
-		private const float SLUDGE_KG_PER_ITEM = 0.05f;
-		private const string SLUDGE_DEF_NAME = "FecalSludge";
-
 		public float stored_water_liters;
 		public float stored_sludge_kg;
 		public float last_processed_liters_per_day;
@@ -110,7 +105,6 @@ namespace RealRim.WaterAndPumps
 			{
 				processTreatment(elapsed_seconds);
 			}
-
 		}
 
 		private void processInfiltration(float elapsed_seconds)

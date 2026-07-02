@@ -197,23 +197,23 @@ namespace RealRim.WaterAndPumps
 
 		private static void patchFixtures()
 		{
-			setFixture("Fountain", FixtureKind.Fountain, 1f, 12f, 0f, 0f, false, false,
+			setFixture("Fountain", 1f, 12f, 0f, 0f, false, false,
 				FluidNetworkType.FreshWater);
-			setFixture("BasinStuff", FixtureKind.Sink, 0.04f, 35f, 0.04f, 0f, true, true,
+			setFixture("BasinStuff", 0.04f, 35f, 0.04f, 0f, true, true,
 				FluidNetworkType.FreshWater, FluidNetworkType.HotWater, FluidNetworkType.WasteWater);
-			setFixture("ToiletStuff", FixtureKind.Toilet, 9f, 12f, 10.5f, 0.225f, false, true,
+			setFixture("ToiletStuff", 9f, 12f, 10.5f, 0.225f, false, true,
 				FluidNetworkType.FreshWater, FluidNetworkType.WasteWater);
-			setFixture("ToiletAdvStuff", FixtureKind.Toilet, 6f, 12f, 7.5f, 0.225f, false, true,
+			setFixture("ToiletAdvStuff", 6f, 12f, 7.5f, 0.225f, false, true,
 				FluidNetworkType.FreshWater, FluidNetworkType.WasteWater);
-			setFixture("ToiletSpacer", FixtureKind.Toilet, 3f, 12f, 4.5f, 0.225f, false, true,
+			setFixture("ToiletSpacer", 3f, 12f, 4.5f, 0.225f, false, true,
 				FluidNetworkType.FreshWater, FluidNetworkType.WasteWater);
-			setFixture("ShowerStuff", FixtureKind.Shower, 0.13f, 40f, 0.13f, 0f, true, true,
+			setFixture("ShowerStuff", 0.13f, 40f, 0.13f, 0f, true, true,
 				FluidNetworkType.FreshWater, FluidNetworkType.HotWater, FluidNetworkType.WasteWater);
-			setFixture("ShowerSimple", FixtureKind.Shower, 0.13f, 39f, 0.13f, 0f, true, true,
+			setFixture("ShowerSimple", 0.13f, 39f, 0.13f, 0f, true, true,
 				FluidNetworkType.FreshWater, FluidNetworkType.HotWater, FluidNetworkType.WasteWater);
-			setFixture("ShowerAdvStuff", FixtureKind.Shower, 0.16f, 40f, 0.16f, 0f, true, true,
+			setFixture("ShowerAdvStuff", 0.16f, 40f, 0.16f, 0f, true, true,
 				FluidNetworkType.FreshWater, FluidNetworkType.HotWater, FluidNetworkType.WasteWater);
-			setFixture("BathtubStuff", FixtureKind.Bath, 1f, 39f, 1f, 0f, true, true,
+			setFixture("BathtubStuff", 1f, 39f, 1f, 0f, true, true,
 				FluidNetworkType.FreshWater, FluidNetworkType.HotWater, FluidNetworkType.WasteWater);
 
 			ThingDef pool = getDef("DBHSwimmingPool");
@@ -335,17 +335,8 @@ namespace RealRim.WaterAndPumps
 			return false;
 		}
 
-		internal static void ensureKitchenSinkDefinition(ThingDef def)
+		private static void ensureKitchenSinkDefinition(ThingDef def)
 		{
-			if (!isKitchenSinkDefinition(def))
-			{
-				return;
-			}
-			if (hasCompleteKitchenSinkDefinition(def))
-			{
-				return;
-			}
-
 			// The DBH building class is retained so its established pawn-use and assignment
 			// jobs continue to recognize the fixture. Its legacy pipe/blockage comps are
 			// removed; all water, heat and waste accounting is supplied by RealRim comps.
@@ -358,7 +349,6 @@ namespace RealRim.WaterAndPumps
 				FluidNetworkType.WasteWater);
 			addComp(def, new CompProperties_Fixture
 			{
-				kind = FixtureKind.KitchenSink,
 				water_per_use_liters = 0.04f,
 				desired_temperature_c = 35f,
 				waste_water_liters = 0.04f,
@@ -369,49 +359,6 @@ namespace RealRim.WaterAndPumps
 				linked_stove_water_liters_per_hour = 12f,
 				linked_stove_sludge_kg_per_hour = 0.075f,
 			});
-		}
-
-		private static bool hasCompleteKitchenSinkDefinition(ThingDef def)
-		{
-			if (def.comps == null)
-			{
-				return false;
-			}
-			CompProperties_FluidNode node = null;
-			CompProperties_Fixture fixture = null;
-			for (int index = 0; index < def.comps.Count; index++)
-			{
-				CompProperties properties = def.comps[index];
-				if (properties == null)
-				{
-					continue;
-				}
-				Type properties_type = properties.GetType();
-				Type comp_type = properties.compClass;
-				if (properties_type.FullName == "DubsBadHygiene.CompProperties_Pipe"
-					|| properties_type.FullName == "DubsBadHygiene.CompProperties_Blockage"
-					|| (comp_type != null && (comp_type.FullName == "DubsBadHygiene.CompPipe"
-						|| comp_type.FullName == "DubsBadHygiene.CompBlockage")))
-				{
-					return false;
-				}
-				if (properties is CompProperties_FluidNode)
-				{
-					node = (CompProperties_FluidNode)properties;
-				}
-				else if (properties is CompProperties_Fixture)
-				{
-					fixture = (CompProperties_Fixture)properties;
-				}
-			}
-			return node != null
-				&& node.networks != null
-				&& node.networks.Contains(FluidNetworkType.FreshWater)
-				&& node.networks.Contains(FluidNetworkType.HotWater)
-				&& node.networks.Contains(FluidNetworkType.WasteWater)
-				&& fixture != null
-				&& fixture.kitchen_sink
-				&& fixture.kind == FixtureKind.KitchenSink;
 		}
 
 		private static void addLatrineRefillComponent(ThingDef latrine)
@@ -466,7 +413,6 @@ namespace RealRim.WaterAndPumps
 					sludge_capacity_kg = 600f,
 					infiltration_liters_per_day = 1200f,
 					treatment_liters_per_day = 0f,
-					automatically_eject_sludge = false,
 				});
 			}
 
@@ -480,8 +426,6 @@ namespace RealRim.WaterAndPumps
 					sludge_capacity_kg = 1000f,
 					treatment_liters_per_day = 5000f,
 					recovery_fraction = 0.95f,
-					automatically_eject_sludge = false,
-					automatic_ejection_kg = 10f,
 				});
 				setPower(treatment, 2000f);
 			}
@@ -496,8 +440,6 @@ namespace RealRim.WaterAndPumps
 					sludge_capacity_kg = 600f,
 					treatment_liters_per_day = 10000f,
 					recovery_fraction = 0.98f,
-					automatically_eject_sludge = false,
-					automatic_ejection_kg = 10f,
 				});
 				setPower(spacer_recovery, 1500f);
 			}
@@ -509,7 +451,6 @@ namespace RealRim.WaterAndPumps
 				addComp(water_treatment, new CompProperties_WaterTreatment
 				{
 					pathogen_removal_fraction = 0.99f,
-					power_watts = 800f,
 				});
 				setPower(water_treatment, 800f);
 				water_treatment.description = "Removes 99% of waterborne pathogens from all water drawn through its connected fresh-water network. Requires power.";
@@ -671,7 +612,6 @@ namespace RealRim.WaterAndPumps
 
 		private static void setFixture(
 			string def_name,
-			FixtureKind kind,
 			float water_liters,
 			float desired_temperature_c,
 			float waste_liters,
@@ -689,16 +629,12 @@ namespace RealRim.WaterAndPumps
 			addNode(def, false, networks);
 			addComp(def, new CompProperties_Fixture
 			{
-				kind = kind,
 				water_per_use_liters = water_liters,
 				desired_temperature_c = desired_temperature_c,
 				waste_water_liters = waste_liters,
 				sludge_kg = sludge_kg,
 				wants_hot_water = wants_hot,
 				needs_drain = needs_drain,
-				kitchen_sink = false,
-				linked_stove_water_liters_per_hour = 0f,
-				linked_stove_sludge_kg_per_hour = 0f,
 			});
 		}
 
@@ -823,12 +759,10 @@ namespace RealRim.WaterAndPumps
 		private static void setNode(string def_name, bool valve, params FluidNetworkType[] networks)
 		{
 			ThingDef def = getDef(def_name);
-			if (def == null)
+			if (def != null)
 			{
-				return;
+				addNode(def, valve, networks);
 			}
-			removeComp<CompProperties_FluidNode>(def);
-			addNode(def, valve, networks);
 		}
 
 		private static void addNode(ThingDef def, bool valve, params FluidNetworkType[] networks)
@@ -841,7 +775,7 @@ namespace RealRim.WaterAndPumps
 			});
 		}
 
-		private static void removeReplacementComps(ThingDef def, bool preserve_legacy_pipe = true)
+		private static void removeReplacementComps(ThingDef def, bool preserve_legacy_pipe)
 		{
 			if (def.comps == null)
 			{

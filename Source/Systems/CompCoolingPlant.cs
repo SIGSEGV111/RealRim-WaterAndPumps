@@ -42,9 +42,8 @@ namespace RealRim.WaterAndPumps
 		public override string CompInspectStringExtra()
 		{
 			FluidNetwork network = FluidUtility.getNetwork(parent, FluidNetworkType.Coolant);
-			float fill = network == null || network.getColdEnergyCapacityKj() <= 0f
-				? 0f
-				: network.getStoredColdEnergyKj() / network.getColdEnergyCapacityKj();
+			float capacity_kj = network == null ? 0f : network.getColdEnergyCapacityKj();
+			float fill = capacity_kj <= 0f ? 0f : network.getStoredColdEnergyKj() / capacity_kj;
 			string status = "RealRim_CoolingPlantStatus".Translate(
 				cooling ? "RealRim_StatusRunning".Translate() : "RealRim_StatusStandby".Translate(),
 				fill.ToStringPercent(),
@@ -62,13 +61,14 @@ namespace RealRim.WaterAndPumps
 			last_cop = 0f;
 			last_reason = string.Empty;
 			FluidNetwork network = FluidUtility.getNetwork(parent, FluidNetworkType.Coolant);
-			if (network == null || network.getColdEnergyCapacityKj() <= 0f)
+			float capacity_kj = network == null ? 0f : network.getColdEnergyCapacityKj();
+			if (capacity_kj <= 0f)
 			{
 				stopCooling("RealRim_ReasonNoCoolantStorage".Translate());
 				return;
 			}
 
-			float fill = network.getStoredColdEnergyKj() / network.getColdEnergyCapacityKj();
+			float fill = network.getStoredColdEnergyKj() / capacity_kj;
 			if (cooling && fill >= Props.stop_fill_fraction)
 			{
 				cooling = false;

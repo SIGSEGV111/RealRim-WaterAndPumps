@@ -149,10 +149,6 @@ namespace RealRim.WaterAndPumps
 
 		public float getPawnPreferenceScore(Pawn pawn)
 		{
-			if (!canPawnUse(pawn))
-			{
-				return -10000f;
-			}
 			float center = (WaterTemperaturePreferences.getAdjustedComfortMinimum(pawn)
 				+ WaterTemperaturePreferences.getAdjustedComfortMaximum(pawn)) * 0.5f;
 			return -Mathf.Abs(temperature_c - center);
@@ -288,7 +284,6 @@ namespace RealRim.WaterAndPumps
 			temperature_c = (existing_energy + incoming_energy)
 				/ (stored_liters * RealPhysics.WATER_DENSITY_KG_PER_LITER * RealPhysics.WATER_SPECIFIC_HEAT_KJ_PER_KG_K);
 		}
-
 
 		private int getLegacyFlowRate()
 		{

@@ -26,15 +26,8 @@ namespace RealRim.WaterAndPumps
 		private const BindingFlags STATIC_FLAGS = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 		private static readonly Dictionary<string, FieldInfo> FIELD_CACHE = new Dictionary<string, FieldInfo>();
 		private static readonly Dictionary<string, MethodInfo> METHOD_CACHE = new Dictionary<string, MethodInfo>();
-		private static readonly HashSet<int> SWIMMING_ANIMATION_PAWNS = new HashSet<int>();
-		private static readonly HashSet<int> SWIMMING_DIAGNOSTIC_PAWNS = new HashSet<int>();
-		private static AnimationDef vanilla_swimming_animation;
-		private static bool vanilla_swimming_animation_resolved;
-		private static bool vanilla_swimming_animation_disabled;
-		private static bool swimming_diagnostics_logged;
 		private static FieldInfo vanilla_swimming_job_field;
 		private static bool vanilla_swimming_job_field_resolved;
-		private static bool vanilla_swimming_job_field_disabled;
 
 		static DbhRuntimeBridge()
 		{
@@ -105,8 +98,8 @@ namespace RealRim.WaterAndPumps
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.JobDriver_DrinkFromGround", "<MakeNewToils>b__1_2", nameof(groundDrinkFinishedPrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.JobDriver_washHands", "<MakeNewToils>b__3_3", nameof(washHandsTickPrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.JobDriver_emptyLatrine", "<MakeNewToils>b__1_0", nameof(emptyLatrinePrefix));
-				patched_methods += patchAllNamedPostfix(harmony, patch_method, harmony_method_type, "DubsBadHygiene.JobDriver_GoSwimming", "swimticker", nameof(swimTickerPostfix));
-				patched_methods += patchAllNamedPostfix(harmony, patch_method, harmony_method_type, "DubsBadHygiene.JobDriver_GoSwimming", "Finishac", nameof(poolSwimmingFinishPostfix));
+				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.JobDriver_GoSwimming", "swimticker", nameof(swimTickerPostfix), true);
+				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.JobDriver_GoSwimming", "Finishac", nameof(poolSwimmingFinishPostfix), true);
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "Verse.AI.Toils_Recipe+<>c__DisplayClass2_0", "<DoRecipeWork>b__2", nameof(recipeWorkTickPrefix));
 
 				Log.Message("[RealRim] Water & Pumps 1.1.35: redirected " + patched_methods
@@ -118,7 +111,7 @@ namespace RealRim.WaterAndPumps
 			}
 		}
 
-		public static bool fixtureInspectStringPrefix(object __instance, ref string __result)
+		private static bool fixtureInspectStringPrefix(object __instance, ref string __result)
 		{
 			ThingWithComps thing = __instance as ThingWithComps;
 			if (!isKitchenSink(thing))
@@ -133,7 +126,7 @@ namespace RealRim.WaterAndPumps
 				for (int index = 0; index < comps.Count; index++)
 				{
 					ThingComp comp = comps[index];
-					if (comp == null || isLegacyKitchenSinkComp(comp))
+					if (comp == null)
 					{
 						continue;
 					}
@@ -158,18 +151,7 @@ namespace RealRim.WaterAndPumps
 			return thing != null && RealRimDefPatcher.isKitchenSinkDefinition(thing.def);
 		}
 
-		private static bool isLegacyKitchenSinkComp(ThingComp comp)
-		{
-			if (comp == null)
-			{
-				return false;
-			}
-			string type_name = comp.GetType().FullName;
-			return type_name == "DubsBadHygiene.CompPipe"
-				|| type_name == "DubsBadHygiene.CompBlockage";
-		}
-
-		public static bool visiblePipeGraphicPrintPrefix(
+		private static bool visiblePipeGraphicPrintPrefix(
 			Graphic_Linked __instance,
 			SectionLayer layer,
 			Thing thing)
@@ -177,24 +159,24 @@ namespace RealRim.WaterAndPumps
 			return !FluidNetworkVisuals.tryPrintVisiblePipe(thing, layer, __instance);
 		}
 
-		public static bool skipOriginal()
+		private static bool skipOriginal()
 		{
 			return false;
 		}
 
-		public static bool nullStringPrefix(ref string __result)
+		private static bool nullStringPrefix(ref string __result)
 		{
 			__result = null;
 			return false;
 		}
 
-		public static bool emptyAlertPrefix(ref AlertReport __result)
+		private static bool emptyAlertPrefix(ref AlertReport __result)
 		{
 			__result = false;
 			return false;
 		}
 
-		public static bool pullWaterPrefix(object __instance, object[] __args, MethodBase __originalMethod, ref bool __result)
+		private static bool pullWaterPrefix(object __instance, object[] __args, MethodBase __originalMethod, ref bool __result)
 		{
 			float requested = __args.Length == 0 ? 0f : Convert.ToSingle(__args[0]);
 			FluidNetwork network = getLegacyNetwork(__instance, FluidNetworkType.FreshWater);
@@ -208,7 +190,7 @@ namespace RealRim.WaterAndPumps
 			return false;
 		}
 
-		public static bool pushWaterPrefix(object __instance, object[] __args, ref float __result)
+		private static bool pushWaterPrefix(object __instance, object[] __args, ref float __result)
 		{
 			float requested = __args.Length == 0 ? 0f : Convert.ToSingle(__args[0]);
 			FluidNetwork network = getLegacyNetwork(__instance, FluidNetworkType.FreshWater);
@@ -216,7 +198,7 @@ namespace RealRim.WaterAndPumps
 			return false;
 		}
 
-		public static bool pushSewagePrefix(object __instance, object[] __args, ref bool __result)
+		private static bool pushSewagePrefix(object __instance, object[] __args, ref bool __result)
 		{
 			float requested = __args.Length == 0 ? 0f : Convert.ToSingle(__args[0]);
 			FluidNetwork network = getLegacyNetwork(__instance, FluidNetworkType.WasteWater);
@@ -224,7 +206,7 @@ namespace RealRim.WaterAndPumps
 			return false;
 		}
 
-		public static bool pullHotWaterPrefix(object __instance, object[] __args, ref bool __result)
+		private static bool pullHotWaterPrefix(object __instance, object[] __args, ref bool __result)
 		{
 			float requested = __args.Length == 0 ? 0f : Convert.ToSingle(__args[0]);
 			FluidNetwork network = getLegacyNetwork(__instance, FluidNetworkType.HotWater);
@@ -233,7 +215,7 @@ namespace RealRim.WaterAndPumps
 			return false;
 		}
 
-		public static bool fixtureWorkingPrefix(object __instance, ref AcceptanceReport __result)
+		private static bool fixtureWorkingPrefix(object __instance, ref AcceptanceReport __result)
 		{
 			ThingWithComps thing = __instance as ThingWithComps;
 			CompFixture fixture = thing == null ? null : thing.TryGetComp<CompFixture>();
@@ -245,7 +227,7 @@ namespace RealRim.WaterAndPumps
 			return false;
 		}
 
-		public static bool troughWorkingPrefix(object __instance, ref AcceptanceReport __result)
+		private static bool troughWorkingPrefix(object __instance, ref AcceptanceReport __result)
 		{
 			ThingWithComps thing = __instance as ThingWithComps;
 			CompWaterTrough trough = thing == null ? null : thing.TryGetComp<CompWaterTrough>();
@@ -258,7 +240,7 @@ namespace RealRim.WaterAndPumps
 			return false;
 		}
 
-		public static bool latrineWorkingPrefix(object __instance, ref AcceptanceReport __result)
+		private static bool latrineWorkingPrefix(object __instance, ref AcceptanceReport __result)
 		{
 			ThingWithComps thing = __instance as ThingWithComps;
 			CompLatrine latrine = thing == null ? null : thing.TryGetComp<CompLatrine>();
@@ -270,7 +252,7 @@ namespace RealRim.WaterAndPumps
 			return false;
 		}
 
-		public static bool showerTryUseWaterPrefix(object __instance, object[] __args, MethodBase __originalMethod, ref bool __result)
+		private static bool showerTryUseWaterPrefix(object __instance, object[] __args, MethodBase __originalMethod, ref bool __result)
 		{
 			ThingWithComps thing = __instance as ThingWithComps;
 			CompFixture fixture = thing == null ? null : thing.TryGetComp<CompFixture>();
@@ -292,7 +274,7 @@ namespace RealRim.WaterAndPumps
 			return false;
 		}
 
-		public static bool bathTryFillPrefix(object __instance, ref bool __result)
+		private static bool bathTryFillPrefix(object __instance, ref bool __result)
 		{
 			ThingWithComps thing = __instance as ThingWithComps;
 			CompFixture fixture = thing == null ? null : thing.TryGetComp<CompFixture>();
@@ -310,7 +292,7 @@ namespace RealRim.WaterAndPumps
 			return false;
 		}
 
-		public static bool toiletTryUsePrefix(object __instance, ref bool __result)
+		private static bool toiletTryUsePrefix(object __instance, ref bool __result)
 		{
 			ThingWithComps thing = __instance as ThingWithComps;
 			CompFixture fixture = thing == null ? null : thing.TryGetComp<CompFixture>();
@@ -318,12 +300,11 @@ namespace RealRim.WaterAndPumps
 			{
 				return true;
 			}
-			bool cold;
-			__result = fixture.tryUse(FluidUtility.findUsingPawn(thing), out cold);
+			__result = fixture.tryUse(FluidUtility.findUsingPawn(thing), out _);
 			return false;
 		}
 
-		public static bool latrineTryUsePrefix(object __instance, ref bool __result)
+		private static bool latrineTryUsePrefix(object __instance, ref bool __result)
 		{
 			ThingWithComps thing = __instance as ThingWithComps;
 			CompLatrine latrine = thing == null ? null : thing.TryGetComp<CompLatrine>();
@@ -339,7 +320,7 @@ namespace RealRim.WaterAndPumps
 			return false;
 		}
 
-		public static bool poolInspectStringPrefix(object __instance, ref string __result)
+		private static bool poolInspectStringPrefix(object __instance, ref string __result)
 		{
 			ThingWithComps thing = __instance as ThingWithComps;
 			CompPoolPhysics pool = thing?.TryGetComp<CompPoolPhysics>();
@@ -359,11 +340,11 @@ namespace RealRim.WaterAndPumps
 			{
 				lines.Add(network_status);
 			}
-			__result = string.Join("\n", lines.ToArray()).TrimEnd('\r', '\n', ' ', '\t');
+			__result = string.Join("\n", lines).TrimEnd('\r', '\n', ' ', '\t');
 			return false;
 		}
 
-		public static bool waterFillableInspectPrefix(object __instance, ref string __result)
+		private static bool waterFillableInspectPrefix(object __instance, ref string __result)
 		{
 			ThingComp component = __instance as ThingComp;
 			if (component?.parent?.TryGetComp<CompLatrine>() == null)
@@ -374,19 +355,19 @@ namespace RealRim.WaterAndPumps
 			return false;
 		}
 
-		public static bool fillableThingTickPrefix(object __instance)
+		private static bool fillableThingTickPrefix(object __instance)
 		{
 			ThingWithComps thing = __instance as ThingWithComps;
 			return thing == null || thing.TryGetComp<CompPoolPhysics>() == null;
 		}
 
-		public static bool washBucketTickRarePrefix(object __instance)
+		private static bool washBucketTickRarePrefix(object __instance)
 		{
 			ThingWithComps thing = __instance as ThingWithComps;
 			return thing == null || thing.TryGetComp<CompWaterTrough>() == null;
 		}
 
-		public static bool poolWorkingPrefix(object __instance, ref AcceptanceReport __result)
+		private static bool poolWorkingPrefix(object __instance, ref AcceptanceReport __result)
 		{
 			ThingWithComps thing = __instance as ThingWithComps;
 			CompPoolPhysics pool = thing == null ? null : thing.TryGetComp<CompPoolPhysics>();
@@ -399,7 +380,7 @@ namespace RealRim.WaterAndPumps
 			return false;
 		}
 
-		public static bool poolGoodTemperaturePrefix(object __instance, ref bool __result)
+		private static bool poolGoodTemperaturePrefix(object __instance, ref bool __result)
 		{
 			ThingWithComps thing = __instance as ThingWithComps;
 			CompPoolPhysics pool = thing == null ? null : thing.TryGetComp<CompPoolPhysics>();
@@ -411,7 +392,7 @@ namespace RealRim.WaterAndPumps
 			return false;
 		}
 
-		public static bool swimmingJobPrefix(object __instance, object[] __args, ref Job __result)
+		private static bool swimmingJobPrefix(object __instance, object[] __args, ref Job __result)
 		{
 			Pawn pawn = __args.Length > 0 ? __args[0] as Pawn : null;
 			Thing offered_pool = __args.Length > 1 ? __args[1] as Thing : null;
@@ -469,13 +450,13 @@ namespace RealRim.WaterAndPumps
 			return false;
 		}
 
-		public static bool thirstFallPrefix(ref float __result)
+		private static bool thirstFallPrefix(ref float __result)
 		{
 			__result = 0.5f / RealPhysics.TICKS_PER_DAY;
 			return false;
 		}
 
-		public static bool drinkFromFixtureTickPrefix(object __instance)
+		private static bool drinkFromFixtureTickPrefix(object __instance)
 		{
 			Pawn pawn;
 			Job job;
@@ -518,7 +499,7 @@ namespace RealRim.WaterAndPumps
 		}
 
 
-		public static bool basinDrinkFinishedPrefix(object __instance)
+		private static bool basinDrinkFinishedPrefix(object __instance)
 		{
 			Pawn pawn;
 			Job job;
@@ -532,7 +513,7 @@ namespace RealRim.WaterAndPumps
 					&& target.TryGetComp<CompFixture>() == null);
 		}
 
-		public static bool groundDrinkFinishedPrefix(object __instance)
+		private static bool groundDrinkFinishedPrefix(object __instance)
 		{
 			Pawn pawn;
 			Job job;
@@ -550,7 +531,7 @@ namespace RealRim.WaterAndPumps
 			return false;
 		}
 
-		public static bool washHandsTickPrefix(object __instance)
+		private static bool washHandsTickPrefix(object __instance)
 		{
 			Pawn pawn;
 			Job job;
@@ -565,14 +546,13 @@ namespace RealRim.WaterAndPumps
 				return true;
 			}
 
-			bool cold;
 			if (!fixture.tryUseVolume(
 				pawn,
 				HAND_WASH_LITERS_PER_TICK,
 				HAND_WASH_LITERS_PER_TICK,
 				0f,
 				false,
-				out cold))
+				out _))
 			{
 				endDriverJob(__instance, JobCondition.Incompletable);
 				return false;
@@ -590,7 +570,7 @@ namespace RealRim.WaterAndPumps
 			return false;
 		}
 
-		public static bool emptyLatrinePrefix(object __instance)
+		private static bool emptyLatrinePrefix(object __instance)
 		{
 			Pawn pawn;
 			Job job;
@@ -619,7 +599,7 @@ namespace RealRim.WaterAndPumps
 			return false;
 		}
 
-		public static bool recipeWorkTickPrefix(object __instance, int delta)
+		private static bool recipeWorkTickPrefix(object __instance, int delta)
 		{
 			if (__instance == null || delta <= 0)
 			{
@@ -708,7 +688,7 @@ namespace RealRim.WaterAndPumps
 			return null;
 		}
 
-		public static void swimTickerPostfix(object __instance)
+		private static void swimTickerPostfix(object __instance)
 		{
 			Pawn pawn;
 			Job job;
@@ -721,11 +701,10 @@ namespace RealRim.WaterAndPumps
 			setPoolSwimmingState(job, isSwimmingInPool(pawn));
 		}
 
-		public static void poolSwimmingFinishPostfix(object __instance)
+		private static void poolSwimmingFinishPostfix(object __instance)
 		{
-			Pawn pawn;
 			Job job;
-			if (tryGetDriverContext(__instance, out pawn, out job))
+			if (tryGetDriverContext(__instance, out _, out job))
 			{
 				setPoolSwimmingState(job, false);
 			}
@@ -744,17 +723,13 @@ namespace RealRim.WaterAndPumps
 			}
 			catch (Exception exception)
 			{
-				vanilla_swimming_job_field_disabled = true;
+				vanilla_swimming_job_field = null;
 				Log.Error("[RealRim] Water & Pumps: failed to set Odyssey's swimming-pose job field: " + exception);
 			}
 		}
 
 		private static bool resolveVanillaSwimmingJobField()
 		{
-			if (vanilla_swimming_job_field_disabled)
-			{
-				return false;
-			}
 			if (vanilla_swimming_job_field_resolved)
 			{
 				return vanilla_swimming_job_field != null;
@@ -768,7 +743,6 @@ namespace RealRim.WaterAndPumps
 			vanilla_swimming_job_field = resolveJobBooleanFieldWrittenBy(pose_method);
 			if (vanilla_swimming_job_field == null)
 			{
-				vanilla_swimming_job_field_disabled = true;
 				Log.Error("[RealRim] Water & Pumps: could not resolve Odyssey's Job swimming-pose field from JobDriver_GoSwimming.CheckForSwimmingPose.");
 				return false;
 			}
@@ -828,100 +802,6 @@ namespace RealRim.WaterAndPumps
 			return null;
 		}
 
-		public static void pawnRendererPostTickPostfix(object __instance)
-		{
-			if (__instance == null || !ModsConfig.OdysseyActive)
-			{
-				return;
-			}
-			FieldInfo pawn_field = getField(__instance.GetType(), "pawn");
-			Pawn pawn = pawn_field == null ? null : pawn_field.GetValue(__instance) as Pawn;
-			maintainVanillaSwimmingAnimation(pawn);
-		}
-
-		public static void pawnRendererCurAnimationPostfix(object __instance, ref AnimationDef __result)
-		{
-			Pawn pawn = getRendererPawn(__instance);
-			if (!isSwimmingInPool(pawn) || !resolveVanillaSwimmingAnimation())
-			{
-				return;
-			}
-
-			__result = vanilla_swimming_animation;
-		}
-
-		public static void pawnRendererHasAnimationPostfix(object __instance, ref bool __result)
-		{
-			Pawn pawn = getRendererPawn(__instance);
-			if (isSwimmingInPool(pawn) && resolveVanillaSwimmingAnimation())
-			{
-				__result = true;
-			}
-		}
-
-		public static void pawnRenderTreeAnimationTickPostfix(object __instance, ref int __result)
-		{
-			Pawn pawn = getRenderTreePawn(__instance);
-			if (!isSwimmingInPool(pawn) || !resolveVanillaSwimmingAnimation())
-			{
-				return;
-			}
-
-			int duration_ticks = getAnimationDurationTicks(vanilla_swimming_animation);
-			int ticks_game = Find.TickManager == null ? 0 : Find.TickManager.TicksGame;
-			__result = duration_ticks <= 0 ? ticks_game : ticks_game % duration_ticks;
-		}
-
-		public static void pawnRenderTreeAnimationFinishedPostfix(object __instance, ref bool __result)
-		{
-			Pawn pawn = getRenderTreePawn(__instance);
-			if (isSwimmingInPool(pawn) && resolveVanillaSwimmingAnimation())
-			{
-				__result = false;
-			}
-		}
-
-		private static Pawn getRendererPawn(object renderer)
-		{
-			if (renderer == null)
-			{
-				return null;
-			}
-			FieldInfo pawn_field = getField(renderer.GetType(), "pawn");
-			return pawn_field == null ? null : pawn_field.GetValue(renderer) as Pawn;
-		}
-
-		private static Pawn getRenderTreePawn(object render_tree)
-		{
-			if (render_tree == null)
-			{
-				return null;
-			}
-			FieldInfo pawn_field = getField(render_tree.GetType(), "pawn");
-			return pawn_field == null ? null : pawn_field.GetValue(render_tree) as Pawn;
-		}
-
-		private static int getAnimationDurationTicks(AnimationDef animation)
-		{
-			if (animation == null)
-			{
-				return 0;
-			}
-			FieldInfo duration_field = getField(animation.GetType(), "durationTicks");
-			if (duration_field == null)
-			{
-				return 240;
-			}
-			try
-			{
-				return Mathf.Max(1, Convert.ToInt32(duration_field.GetValue(animation)));
-			}
-			catch
-			{
-				return 240;
-			}
-		}
-
 		private static bool isSwimmingInPool(Pawn pawn)
 		{
 			Job job = pawn?.CurJob;
@@ -933,611 +813,6 @@ namespace RealRim.WaterAndPumps
 				&& pool.TryGetComp<CompPoolPhysics>() != null
 				&& pawn.Spawned
 				&& GenAdj.OccupiedRect(pool).Contains(pawn.Position);
-		}
-
-		private static void maintainVanillaSwimmingAnimation(Pawn pawn)
-		{
-			if (pawn == null || !ModsConfig.OdysseyActive)
-			{
-				return;
-			}
-			if (!isSwimmingInPool(pawn))
-			{
-				if (SWIMMING_ANIMATION_PAWNS.Remove(pawn.thingIDNumber))
-				{
-					clearSwimmingAnimation(pawn);
-				}
-				return;
-			}
-			if (!resolveVanillaSwimmingAnimation())
-			{
-				return;
-			}
-
-			try
-			{
-				object drawer = pawn.Drawer;
-				FieldInfo renderer_field = drawer == null ? null : getField(drawer.GetType(), "renderer");
-				object renderer = renderer_field == null ? null : renderer_field.GetValue(drawer);
-				if (renderer == null)
-				{
-					return;
-				}
-				if (!SWIMMING_ANIMATION_PAWNS.Contains(pawn.thingIDNumber))
-				{
-					MethodInfo set_animation = getMethod(
-						renderer.GetType(),
-						"SetAnimation",
-						new Type[] { typeof(AnimationDef) });
-					if (set_animation == null)
-					{
-						throw new MissingMethodException(renderer.GetType().FullName, "SetAnimation(AnimationDef)");
-					}
-					set_animation.Invoke(renderer, new object[] { vanilla_swimming_animation });
-					SWIMMING_ANIMATION_PAWNS.Add(pawn.thingIDNumber);
-				}
-			}
-			catch (Exception exception)
-			{
-				vanilla_swimming_animation_disabled = true;
-				Log.Error("[RealRim] Water & Pumps: Odyssey swimming-animation assignment failed: " + exception);
-			}
-		}
-
-		private static bool resolveVanillaSwimmingAnimation()
-		{
-			if (vanilla_swimming_animation_disabled)
-			{
-				return false;
-			}
-			if (vanilla_swimming_animation_resolved)
-			{
-				return vanilla_swimming_animation != null;
-			}
-
-			vanilla_swimming_animation_resolved = true;
-			Type swimming_driver_type = findType("RimWorld.JobDriver_GoSwimming");
-			MethodInfo pose_method = swimming_driver_type == null
-				? null
-				: getMethod(swimming_driver_type, "CheckForSwimmingPose", Type.EmptyTypes);
-			vanilla_swimming_animation = resolveAnimationOperand(pose_method);
-			if (vanilla_swimming_animation == null)
-			{
-				vanilla_swimming_animation_disabled = true;
-				Log.Warning("[RealRim] Water & Pumps: Odyssey's swimming animation could not be read from JobDriver_GoSwimming.CheckForSwimmingPose; pool pawns will use the swimming render state without an animation.");
-			}
-			return vanilla_swimming_animation != null;
-		}
-
-		private static AnimationDef resolveAnimationOperand(MethodInfo method)
-		{
-			if (method == null)
-			{
-				return null;
-			}
-			MethodBody body;
-			try
-			{
-				body = method.GetMethodBody();
-			}
-			catch
-			{
-				return null;
-			}
-			byte[] il = body?.GetILAsByteArray();
-			if (il == null || il.Length < 5)
-			{
-				return null;
-			}
-
-			for (int index = 0; index <= il.Length - 5; index++)
-			{
-				if (il[index] != 0x7E && il[index] != 0x7F)
-				{
-					continue;
-				}
-				int token = BitConverter.ToInt32(il, index + 1);
-				FieldInfo field;
-				try
-				{
-					field = method.Module.ResolveField(token);
-				}
-				catch
-				{
-					continue;
-				}
-				if (field == null || !field.IsStatic || field.FieldType != typeof(AnimationDef))
-				{
-					continue;
-				}
-				try
-				{
-					AnimationDef animation = field.GetValue(null) as AnimationDef;
-					if (animation != null)
-					{
-						return animation;
-					}
-				}
-				catch
-				{
-				}
-			}
-			return null;
-		}
-
-		private static void clearSwimmingAnimation(Pawn pawn)
-		{
-			try
-			{
-				object drawer = pawn?.Drawer;
-				FieldInfo renderer_field = drawer == null ? null : getField(drawer.GetType(), "renderer");
-				object renderer = renderer_field == null ? null : renderer_field.GetValue(drawer);
-				MethodInfo set_animation = renderer == null
-					? null
-					: getMethod(renderer.GetType(), "SetAnimation", new Type[] { typeof(AnimationDef) });
-				set_animation?.Invoke(renderer, new object[] { null });
-			}
-			catch (Exception exception)
-			{
-				Log.Warning("[RealRim] Water & Pumps: could not clear Odyssey swimming animation: " + exception.Message);
-			}
-		}
-
-		private static void logPoolPawnRuntimeDiagnostics(Pawn pawn, Job job)
-		{
-			if (pawn == null || job == null || !ModsConfig.OdysseyActive
-				|| !SWIMMING_DIAGNOSTIC_PAWNS.Add(pawn.thingIDNumber))
-			{
-				return;
-			}
-			try
-			{
-				ThingWithComps pool = job.targetA.Thing as ThingWithComps;
-				object drawer = pawn.Drawer;
-				FieldInfo renderer_field = drawer == null ? null : getField(drawer.GetType(), "renderer");
-				object renderer = renderer_field == null ? null : renderer_field.GetValue(drawer);
-				FieldInfo render_tree_field = renderer == null ? null : getField(renderer.GetType(), "renderTree");
-				object render_tree = render_tree_field == null ? null : render_tree_field.GetValue(renderer);
-				StringBuilder report = new StringBuilder();
-				report.AppendLine("[RealRim] Pool-swimming pawn runtime diagnostics:");
-				report.AppendLine("  pawn=" + pawn.LabelShortCap
-					+ "; thingID=" + pawn.thingIDNumber
-					+ "; position=" + pawn.Position
-					+ "; spawned=" + pawn.Spawned);
-				report.AppendLine("  jobDef=" + (job.def == null ? "<null>" : job.def.defName)
-					+ "; jobDriver=" + (pawn.jobs?.curDriver == null ? "<null>" : pawn.jobs.curDriver.GetType().AssemblyQualifiedName));
-				report.AppendLine("  pool=" + (pool == null ? "<null>" : pool.LabelCap + " / " + pool.def?.defName)
-					+ "; target=" + job.targetA
-					+ "; insidePool=" + isSwimmingInPool(pawn));
-				report.AppendLine("  Pawn.Swimming=" + pawn.Swimming
-					+ "; resolverSucceeded=" + resolveVanillaSwimmingAnimation()
-					+ "; resolvedAnimation=" + (vanilla_swimming_animation == null ? "<null>" : vanilla_swimming_animation.defName));
-				report.AppendLine("  drawerType=" + (drawer == null ? "<null>" : drawer.GetType().AssemblyQualifiedName));
-				report.AppendLine("  rendererType=" + (renderer == null ? "<null>" : renderer.GetType().AssemblyQualifiedName));
-				report.AppendLine("  renderer.CurAnimation=" + getReflectedValue(renderer, "CurAnimation"));
-				report.AppendLine("  renderer.HasAnimation=" + getReflectedValue(renderer, "HasAnimation"));
-				report.AppendLine("  renderTreeType=" + (render_tree == null ? "<null>" : render_tree.GetType().AssemblyQualifiedName));
-				report.AppendLine("  renderTree.AnimationTick=" + getReflectedValue(render_tree, "AnimationTick"));
-				report.AppendLine("  renderTree.AnimationFinished=" + getReflectedValue(render_tree, "AnimationFinished"));
-				appendObjectAnimationFields(report, renderer, "renderer");
-				appendObjectAnimationFields(report, render_tree, "renderTree");
-				Log.Message(report.ToString().TrimEndNewlines());
-			}
-			catch (Exception exception)
-			{
-				Log.Warning("[RealRim] Water & Pumps: pool-swimming pawn runtime diagnostics failed: " + exception);
-			}
-		}
-
-		private static void appendObjectAnimationFields(StringBuilder report, object instance, string label)
-		{
-			if (instance == null)
-			{
-				return;
-			}
-			FieldInfo[] fields = instance.GetType().GetFields(INSTANCE_FLAGS);
-			for (int index = 0; index < fields.Length; index++)
-			{
-				FieldInfo field = fields[index];
-				string field_name = field.Name.ToLowerInvariant();
-				if (!field_name.Contains("anim") && !field_name.Contains("pose") && !field_name.Contains("swim"))
-				{
-					continue;
-				}
-				string value;
-				try
-				{
-					object field_value = field.GetValue(instance);
-					AnimationDef animation = field_value as AnimationDef;
-					value = animation == null
-						? (field_value == null ? "<null>" : field_value.ToString())
-						: animation.defName;
-				}
-				catch (Exception exception)
-				{
-					value = "<error " + exception.GetType().Name + ">";
-				}
-				report.AppendLine("  " + label + "." + field.Name + "=" + value
-					+ " [" + field.FieldType.FullName + "]");
-			}
-		}
-
-		private static void logSwimmingDiagnostics()
-		{
-			if (swimming_diagnostics_logged || !ModsConfig.OdysseyActive)
-			{
-				return;
-			}
-			swimming_diagnostics_logged = true;
-			try
-			{
-				StringBuilder report = new StringBuilder();
-				report.AppendLine("[RealRim] Water & Pumps 1.1.35 swimming diagnostics BEGIN");
-				report.AppendLine("Odyssey active: " + ModsConfig.OdysseyActive);
-				appendAnimationDefinitions(report);
-				appendAnimationDefOfFields(report);
-				appendSwimmingJobDefinitions(report);
-				appendSwimmingRuntimeTypes(report);
-				appendVanillaSwimmingMethod(report);
-				report.AppendLine("[RealRim] Water & Pumps 1.1.35 swimming diagnostics END");
-				logDiagnosticChunks(report.ToString());
-			}
-			catch (Exception exception)
-			{
-				Log.Warning("[RealRim] Water & Pumps: swimming diagnostics failed: " + exception);
-			}
-		}
-
-		private static void appendAnimationDefinitions(StringBuilder report)
-		{
-			List<AnimationDef> animations = DefDatabase<AnimationDef>.AllDefsListForReading;
-			report.AppendLine("AnimationDef count: " + (animations == null ? 0 : animations.Count));
-			if (animations == null)
-			{
-				return;
-			}
-			for (int index = 0; index < animations.Count; index++)
-			{
-				AnimationDef animation = animations[index];
-				if (animation == null)
-				{
-					report.AppendLine("  [" + index + "] <null>");
-					continue;
-				}
-				string duration = getReflectedValue(animation, "durationTicks");
-				string worker = getReflectedValue(animation, "workerClass");
-				if (worker == "<missing>")
-				{
-					worker = getReflectedValue(animation, "animationWorkerClass");
-				}
-				report.AppendLine("  [" + index + "] defName=" + animation.defName
-					+ "; label=" + animation.label
-					+ "; durationTicks=" + duration
-					+ "; worker=" + worker
-					+ "; type=" + animation.GetType().FullName);
-			}
-		}
-
-		private static void appendAnimationDefOfFields(StringBuilder report)
-		{
-			Type animation_def_of = findType("RimWorld.AnimationDefOf");
-			report.AppendLine("AnimationDefOf type: " + (animation_def_of == null ? "<not found>" : animation_def_of.AssemblyQualifiedName));
-			if (animation_def_of == null)
-			{
-				return;
-			}
-			FieldInfo[] fields = animation_def_of.GetFields(STATIC_FLAGS);
-			for (int index = 0; index < fields.Length; index++)
-			{
-				FieldInfo field = fields[index];
-				object value = null;
-				string error = null;
-				try
-				{
-					value = field.GetValue(null);
-				}
-				catch (Exception exception)
-				{
-					error = exception.GetType().Name + ": " + exception.Message;
-				}
-				AnimationDef animation = value as AnimationDef;
-				report.AppendLine("  field " + field.Name
-					+ ": fieldType=" + field.FieldType.FullName
-					+ "; valueType=" + (value == null ? "<null>" : value.GetType().FullName)
-					+ "; animationDef=" + (animation == null ? "<none>" : animation.defName)
-					+ (error == null ? string.Empty : "; error=" + error));
-			}
-		}
-
-		private static void appendSwimmingJobDefinitions(StringBuilder report)
-		{
-			List<JobDef> jobs = DefDatabase<JobDef>.AllDefsListForReading;
-			report.AppendLine("Relevant JobDefs:");
-			if (jobs == null)
-			{
-				report.AppendLine("  <none>");
-				return;
-			}
-			int matches = 0;
-			for (int index = 0; index < jobs.Count; index++)
-			{
-				JobDef job = jobs[index];
-				if (job == null)
-				{
-					continue;
-				}
-				Type driver_class = getJobDriverClass(job);
-				string searchable = ((job.defName ?? string.Empty) + " "
-					+ (job.label ?? string.Empty) + " "
-					+ (driver_class == null ? string.Empty : driver_class.FullName)).ToLowerInvariant();
-				if (!searchable.Contains("swim")
-					&& !searchable.Contains("pool")
-					&& !searchable.Contains("bath")
-					&& !searchable.Contains("water"))
-				{
-					continue;
-				}
-				matches++;
-				report.AppendLine("  defName=" + job.defName
-					+ "; label=" + job.label
-					+ "; driverClass=" + (driver_class == null ? "<null>" : driver_class.AssemblyQualifiedName));
-			}
-			if (matches == 0)
-			{
-				report.AppendLine("  <no matching JobDefs>");
-			}
-		}
-
-		private static void appendSwimmingRuntimeTypes(StringBuilder report)
-		{
-			report.AppendLine("Runtime types containing swim/pool/bath and deriving from JobDriver, or otherwise animation-related:");
-			Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
-			int matches = 0;
-			for (int assembly_index = 0; assembly_index < assemblies.Length; assembly_index++)
-			{
-				Type[] types;
-				try
-				{
-					types = assemblies[assembly_index].GetTypes();
-				}
-				catch (ReflectionTypeLoadException exception)
-				{
-					types = exception.Types;
-				}
-				catch
-				{
-					continue;
-				}
-				if (types == null)
-				{
-					continue;
-				}
-				for (int type_index = 0; type_index < types.Length; type_index++)
-				{
-					Type type = types[type_index];
-					if (type == null)
-					{
-						continue;
-					}
-					string name = (type.FullName ?? type.Name ?? string.Empty).ToLowerInvariant();
-					bool relevant_name = name.Contains("swim") || name.Contains("pool") || name.Contains("bath");
-					bool job_driver = typeof(JobDriver).IsAssignableFrom(type);
-					bool animation_related = name.Contains("animation") && name.Contains("pawn");
-					if ((!relevant_name || !job_driver) && !animation_related)
-					{
-						continue;
-					}
-					matches++;
-					report.AppendLine("  type=" + type.AssemblyQualifiedName
-						+ "; base=" + (type.BaseType == null ? "<null>" : type.BaseType.FullName));
-					MethodInfo[] methods;
-					try
-					{
-						methods = type.GetMethods(INSTANCE_FLAGS | STATIC_FLAGS | BindingFlags.DeclaredOnly);
-					}
-					catch
-					{
-						continue;
-					}
-					for (int method_index = 0; method_index < methods.Length; method_index++)
-					{
-						MethodInfo method = methods[method_index];
-						report.AppendLine("    method " + describeMethod(method));
-					}
-				}
-			}
-			if (matches == 0)
-			{
-				report.AppendLine("  <no matching runtime types>");
-			}
-		}
-
-		private static void appendVanillaSwimmingMethod(StringBuilder report)
-		{
-			Type swimming_driver_type = findType("RimWorld.JobDriver_GoSwimming");
-			report.AppendLine("Vanilla swimming driver: "
-				+ (swimming_driver_type == null ? "<not found>" : swimming_driver_type.AssemblyQualifiedName));
-			if (swimming_driver_type == null)
-			{
-				return;
-			}
-			FieldInfo[] fields = swimming_driver_type.GetFields(INSTANCE_FLAGS | STATIC_FLAGS);
-			for (int index = 0; index < fields.Length; index++)
-			{
-				FieldInfo field = fields[index];
-				report.AppendLine("  field " + field.Name + ": " + field.FieldType.FullName
-					+ "; static=" + field.IsStatic);
-			}
-			MethodInfo[] methods = swimming_driver_type.GetMethods(INSTANCE_FLAGS | STATIC_FLAGS | BindingFlags.DeclaredOnly);
-			for (int index = 0; index < methods.Length; index++)
-			{
-				MethodInfo method = methods[index];
-				report.AppendLine("  method " + describeMethod(method));
-				if (method.Name == "CheckForSwimmingPose")
-				{
-					report.AppendLine("    IL: " + getMethodIlHex(method));
-				}
-			}
-			Type renderer_type = findType("Verse.PawnRenderer");
-			appendAnimationMembers(report, renderer_type, "PawnRenderer animation members");
-			Type render_tree_type = findType("Verse.PawnRenderTree");
-			appendAnimationMembers(report, render_tree_type, "PawnRenderTree animation members");
-		}
-
-		private static void appendAnimationMembers(StringBuilder report, Type type, string heading)
-		{
-			report.AppendLine(heading + ": " + (type == null ? "<not found>" : type.AssemblyQualifiedName));
-			if (type == null)
-			{
-				return;
-			}
-			MethodInfo[] methods = type.GetMethods(INSTANCE_FLAGS | STATIC_FLAGS);
-			for (int index = 0; index < methods.Length; index++)
-			{
-				MethodInfo method = methods[index];
-				string name = method.Name.ToLowerInvariant();
-				if (name.Contains("anim") || name.Contains("swim") || name.Contains("pose"))
-				{
-					report.AppendLine("  method " + describeMethod(method));
-				}
-			}
-			FieldInfo[] fields = type.GetFields(INSTANCE_FLAGS | STATIC_FLAGS);
-			for (int index = 0; index < fields.Length; index++)
-			{
-				FieldInfo field = fields[index];
-				string name = field.Name.ToLowerInvariant();
-				if (name.Contains("anim") || name.Contains("swim") || name.Contains("pose"))
-				{
-					report.AppendLine("  field " + field.Name + ": " + field.FieldType.FullName);
-				}
-			}
-		}
-
-		private static Type getJobDriverClass(JobDef job)
-		{
-			if (job == null)
-			{
-				return null;
-			}
-			FieldInfo field = getField(job.GetType(), "driverClass");
-			return field == null ? null : field.GetValue(job) as Type;
-		}
-
-		private static string getReflectedValue(object instance, string member_name)
-		{
-			if (instance == null)
-			{
-				return "<null>";
-			}
-			FieldInfo field = getField(instance.GetType(), member_name);
-			if (field != null)
-			{
-				try
-				{
-					object value = field.GetValue(instance);
-					return value == null ? "<null>" : value.ToString();
-				}
-				catch (Exception exception)
-				{
-					return "<error " + exception.GetType().Name + ">";
-				}
-			}
-			PropertyInfo property = instance.GetType().GetProperty(member_name, INSTANCE_FLAGS);
-			if (property != null)
-			{
-				try
-				{
-					object value = property.GetValue(instance, null);
-					return value == null ? "<null>" : value.ToString();
-				}
-				catch (Exception exception)
-				{
-					return "<error " + exception.GetType().Name + ">";
-				}
-			}
-			return "<missing>";
-		}
-
-		private static string describeMethod(MethodInfo method)
-		{
-			if (method == null)
-			{
-				return "<null>";
-			}
-			StringBuilder description = new StringBuilder();
-			description.Append(method.ReturnType == null ? "void" : method.ReturnType.FullName);
-			description.Append(" ");
-			description.Append(method.Name);
-			description.Append("(");
-			ParameterInfo[] parameters = method.GetParameters();
-			for (int index = 0; index < parameters.Length; index++)
-			{
-				if (index > 0)
-				{
-					description.Append(", ");
-				}
-				description.Append(parameters[index].ParameterType.FullName);
-				description.Append(" ");
-				description.Append(parameters[index].Name);
-			}
-			description.Append(")");
-			return description.ToString();
-		}
-
-		private static string getMethodIlHex(MethodInfo method)
-		{
-			if (method == null)
-			{
-				return "<method missing>";
-			}
-			try
-			{
-				byte[] il = method.GetMethodBody()?.GetILAsByteArray();
-				if (il == null)
-				{
-					return "<no method body>";
-				}
-				StringBuilder result = new StringBuilder(il.Length * 3);
-				for (int index = 0; index < il.Length; index++)
-				{
-					if (index > 0)
-					{
-						result.Append(' ');
-					}
-					result.Append(il[index].ToString("X2"));
-				}
-				return result.ToString();
-			}
-			catch (Exception exception)
-			{
-				return "<error " + exception.GetType().Name + ": " + exception.Message + ">";
-			}
-		}
-
-		private static void logDiagnosticChunks(string text)
-		{
-			const int MAX_CHUNK_LENGTH = 12000;
-			if (text.NullOrEmpty())
-			{
-				return;
-			}
-			int offset = 0;
-			int chunk_index = 1;
-			while (offset < text.Length)
-			{
-				int length = Mathf.Min(MAX_CHUNK_LENGTH, text.Length - offset);
-				if (offset + length < text.Length)
-				{
-					int newline = text.LastIndexOf('\n', offset + length - 1, length);
-					if (newline > offset)
-					{
-						length = newline - offset + 1;
-					}
-				}
-				Log.Message("[RealRim] Swimming diagnostics chunk " + chunk_index + ":\n" + text.Substring(offset, length));
-				offset += length;
-				chunk_index++;
-			}
 		}
 
 		private static bool tryGetDriverContext(object driver_instance, out Pawn pawn, out Job job)
@@ -1672,44 +947,24 @@ namespace RealRim.WaterAndPumps
 			return harmony != null && patch_method != null;
 		}
 
-		private static int patchAllNamedPostfix(object harmony, MethodInfo patch_method, Type harmony_method_type, string type_name, string method_name, string postfix_name)
+		private static int patchAllNamed(
+			object harmony,
+			MethodInfo patch_method,
+			Type harmony_method_type,
+			string type_name,
+			string method_name,
+			string patch_name,
+			bool postfix = false)
 		{
 			Type type = findType(type_name);
-			MethodInfo postfix = typeof(DbhRuntimeBridge).GetMethod(postfix_name, STATIC_FLAGS);
-			if (type == null || postfix == null)
+			MethodInfo patch = typeof(DbhRuntimeBridge).GetMethod(patch_name, STATIC_FLAGS);
+			if (type == null || patch == null)
 			{
-				Log.Warning("[RealRim] Water & Pumps: postfix target not found: " + type_name + "." + method_name);
+				Log.Warning("[RealRim] Water & Pumps: " + (postfix ? "postfix" : "prefix")
+					+ " target not found: " + type_name + "." + method_name);
 				return 0;
 			}
-			int count = 0;
-			MethodInfo[] methods = type.GetMethods(INSTANCE_FLAGS);
-			for (int index = 0; index < methods.Length; index++)
-			{
-				MethodInfo original = methods[index];
-				if (original.Name != method_name || original.IsAbstract)
-				{
-					continue;
-				}
-				object harmony_postfix = Activator.CreateInstance(harmony_method_type, new object[] { postfix });
-				patch_method.Invoke(harmony, new object[] { original, null, harmony_postfix, null, null });
-				count++;
-			}
-			if (count == 0)
-			{
-				Log.Warning("[RealRim] Water & Pumps: no overload matched postfix target: " + type_name + "." + method_name);
-			}
-			return count;
-		}
 
-		private static int patchAllNamed(object harmony, MethodInfo patch_method, Type harmony_method_type, string type_name, string method_name, string prefix_name)
-		{
-			Type type = findType(type_name);
-			MethodInfo prefix = typeof(DbhRuntimeBridge).GetMethod(prefix_name, STATIC_FLAGS);
-			if (type == null || prefix == null)
-			{
-				Log.Warning("[RealRim] Water & Pumps: patch target not found: " + type_name + "." + method_name);
-				return 0;
-			}
 			int count = 0;
 			MethodInfo[] methods = type.GetMethods(INSTANCE_FLAGS);
 			for (int index = 0; index < methods.Length; index++)
@@ -1719,13 +974,18 @@ namespace RealRim.WaterAndPumps
 				{
 					continue;
 				}
-				object harmony_prefix = Activator.CreateInstance(harmony_method_type, new object[] { prefix });
-				patch_method.Invoke(harmony, new object[] { original, harmony_prefix, null, null, null });
+
+				object harmony_patch = Activator.CreateInstance(harmony_method_type, new object[] { patch });
+				patch_method.Invoke(harmony, postfix
+					? new object[] { original, null, harmony_patch, null, null }
+					: new object[] { original, harmony_patch, null, null, null });
 				count++;
 			}
+
 			if (count == 0)
 			{
-				Log.Warning("[RealRim] Water & Pumps: no overload matched patch target: " + type_name + "." + method_name);
+				Log.Warning("[RealRim] Water & Pumps: no overload matched "
+					+ (postfix ? "postfix" : "prefix") + " target: " + type_name + "." + method_name);
 			}
 			return count;
 		}

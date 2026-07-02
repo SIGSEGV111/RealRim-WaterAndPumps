@@ -74,11 +74,6 @@ namespace RealRim.WaterAndPumps
 			return contamination.copyContamination();
 		}
 
-		public float addWater(float requested_liters)
-		{
-			return addWater(requested_liters, null);
-		}
-
 		public float addWater(
 			float requested_liters,
 			WaterContamination incoming_contamination)
@@ -96,12 +91,6 @@ namespace RealRim.WaterAndPumps
 				incoming_contamination);
 			stored_liters += accepted;
 			return accepted;
-		}
-
-		public float drawWater(float requested_liters)
-		{
-			WaterSample sample = drawWaterSample(requested_liters);
-			return sample.liters;
 		}
 
 		public WaterSample drawWaterSample(float requested_liters)

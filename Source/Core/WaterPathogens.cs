@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
@@ -48,22 +47,15 @@ namespace RealRim.WaterAndPumps
 
 		public WaterContamination copyContamination()
 		{
-			WaterContamination result = new WaterContamination();
-			foreach (KeyValuePair<WaterbornePathogenDef, float> pair in risks_per_liter)
+			return new WaterContamination
 			{
-				result.risks_per_liter[pair.Key] = pair.Value;
-			}
-			return result;
+				risks_per_liter = new Dictionary<WaterbornePathogenDef, float>(risks_per_liter),
+			};
 		}
 
 		public bool hasPathogens()
 		{
 			return risks_per_liter.Count > 0;
-		}
-
-		public int getPathogenCount()
-		{
-			return risks_per_liter.Count;
 		}
 
 		public float getRiskPerLiter(WaterbornePathogenDef pathogen)
@@ -72,16 +64,6 @@ namespace RealRim.WaterAndPumps
 			return pathogen != null && risks_per_liter.TryGetValue(pathogen, out risk)
 				? risk
 				: 0f;
-		}
-
-		public float getCombinedRiskPerLiter()
-		{
-			float survival = 1f;
-			foreach (float risk in risks_per_liter.Values)
-			{
-				survival *= 1f - Mathf.Clamp01(risk);
-			}
-			return 1f - survival;
 		}
 
 		public IEnumerable<KeyValuePair<WaterbornePathogenDef, float>> getPathogens()
@@ -137,15 +119,6 @@ namespace RealRim.WaterAndPumps
 				}
 			}
 			risks_per_liter = mixed;
-		}
-
-		public void addWeightedSample(float current_liters, WaterSample sample)
-		{
-			if (sample == null || sample.liters <= 0f)
-			{
-				return;
-			}
-			mixWater(current_liters, sample.liters, sample.contamination);
 		}
 
 		public void reducePathogens(float removal_fraction)

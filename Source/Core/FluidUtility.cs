@@ -10,6 +10,9 @@ namespace RealRim.WaterAndPumps
 	public static class FluidUtility
 	{
 		private const BindingFlags STATIC_FLAGS = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+		private static readonly Type GRAV_ENGINE_TYPE = findType("RimWorld.Building_GravEngine");
+		private static readonly MethodInfo IS_ONBOARD_GRAVSHIP_METHOD = findType("RimWorld.GravshipUtility")
+			?.GetMethod("IsOnboardGravship", STATIC_FLAGS);
 
 		public static FluidNetwork getNetwork(Thing thing, FluidNetworkType network_type)
 		{
@@ -109,10 +112,7 @@ namespace RealRim.WaterAndPumps
 
 			try
 			{
-				Type grav_engine_type = findType("RimWorld.Building_GravEngine");
-				Type utility_type = findType("RimWorld.GravshipUtility");
-				MethodInfo method = utility_type?.GetMethod("IsOnboardGravship", STATIC_FLAGS);
-				if (grav_engine_type == null || method == null)
+				if (GRAV_ENGINE_TYPE == null || IS_ONBOARD_GRAVSHIP_METHOD == null)
 				{
 					return false;
 				}
@@ -121,12 +121,12 @@ namespace RealRim.WaterAndPumps
 				for (int index = 0; index < buildings.Count; index++)
 				{
 					Building building = buildings[index];
-					if (!grav_engine_type.IsInstanceOfType(building))
+					if (!GRAV_ENGINE_TYPE.IsInstanceOfType(building))
 					{
 						continue;
 					}
 
-					object result = method.Invoke(null, new object[]
+					object result = IS_ONBOARD_GRAVSHIP_METHOD.Invoke(null, new object[]
 					{
 						thing.PositionHeld,
 						building,

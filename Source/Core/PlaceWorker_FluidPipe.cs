@@ -8,7 +8,7 @@ namespace RealRim.WaterAndPumps
 		public override bool ForceAllowPlaceOver(BuildableDef other_def)
 		{
 			ThingDef thing_def = other_def as ThingDef;
-			return thing_def != null && getNodeProperties(thing_def) != null;
+			return thing_def != null && FluidNetworkVisuals.getNodeProperties(thing_def) != null;
 		}
 
 		public override AcceptanceReport AllowsPlacing(
@@ -20,7 +20,7 @@ namespace RealRim.WaterAndPumps
 			Thing thing = null)
 		{
 			ThingDef checking_thing_def = checking_def as ThingDef;
-			CompProperties_FluidNode checking_node = getNodeProperties(checking_thing_def);
+			CompProperties_FluidNode checking_node = FluidNetworkVisuals.getNodeProperties(checking_thing_def);
 			if (checking_node == null)
 			{
 				return true;
@@ -48,11 +48,6 @@ namespace RealRim.WaterAndPumps
 				}
 			}
 			return true;
-		}
-
-		private static CompProperties_FluidNode getNodeProperties(ThingDef def)
-		{
-			return FluidNetworkVisuals.getNodeProperties(def);
 		}
 	}
 }

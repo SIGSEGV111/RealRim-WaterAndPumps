@@ -128,29 +128,5 @@ namespace RealRim.WaterAndPumps
 			temperature_c -= RealPhysics.calculateWaterTemperatureChange(delivered, stored_liters);
 			return delivered;
 		}
-
-		public float drawHotWater(float requested_liters, float replacement_temperature_c, float replacement_liters)
-		{
-			float delivered = Mathf.Min(Mathf.Max(0f, requested_liters), stored_liters);
-			if (delivered <= 0f)
-			{
-				return 0f;
-			}
-
-			stored_liters -= delivered;
-			float accepted_replacement = Mathf.Min(
-				Mathf.Max(0f, replacement_liters),
-				Props.capacity_liters - stored_liters);
-			if (accepted_replacement > 0f)
-			{
-				float old_energy = RealPhysics.calculateWaterEnergy(stored_liters, temperature_c);
-				float replacement_energy = RealPhysics.calculateWaterEnergy(accepted_replacement, replacement_temperature_c);
-				stored_liters += accepted_replacement;
-				temperature_c = (old_energy + replacement_energy)
-					/ (stored_liters * RealPhysics.WATER_DENSITY_KG_PER_LITER * RealPhysics.WATER_SPECIFIC_HEAT_KJ_PER_KG_K);
-			}
-
-			return delivered;
-		}
 	}
 }

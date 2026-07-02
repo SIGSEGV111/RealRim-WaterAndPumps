@@ -20,8 +20,6 @@ namespace RealRim.WaterAndPumps
 		private readonly List<CompFluidNode> nodes = new List<CompFluidNode>();
 		private readonly Dictionary<FluidNetworkType, Dictionary<CompFluidNode, FluidNetwork>> network_by_node =
 			new Dictionary<FluidNetworkType, Dictionary<CompFluidNode, FluidNetwork>>();
-		private readonly Dictionary<FluidNetworkType, List<FluidNetwork>> networks_by_type =
-			new Dictionary<FluidNetworkType, List<FluidNetwork>>();
 		private bool networks_dirty = true;
 
 		public MapComponent_FluidNetworks(Map map) : base(map)
@@ -79,20 +77,6 @@ namespace RealRim.WaterAndPumps
 				: null;
 		}
 
-		public List<FluidNetwork> getNetworks(FluidNetworkType network_type)
-		{
-			if (networks_dirty)
-			{
-				rebuildNetworks();
-			}
-
-			List<FluidNetwork> result;
-			return networks_by_type.TryGetValue(network_type, out result)
-				? result
-				: new List<FluidNetwork>();
-		}
-
-
 		public List<CompFluidNode> getAllActiveNodes(FluidNetworkType network_type)
 		{
 			if (networks_dirty)
@@ -109,7 +93,6 @@ namespace RealRim.WaterAndPumps
 		{
 			nodes.RemoveAll(node => node == null || node.parent == null || !node.parent.Spawned);
 			network_by_node.Clear();
-			networks_by_type.Clear();
 
 			FluidNetworkType[] network_types = (FluidNetworkType[])System.Enum.GetValues(typeof(FluidNetworkType));
 			for (int type_index = 0; type_index < network_types.Length; type_index++)
@@ -128,7 +111,6 @@ namespace RealRim.WaterAndPumps
 			Dictionary<IntVec3, List<CompFluidNode>> cell_index = buildCellIndex(candidates);
 			HashSet<CompFluidNode> unvisited = new HashSet<CompFluidNode>(candidates);
 			Dictionary<CompFluidNode, FluidNetwork> lookup = new Dictionary<CompFluidNode, FluidNetwork>();
-			List<FluidNetwork> networks = new List<FluidNetwork>();
 			int network_id = 1;
 
 			while (unvisited.Count > 0)
@@ -166,7 +148,6 @@ namespace RealRim.WaterAndPumps
 				}
 
 				FluidNetwork network = new FluidNetwork(network_id++, network_type, connected);
-				networks.Add(network);
 				for (int index = 0; index < connected.Count; index++)
 				{
 					lookup[connected[index]] = network;
@@ -174,7 +155,6 @@ namespace RealRim.WaterAndPumps
 			}
 
 			network_by_node[network_type] = lookup;
-			networks_by_type[network_type] = networks;
 		}
 
 		private static Dictionary<IntVec3, List<CompFluidNode>> buildCellIndex(List<CompFluidNode> candidates)

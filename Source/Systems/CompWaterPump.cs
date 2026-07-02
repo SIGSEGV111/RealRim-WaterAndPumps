@@ -150,7 +150,8 @@ namespace RealRim.WaterAndPumps
 			last_source_count = 0;
 			last_drive_multiplier = getDriveMultiplier();
 			FluidNetwork network = FluidUtility.getNetwork(parent, FluidNetworkType.FreshWater);
-			if (network == null || network.getFreshWaterCapacity() <= 0f)
+			float capacity_liters = network == null ? 0f : network.getFreshWaterCapacity();
+			if (capacity_liters <= 0f)
 			{
 				pumping = false;
 				FluidUtility.setPowerConsumption(parent, Props.power_watts, false);
@@ -166,7 +167,7 @@ namespace RealRim.WaterAndPumps
 				return;
 			}
 
-			float fill_fraction = network.getStoredFreshWater() / network.getFreshWaterCapacity();
+			float fill_fraction = network.getStoredFreshWater() / capacity_liters;
 			if (controller_enabled)
 			{
 				if (pumping && fill_fraction >= stop_fill_fraction)

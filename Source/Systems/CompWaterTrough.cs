@@ -90,17 +90,6 @@ namespace RealRim.WaterAndPumps
 			return stored_liters + 0.001f >= getDrinkLiters(pawn);
 		}
 
-		public bool drink(Pawn pawn)
-		{
-			float liters = getDrinkLiters(pawn);
-			return drawWater(liters) + 0.001f >= liters;
-		}
-
-		public float drawWater(float requested_liters)
-		{
-			return drawWaterSample(requested_liters).liters;
-		}
-
 		public WaterSample drawWaterSample(float requested_liters)
 		{
 			WaterSample sample = new WaterSample

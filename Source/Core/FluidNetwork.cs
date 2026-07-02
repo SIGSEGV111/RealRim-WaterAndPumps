@@ -23,17 +23,14 @@ namespace RealRim.WaterAndPumps
 
 		public IEnumerable<T> getComponents<T>() where T : ThingComp
 		{
-			HashSet<T> result = new HashSet<T>();
 			for (int index = 0; index < nodes.Count; index++)
 			{
 				T component = nodes[index].parent.TryGetComp<T>();
 				if (component != null)
 				{
-					result.Add(component);
+					yield return component;
 				}
 			}
-
-			return result;
 		}
 
 		public int getLongestRouteMeters(Thing origin)
@@ -162,11 +159,6 @@ namespace RealRim.WaterAndPumps
 				}
 			}
 			return Mathf.Clamp01(best_removal);
-		}
-
-		public float getThermalStoredEnergyKj()
-		{
-			return getComponents<CompThermalTank>().Sum(tank => tank.getUsableEnergyKj());
 		}
 
 		public float getThermalCapacityEnergyKj()

@@ -14,6 +14,8 @@ namespace RealRim.WaterAndPumps
 		public bool wants_hot_water;
 		public bool needs_drain;
 		public bool kitchen_sink;
+		public bool spills_water_to_floor;
+		public float water_liters_per_filth = 20f;
 		public float linked_stove_water_liters_per_hour;
 		public float linked_stove_sludge_kg_per_hour;
 
@@ -32,6 +34,7 @@ namespace RealRim.WaterAndPumps
 		public float total_water_used_liters;
 		public string last_reason = string.Empty;
 		private readonly Dictionary<int, int> stove_activity_ticks = new Dictionary<int, int>();
+		private float unspilled_water_liters;
 		private int last_thought_tick = -999999;
 		private int last_thought_pawn_id = -1;
 
@@ -48,6 +51,7 @@ namespace RealRim.WaterAndPumps
 			base.PostExposeData();
 			Scribe_Values.Look(ref last_water_temperature_c, "last_water_temperature_c", RealPhysics.COLD_WATER_TEMPERATURE_C);
 			Scribe_Values.Look(ref total_water_used_liters, "total_water_used_liters", 0f);
+			Scribe_Values.Look(ref unspilled_water_liters, "unspilled_water_liters", 0f);
 		}
 
 		public override string CompInspectStringExtra()
@@ -158,7 +162,7 @@ namespace RealRim.WaterAndPumps
 				RealPhysics.COLD_WATER_TEMPERATURE_C,
 				hot_temperature,
 				actual_hot_fraction);
-			cold_water = Props.wants_hot_water && last_water_temperature_c < Props.desired_temperature_c - 3f;
+			cold_water = last_water_temperature_c < Props.desired_temperature_c - 3f;
 			total_water_used_liters += water_liters;
 
 			if (Props.needs_drain)
@@ -171,7 +175,10 @@ namespace RealRim.WaterAndPumps
 				}
 			}
 
-			last_reason = cold_water ? "RealRim_ReasonNoHotWater".Translate().ToString() : string.Empty;
+			spillWaterToFloor(water_liters);
+			last_reason = Props.wants_hot_water && cold_water
+				? "RealRim_ReasonNoHotWater".Translate().ToString()
+				: string.Empty;
 			if (apply_thought)
 			{
 				applyTemperatureThought(pawn, last_water_temperature_c, Props.desired_temperature_c);
@@ -292,6 +299,52 @@ namespace RealRim.WaterAndPumps
 			}
 
 			return true;
+		}
+
+		private void spillWaterToFloor(float water_liters)
+		{
+			if (!Props.spills_water_to_floor
+				|| water_liters <= 0f
+				|| parent == null
+				|| !parent.Spawned
+				|| parent.Map == null)
+			{
+				return;
+			}
+
+			float liters_per_filth = Mathf.Max(0.1f, Props.water_liters_per_filth);
+			unspilled_water_liters += water_liters;
+			int filth_count = Mathf.FloorToInt(unspilled_water_liters / liters_per_filth);
+			if (filth_count <= 0)
+			{
+				return;
+			}
+
+			ThingDef water_filth = DefDatabase<ThingDef>.GetNamedSilentFail("RealRim_WaterDirt");
+			if (water_filth == null)
+			{
+				Log.ErrorOnce(
+					"[RealRim] Water & Pumps: RealRim_WaterDirt is unavailable; floor-water spawning is disabled.",
+					0x52525744);
+				unspilled_water_liters = 0f;
+				return;
+			}
+
+			int created_count = 0;
+			for (int index = 0; index < filth_count; index++)
+			{
+				if (!FilthMaker.TryMakeFilth(parent.Position, parent.Map, water_filth, 1))
+				{
+					break;
+				}
+				created_count++;
+			}
+
+			unspilled_water_liters -= created_count * liters_per_filth;
+			if (created_count < filth_count)
+			{
+				unspilled_water_liters = 0f;
+			}
 		}
 
 		private void applyTemperatureThought(Pawn pawn, float water_temperature_c, float reference_temperature_c)

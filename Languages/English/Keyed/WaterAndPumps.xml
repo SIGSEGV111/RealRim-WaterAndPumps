@@ -187,4 +187,6 @@ Total water used: {5} L
 	<RealRim_HotWaterReportTankDetails>{0} / {1} L, {2}, heat input {3} kW, refill {4} L/h, standing loss {5} kW</RealRim_HotWaterReportTankDetails>
 	<RealRim_HotWaterReportFixtureDetails>last mixed-water temperature {0}, total mixed water used {1} L</RealRim_HotWaterReportFixtureDetails>
 
+	<RealRim_SimpleShowerDescription>A primitive, unregulated shower head connected only to fresh water. It cannot use hot water and has no drain, so it leaves standing water on the floor. Uses about 100 L for a full wash.</RealRim_SimpleShowerDescription>
+
 </LanguageData>

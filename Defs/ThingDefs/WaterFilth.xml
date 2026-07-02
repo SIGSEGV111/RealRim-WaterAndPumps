@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+	<ThingDef>
+		<defName>RealRim_WaterDirt</defName>
+		<label>standing water</label>
+		<description>Water pooled on the floor beneath an open shower.</description>
+		<thingClass>Filth</thingClass>
+		<category>Filth</category>
+		<altitudeLayer>Filth</altitudeLayer>
+		<useHitPoints>false</useHitPoints>
+		<drawerType>MapMeshOnly</drawerType>
+		<graphicData>
+			<texPath>Things/Filth/LiquidFuel</texPath>
+			<shaderType>Transparent</shaderType>
+			<graphicClass>Graphic_Cluster</graphicClass>
+			<color>(120, 180, 255, 90)</color>
+		</graphicData>
+		<statBases>
+			<Beauty>-2</Beauty>
+			<Cleanliness>-1</Cleanliness>
+		</statBases>
+		<pathCost>1</pathCost>
+		<filth>
+			<disappearsInDays>0.15~0.35</disappearsInDays>
+			<rainWashes>true</rainWashes>
+			<cleaningWorkToReduceThickness>25</cleaningWorkToReduceThickness>
+			<canFilthAttach>true</canFilthAttach>
+			<allowsFire>false</allowsFire>
+			<maxThickness>5</maxThickness>
+		</filth>
+	</ThingDef>
+</Defs>

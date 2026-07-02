@@ -33,11 +33,11 @@ namespace RealRim.WaterAndPumps
 
 			if (failed_phases == 0)
 			{
-				Log.Message("[RealRim] Water & Pumps 1.1.39: replaced DBH water, heating, cooling, sprinkler and sewage definitions.");
+				Log.Message("[RealRim] Water & Pumps 1.1.40: replaced DBH water, heating, cooling, sprinkler and sewage definitions.");
 			}
 			else
 			{
-				Log.Error("[RealRim] Water & Pumps 1.1.39: definition replacement completed with "
+				Log.Error("[RealRim] Water & Pumps 1.1.40: definition replacement completed with "
 					+ failed_phases + " failed phase(s). Later phases were still applied; see the preceding errors.");
 			}
 		}
@@ -229,8 +229,7 @@ namespace RealRim.WaterAndPumps
 				FluidNetworkType.FreshWater, FluidNetworkType.WasteWater);
 			setFixture("ShowerStuff", 0.13f, 40f, 0.13f, 0f, true, true,
 				FluidNetworkType.FreshWater, FluidNetworkType.HotWater, FluidNetworkType.WasteWater);
-			setFixture("ShowerSimple", 0.13f, 39f, 0.13f, 0f, true, true,
-				FluidNetworkType.FreshWater, FluidNetworkType.HotWater, FluidNetworkType.WasteWater);
+			setSimpleShower();
 			setFixture("ShowerAdvStuff", 0.16f, 40f, 0.16f, 0f, true, true,
 				FluidNetworkType.FreshWater, FluidNetworkType.HotWater, FluidNetworkType.WasteWater);
 			setFixture("BathtubStuff", 1f, 39f, 1f, 0f, true, true,
@@ -697,6 +696,30 @@ namespace RealRim.WaterAndPumps
 				wants_hot_water = wants_hot,
 				needs_drain = needs_drain,
 			});
+		}
+
+		private static void setSimpleShower()
+		{
+			ThingDef def = getDef("ShowerSimple");
+			if (def == null)
+			{
+				return;
+			}
+
+			removeReplacementComps(def, false);
+			addNode(def, false, FluidNetworkType.FreshWater);
+			addComp(def, new CompProperties_Fixture
+			{
+				water_per_use_liters = 0.20f,
+				desired_temperature_c = 39f,
+				waste_water_liters = 0f,
+				sludge_kg = 0f,
+				wants_hot_water = false,
+				needs_drain = false,
+				spills_water_to_floor = true,
+				water_liters_per_filth = 20f,
+			});
+			def.description = "RealRim_SimpleShowerDescription".Translate().ToString();
 		}
 
 		private static void setTrough(string def_name, float capacity_liters, float refill_liters_per_hour)

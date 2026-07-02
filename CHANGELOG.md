@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.40 — Fresh-water-only simple shower
+
+- The DBH simple shower now connects only to the fresh-water network. It no longer has hot-water or waste-water connectors and does not require drain capacity.
+- Increased simple-shower demand from 0.13 L to 0.20 L per shower work tick, corresponding to about 100 L for a full wash instead of the modern shower's roughly 65 L.
+- The simple shower deliberately uses 12 °C fresh water and reports the use as cold to DBH's shower job, while avoiding a misleading "no hot water" fixture error because hot water is not a requirement. RealRim's temperature-preference thoughts remain active.
+- Added short-lived standing-water filth under the open shower. One filth thickness is produced per 20 L used, up to five layers, representing the lack of a basin or drain.
+- Retained DBH's existing primitive shower-head graphic, pawn shower job, washing effect, sound and steam animation.
+- Updated release metadata and runtime labels to 1.1.40.
+
 ## 1.1.39 — Pipe heat exchange and hot-water report
 
 - Heating-water and domestic hot-water pipe cells now exchange heat bidirectionally with outdoor air. Heat transfer scales linearly with connected pipe length and the live network-to-outdoor temperature difference.

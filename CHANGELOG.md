@@ -1,5 +1,69 @@
 # Changelog
 
+## 1.1.35 — Use Odyssey's actual Job swimming-pose flag
+
+- Corrected the Odyssey integration after decoding `JobDriver_GoSwimming.CheckForSwimmingPose()`.
+- The vanilla method does not assign an animation or a field on `Pawn`; it writes a private boolean field on the active `Verse.AI.Job` based on whether the pawn stands in water.
+- Resolves that exact job field from the vanilla method IL and sets it while a pawn is inside the DBH swimming-pool footprint.
+- Removed the `Pawn.Swimming` getter override, allowing RimWorld's normal getter and render pipeline to consume the same job state used by vanilla river and sea swimming.
+- Clears the job flag when the pool-swimming job finishes.
+- Updated release metadata and runtime labels to 1.1.35.
+
+## 1.1.34 — Odyssey swimming pose field fix
+
+- Replaced the incorrect AnimationDef-based pool integration after diagnostics confirmed that Odyssey swimming has no dedicated AnimationDef.
+- Resolves the exact private Pawn boolean field written by `JobDriver_GoSwimming.CheckForSwimmingPose()` and sets that field while a pawn is inside a swimming pool.
+- Clears the field when the DBH swimming job finishes.
+- Removed the active renderer-animation overrides and startup diagnostic dump.
+- Updated release metadata and runtime version labels to 1.1.34.
+
+## 1.1.33 — Odyssey swimming diagnostics
+
+- Added a one-time diagnostic report when Odyssey is active.
+- Logs every loaded `AnimationDef`, all fields on `AnimationDefOf`, relevant swimming/pool/bath/water `JobDef` entries and their driver classes, swimming-related runtime job-driver types, the vanilla `JobDriver_GoSwimming` fields and methods, raw IL for `CheckForSwimmingPose`, and animation-related renderer/render-tree members.
+- Adds a one-time runtime snapshot for each pawn entering a pool, including its active job driver, pool position test, renderer animation, render-tree animation tick and animation-related backing fields.
+- Splits the report into bounded log chunks so it survives Unity log limits.
+- Updated release metadata and runtime version labels to 1.1.33.
+
+## 1.1.32 — Resolve Odyssey swimming animation from vanilla IL
+
+- Replaced the incorrect AnimationDefOf field-name search, which found no field because Odyssey's swimming animation is stored under a non-swimming field name.
+- Resolves the exact AnimationDef operand used by RimWorld's own JobDriver_GoSwimming.CheckForSwimmingPose method.
+- Downgraded failure to a warning and leaves the pool recreation functional if a future RimWorld build changes the vanilla method body.
+- Updated release metadata and runtime version labels to 1.1.32.
+
+## 1.1.31 — Forced Odyssey pool animation state
+
+- Replaced the transient swimming-animation assignment with renderer getter patches that keep Odyssey's swimming `AnimationDef` active throughout the DBH pool job.
+- Forces `PawnRenderer.CurAnimation` and `HasAnimation` for pawns swimming inside the pool footprint.
+- Supplies a continuously advancing, duration-wrapped animation tick through `PawnRenderTree` and prevents the swimming animation from being marked finished.
+- Retains Odyssey's swimming graphic state and clears the transient renderer state after the pawn leaves the pool.
+- Updated release metadata and runtime labels to 1.1.31.
+
+## 1.1.30 — Direct Odyssey swimming animation assignment
+
+- Removed the ineffective call to `JobDriver_GoSwimming.CheckForSwimmingPose`, whose vanilla water/job checks reject DBH pool tiles.
+- Resolves Odyssey's actual swimming `AnimationDef` from `RimWorld.AnimationDefOf` and assigns it directly to the pawn renderer while the pawn is inside a swimming pool.
+- Maintains the animation through both DBH movement and waiting toils, and clears it when the pawn leaves the pool or swimming job.
+- Retains the pool-only `Pawn.Swimming` state so Odyssey's swimming graphics and apparel handling remain active.
+- Updated release metadata and runtime version labels to 1.1.30.
+
+## 1.1.29 — Odyssey swimming animation integration
+
+- Replaced the pool-only `Pawn.Swimming` visual flag with Odyssey's own `JobDriver_GoSwimming.CheckForSwimmingPose` path.
+- Applies the vanilla swimming animation after DBH's pool swimming tick, while retaining RealRim's pool recreation and temperature logic.
+- Clears the swimming animation when the pawn leaves the pool job or pool footprint.
+- Updated release metadata and runtime version labels to 1.1.29.
+
+## 1.1.28 — Swimming recreation and Odyssey pool animation
+
+- Added a dedicated `RealRim_Swimming` recreation type for swimming pools.
+- Reassigned DBH's swimming-pool joy giver, swimming job and pool building joy kind from Hydrotherapy to Swimming.
+- Bathtubs and hot tubs remain on DBH's existing Hydrotherapy recreation type.
+- When Odyssey is active, pawns performing the DBH pool-swimming job are reported as swimming while they are inside the pool footprint, enabling Odyssey's swimming rendering/animation path without affecting their approach or exit walk.
+- Updated the pool description and English/German recreation labels.
+- Updated release metadata and runtime version labels to 1.1.28.
+
 ## 1.1.27 — Kitchen-sink pre-tick inspect fix
 
 - Removed the empty line produced by the kitchen-sink fixture status before the first stove/fluid tick.

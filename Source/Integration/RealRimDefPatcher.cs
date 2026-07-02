@@ -25,17 +25,18 @@ namespace RealRim.WaterAndPumps
 			runPatchPhase("heating", patchHeating, ref failed_phases);
 			runPatchPhase("cooling", patchCooling, ref failed_phases);
 			runPatchPhase("fixtures", patchFixtures, ref failed_phases);
+			runPatchPhase("swimming recreation", patchSwimmingRecreation, ref failed_phases);
 			runPatchPhase("kitchen sink", patchKitchenSink, ref failed_phases);
 			runPatchPhase("waste processing", patchWaste, ref failed_phases);
 			runPatchPhase("work definitions", patchWorkDefinitions, ref failed_phases);
 
 			if (failed_phases == 0)
 			{
-				Log.Message("[RealRim] Water & Pumps 1.1.27: replaced DBH water, heating, cooling and sewage definitions.");
+				Log.Message("[RealRim] Water & Pumps 1.1.35: replaced DBH water, heating, cooling and sewage definitions.");
 			}
 			else
 			{
-				Log.Error("[RealRim] Water & Pumps 1.1.27: definition replacement completed with "
+				Log.Error("[RealRim] Water & Pumps 1.1.35: definition replacement completed with "
 					+ failed_phases + " failed phase(s). Later phases were still applied; see the preceding errors.");
 			}
 		}
@@ -250,6 +251,36 @@ namespace RealRim.WaterAndPumps
 
 			setTrough("WaterTrough", 200f, 500f);
 			setTrough("PetWaterBowl", 12f, 60f);
+		}
+
+		private static void patchSwimmingRecreation()
+		{
+			JoyKindDef swimming = DefDatabase<JoyKindDef>.GetNamedSilentFail("RealRim_Swimming");
+			if (swimming == null)
+			{
+				throw new InvalidOperationException("RealRim_Swimming JoyKindDef was not loaded.");
+			}
+
+			JobDef swimming_job = DefDatabase<JobDef>.GetNamedSilentFail("DBHGoSwimming");
+			if (swimming_job == null)
+			{
+				throw new InvalidOperationException("DBHGoSwimming JobDef was not loaded.");
+			}
+			swimming_job.joyKind = swimming;
+
+			JoyGiverDef swimming_giver = DefDatabase<JoyGiverDef>.GetNamedSilentFail("UseDBHSwimmingPool");
+			if (swimming_giver == null)
+			{
+				throw new InvalidOperationException("UseDBHSwimmingPool JoyGiverDef was not loaded.");
+			}
+			swimming_giver.joyKind = swimming;
+
+			ThingDef pool = getDef("DBHSwimmingPool");
+			if (pool == null || pool.building == null)
+			{
+				throw new InvalidOperationException("DBHSwimmingPool building definition is unavailable.");
+			}
+			pool.building.joyKind = swimming;
 		}
 
 		private static void patchKitchenSink()

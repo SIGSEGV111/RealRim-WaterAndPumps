@@ -64,7 +64,7 @@ Wärmeverlust durch Verdunstung: {10} kW
 Regenwasseraufnahme: {11} L/Tag
 Frischwassernachspeisung: {12} L/Tag
 Füllmengenregelung: {13}%</RealRim_PoolStatus>
-	<RealRim_PoolDescription>Ein Schwimmbecken für Hydrotherapie, Entspannung und Erholung. Es muss mindestens zu 90 % gefüllt sein und eine für den jeweiligen Kolonisten angenehme Temperatur haben, bevor es benutzt werden kann.
+	<RealRim_PoolDescription>Ein Schwimmbecken zum Schwimmen, Entspannen und Erholen. Es muss mindestens zu 90 % gefüllt sein und eine für den jeweiligen Kolonisten angenehme Temperatur haben, bevor es benutzt werden kann.
 
 Statuseinträge: Beckenwasser zeigt das aktuelle Volumen und den Füllstand. Wassertemperatur ist die gemessene Temperatur; die Zieltemperatur steuert die Beheizung aus dem Heizwassernetz. Heizung aus dem Netz ist die momentan über den Wärmetauscher zugeführte Wärme. Wärmeaustausch mit der Luft ist positiv, wenn die Umgebungsluft das Wasser erwärmt, und negativ, wenn sie es abkühlt. Solargewinn ist im Freien aufgenommenes Sonnenlicht. Wärmeverlust zum Nachthimmel ist die Strahlungskühlung in klaren dunklen Nächten. Verdunstung zeigt den täglichen Wasserverlust und den damit verbundenen Wärmeverlust. Regenwasseraufnahme und Frischwassernachspeisung zeigen die aktuellen Füllraten. Die Füllmengenregelung begrenzt die automatische Frischwassernachspeisung.</RealRim_PoolDescription>
 	<RealRim_PoolNotFull>Das Schwimmbecken muss mindestens zu 90 % gefüllt sein.</RealRim_PoolNotFull>

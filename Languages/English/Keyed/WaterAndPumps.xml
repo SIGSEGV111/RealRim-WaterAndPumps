@@ -64,7 +64,7 @@ Evaporation heat loss: {10} kW
 Rain collection: {11} L/day
 Fresh-water refill: {12} L/day
 Fill-flow setting: {13}%</RealRim_PoolStatus>
-	<RealRim_PoolDescription>A swimming pool for hydrotherapy, relaxation and recreation. It must be at least 90% full and within a pawn's comfortable temperature range before it can be used.
+	<RealRim_PoolDescription>A swimming pool for swimming, relaxation and recreation. It must be at least 90% full and within a pawn's comfortable temperature range before it can be used.
 
 Status entries: Pool water is the current volume and fill percentage. Water temperature is the measured pool temperature; target temperature controls heating from the heating-water network. Network heating is heat currently supplied by the pool heat exchanger. Air exchange is positive when surrounding air warms the pool and negative when it cools it. Solar gain is sunlight absorbed outdoors. Night-sky loss is radiative cooling on clear dark nights. Evaporation shows both water lost per day and the associated heat loss. Rain collection and fresh-water refill show current filling rates. Fill-flow setting limits automatic fresh-water refill.</RealRim_PoolDescription>
 	<RealRim_PoolNotFull>The swimming pool must be at least 90% full.</RealRim_PoolNotFull>

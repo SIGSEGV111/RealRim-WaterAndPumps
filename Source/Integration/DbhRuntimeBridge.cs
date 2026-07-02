@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Text;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -53,6 +54,8 @@ namespace RealRim.WaterAndPumps
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.PlumbingNet", "PushSewage", nameof(pushSewagePrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.PlumbingNet", "PullHotWater", nameof(pullHotWaterPrefix));
 
+				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.Building_AssignableFixture", "GetInspectString", nameof(fixtureInspectStringPrefix));
+
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.CompWaterPumpingStation", "PostDrawExtraSelectionOverlays", nameof(skipOriginal));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.CompWaterPumpingStation", "CompInspectStringExtra", nameof(nullStringPrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.CompWindPump", "CompInspectStringExtra", nameof(nullStringPrefix));
@@ -95,13 +98,64 @@ namespace RealRim.WaterAndPumps
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.JobDriver_GoSwimming", "swimticker", nameof(swimTickerPrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "Verse.AI.Toils_Recipe+<>c__DisplayClass2_0", "<DoRecipeWork>b__2", nameof(recipeWorkTickPrefix));
 
-				Log.Message("[RealRim] Water & Pumps 1.1.23: redirected " + patched_methods
+				Log.Message("[RealRim] Water & Pumps 1.1.27: redirected " + patched_methods
 					+ " DBH runtime methods to RealRim physics.");
 			}
 			catch (Exception exception)
 			{
 				Log.Error("[RealRim] Water & Pumps: runtime bridge failed: " + exception);
 			}
+		}
+
+		public static bool fixtureInspectStringPrefix(object __instance, ref string __result)
+		{
+			ThingWithComps thing = __instance as ThingWithComps;
+			if (!isKitchenSink(thing))
+			{
+				return true;
+			}
+
+			StringBuilder status = new StringBuilder();
+			List<ThingComp> comps = thing.AllComps;
+			if (comps != null)
+			{
+				for (int index = 0; index < comps.Count; index++)
+				{
+					ThingComp comp = comps[index];
+					if (comp == null || isLegacyKitchenSinkComp(comp))
+					{
+						continue;
+					}
+					string line = comp.CompInspectStringExtra();
+					if (line.NullOrEmpty())
+					{
+						continue;
+					}
+					if (status.Length > 0)
+					{
+						status.AppendLine();
+					}
+					status.Append(line.TrimEndNewlines());
+				}
+			}
+			__result = status.ToString().TrimEndNewlines();
+			return false;
+		}
+
+		private static bool isKitchenSink(ThingWithComps thing)
+		{
+			return thing != null && RealRimDefPatcher.isKitchenSinkDefinition(thing.def);
+		}
+
+		private static bool isLegacyKitchenSinkComp(ThingComp comp)
+		{
+			if (comp == null)
+			{
+				return false;
+			}
+			string type_name = comp.GetType().FullName;
+			return type_name == "DubsBadHygiene.CompPipe"
+				|| type_name == "DubsBadHygiene.CompBlockage";
 		}
 
 		public static bool visiblePipeGraphicPrintPrefix(

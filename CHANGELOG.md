@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.1.27 — Kitchen-sink pre-tick inspect fix
+
+- Removed the empty line produced by the kitchen-sink fixture status before the first stove/fluid tick.
+- Trimmed the base fixture status before appending the kitchen-sink activity section.
+- Updated release metadata and runtime version labels to 1.1.27.
+
+## 1.1.26 — Kitchen-sink facility identification fix
+
+- Fixed kitchen-sink integration for DBH basin-class facility definitions whose defName is not exactly `KitchenSink`.
+- Kitchen sinks are now identified by their actual runtime structure: `DubsBadHygiene.Building_basin` plus RimWorld's `CompFacility`.
+- The recognized definition receives fresh-water, hot-water and waste-water nodes plus the RealRim kitchen-sink fixture component before any save is loaded or building is created.
+- Removed the ineffective runtime component-list mutation from the previous fixes.
+- DBH's legacy kitchen-sink inspect text is suppressed for the correctly identified facility sink.
+- Stove linkage continues to use only `CompAffectedByFacilities.LinkedFacilitiesListForReading`.
+- Updated release metadata and runtime version labels to 1.1.26.
+
+## 1.1.25 — Kitchen-sink runtime component repair
+
+- Fixed the actual cause of the persistent DBH "No water capacity" state: loaded kitchen-sink instances could retain DBH's cached pipe/blockage comps while lacking the RealRim fluid comps even after their `ThingDef` had been changed.
+- Repairs the kitchen sink's instance component list before DBH exposes or spawns the fixture, so existing saves and newly built sinks receive fresh-water, hot-water and waste-water connectivity.
+- Removes only DBH's legacy `CompPipe` and `CompBlockage` instances; RimWorld's facility component and its authoritative stove links are preserved.
+- Replaces DBH's kitchen-sink inspect-string body with the actual component status, retaining facility statistics while removing the obsolete DBH water-capacity/owner text.
+- Stove accounting continues to use only `CompAffectedByFacilities.LinkedFacilitiesListForReading`; no proximity or room fallback is used.
+- Updated release metadata and runtime version labels to 1.1.25.
+
+## 1.1.24 — Kitchen-sink component initialization fix
+
+- Enforced the exact `KitchenSink` definition immediately before RimWorld initializes its comps, eliminating static-constructor ordering issues that could leave the sink on DBH's legacy plumbing state.
+- Removed the DBH pipe and blockage comps from the kitchen sink while retaining DBH's building class for its established pawn-use and assignment jobs.
+- The kitchen sink now always receives RealRim fresh-water, hot-water and waste-water nodes plus normal sink behavior.
+- Stove water and waste generation continues to use only RimWorld's authoritative `CompAffectedByFacilities.LinkedFacilitiesListForReading` relationship; no proximity or room fallback is used.
+- Updated release metadata and runtime version labels to 1.1.24.
+
 ## 1.1.23 — Command icons and kitchen-sink integration
 
 - Assigned the five external textures to the heating overview, lower target, raise target, pump-threshold and heat-source target commands.

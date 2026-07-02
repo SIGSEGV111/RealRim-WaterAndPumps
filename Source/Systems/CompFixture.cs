@@ -66,17 +66,25 @@ namespace RealRim.WaterAndPumps
 			string status = "RealRim_FixtureStatus".Translate(
 				last_water_temperature_c.ToStringTemperature("F1"),
 				total_water_used_liters.ToString("N1"),
-				last_reason);
+				last_reason)
+				.ToString()
+				.TrimEnd('\r', '\n', ' ', '\t');
 			if (Props.kitchen_sink)
 			{
 				int current_tick = Find.TickManager?.TicksGame ?? 0;
 				int stove_count = current_tick - last_stove_activity_tick <= 120 ? active_stove_count : 0;
-				status += "\n" + "RealRim_KitchenSinkStatus".Translate(
+				string kitchen_status = "RealRim_KitchenSinkStatus".Translate(
 					stove_count,
 					(stove_count * Props.linked_stove_water_liters_per_hour).ToString("N1"),
-					(stove_count * Props.linked_stove_sludge_kg_per_hour * 1000f).ToString("N0"));
+					(stove_count * Props.linked_stove_sludge_kg_per_hour * 1000f).ToString("N0"))
+					.ToString()
+					.TrimEnd('\r', '\n', ' ', '\t');
+				if (!kitchen_status.NullOrEmpty())
+				{
+					status += "\n" + kitchen_status;
+				}
 			}
-			return status.TrimEnd('\r', '\n', ' ', '\t');
+			return status;
 		}
 
 		public AcceptanceReport getWorkingReport()

@@ -31,11 +31,11 @@ namespace RealRim.WaterAndPumps
 
 			if (failed_phases == 0)
 			{
-				Log.Message("[RealRim] Water & Pumps 1.1.23: replaced DBH water, heating, cooling and sewage definitions.");
+				Log.Message("[RealRim] Water & Pumps 1.1.27: replaced DBH water, heating, cooling and sewage definitions.");
 			}
 			else
 			{
-				Log.Error("[RealRim] Water & Pumps 1.1.23: definition replacement completed with "
+				Log.Error("[RealRim] Water & Pumps 1.1.27: definition replacement completed with "
 					+ failed_phases + " failed phase(s). Later phases were still applied; see the preceding errors.");
 			}
 		}
@@ -254,13 +254,71 @@ namespace RealRim.WaterAndPumps
 
 		private static void patchKitchenSink()
 		{
-			ThingDef def = getDef("KitchenSink");
+			List<ThingDef> all_defs = DefDatabase<ThingDef>.AllDefsListForReading;
+			for (int index = 0; index < all_defs.Count; index++)
+			{
+				ThingDef def = all_defs[index];
+				if (isKitchenSinkDefinition(def))
+				{
+					ensureKitchenSinkDefinition(def);
+				}
+			}
+		}
+
+		internal static bool isKitchenSinkDefinition(ThingDef def)
+		{
 			if (def == null)
+			{
+				return false;
+			}
+			if (def.defName == "KitchenSink")
+			{
+				return true;
+			}
+			Type building_type = def.thingClass;
+			bool is_dbh_basin = false;
+			while (building_type != null)
+			{
+				if (building_type.FullName == "DubsBadHygiene.Building_basin")
+				{
+					is_dbh_basin = true;
+					break;
+				}
+				building_type = building_type.BaseType;
+			}
+			if (!is_dbh_basin)
+			{
+				return false;
+			}
+			if (def.comps == null)
+			{
+				return false;
+			}
+			for (int index = 0; index < def.comps.Count; index++)
+			{
+				if (def.comps[index] is CompProperties_Facility)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+		internal static void ensureKitchenSinkDefinition(ThingDef def)
+		{
+			if (!isKitchenSinkDefinition(def))
+			{
+				return;
+			}
+			if (hasCompleteKitchenSinkDefinition(def))
 			{
 				return;
 			}
 
-			removeReplacementComps(def, true);
+			// The DBH building class is retained so its established pawn-use and assignment
+			// jobs continue to recognize the fixture. Its legacy pipe/blockage comps are
+			// removed; all water, heat and waste accounting is supplied by RealRim comps.
+			removeReplacementComps(def, false);
 			addNode(
 				def,
 				false,
@@ -269,7 +327,7 @@ namespace RealRim.WaterAndPumps
 				FluidNetworkType.WasteWater);
 			addComp(def, new CompProperties_Fixture
 			{
-				kind = FixtureKind.Sink,
+				kind = FixtureKind.KitchenSink,
 				water_per_use_liters = 0.04f,
 				desired_temperature_c = 35f,
 				waste_water_liters = 0.04f,
@@ -280,6 +338,49 @@ namespace RealRim.WaterAndPumps
 				linked_stove_water_liters_per_hour = 12f,
 				linked_stove_sludge_kg_per_hour = 0.075f,
 			});
+		}
+
+		private static bool hasCompleteKitchenSinkDefinition(ThingDef def)
+		{
+			if (def.comps == null)
+			{
+				return false;
+			}
+			CompProperties_FluidNode node = null;
+			CompProperties_Fixture fixture = null;
+			for (int index = 0; index < def.comps.Count; index++)
+			{
+				CompProperties properties = def.comps[index];
+				if (properties == null)
+				{
+					continue;
+				}
+				Type properties_type = properties.GetType();
+				Type comp_type = properties.compClass;
+				if (properties_type.FullName == "DubsBadHygiene.CompProperties_Pipe"
+					|| properties_type.FullName == "DubsBadHygiene.CompProperties_Blockage"
+					|| (comp_type != null && (comp_type.FullName == "DubsBadHygiene.CompPipe"
+						|| comp_type.FullName == "DubsBadHygiene.CompBlockage")))
+				{
+					return false;
+				}
+				if (properties is CompProperties_FluidNode)
+				{
+					node = (CompProperties_FluidNode)properties;
+				}
+				else if (properties is CompProperties_Fixture)
+				{
+					fixture = (CompProperties_Fixture)properties;
+				}
+			}
+			return node != null
+				&& node.networks != null
+				&& node.networks.Contains(FluidNetworkType.FreshWater)
+				&& node.networks.Contains(FluidNetworkType.HotWater)
+				&& node.networks.Contains(FluidNetworkType.WasteWater)
+				&& fixture != null
+				&& fixture.kitchen_sink
+				&& fixture.kind == FixtureKind.KitchenSink;
 		}
 
 		private static void addLatrineRefillComponent(ThingDef latrine)

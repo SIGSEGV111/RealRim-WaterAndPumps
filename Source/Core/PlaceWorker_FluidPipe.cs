@@ -1,36 +1,10 @@
 using System.Collections.Generic;
-using UnityEngine;
 using Verse;
 
 namespace RealRim.WaterAndPumps
 {
 	public sealed class PlaceWorker_FluidPipe : PlaceWorker
 	{
-		public override void DrawGhost(
-			ThingDef def,
-			IntVec3 center,
-			Rot4 rotation,
-			Color ghost_color,
-			Thing thing = null)
-		{
-			base.DrawGhost(def, center, rotation, ghost_color, thing);
-			Map map = Find.CurrentMap;
-			CompProperties_FluidNode node = getNodeProperties(def);
-			MapComponent_FluidNetworks manager = map?.GetComponent<MapComponent_FluidNetworks>();
-			if (node == null || manager == null || node.networks.NullOrEmpty())
-			{
-				return;
-			}
-
-			for (int index = 0; index < node.networks.Count; index++)
-			{
-				FluidNetworkType network_type = node.networks[index];
-				FluidNetworkVisuals.drawCells(
-					manager.getAllNodeCells(network_type),
-					network_type);
-			}
-		}
-
 		public override bool ForceAllowPlaceOver(BuildableDef other_def)
 		{
 			ThingDef thing_def = other_def as ThingDef;
@@ -78,19 +52,7 @@ namespace RealRim.WaterAndPumps
 
 		private static CompProperties_FluidNode getNodeProperties(ThingDef def)
 		{
-			if (def?.comps == null)
-			{
-				return null;
-			}
-			for (int index = 0; index < def.comps.Count; index++)
-			{
-				CompProperties_FluidNode node = def.comps[index] as CompProperties_FluidNode;
-				if (node != null)
-				{
-					return node;
-				}
-			}
-			return null;
+			return FluidNetworkVisuals.getNodeProperties(def);
 		}
 	}
 }

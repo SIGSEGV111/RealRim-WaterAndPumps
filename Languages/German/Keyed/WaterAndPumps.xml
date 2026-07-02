@@ -9,9 +9,10 @@
 	<RealRim_StatusRunning>running</RealRim_StatusRunning>
 	<RealRim_StatusStandby>standby</RealRim_StatusStandby>
 	<RealRim_WaterStored>Water: {0} / {1} L ({2})</RealRim_WaterStored>
-	<RealRim_ThermalTankStatus>Thermal tank: {0} / {1} L
-Temperature: {2}
-Usable heat: {3}</RealRim_ThermalTankStatus>
+	<RealRim_ThermalTankStatus>Wärmespeicher: {0} / {1} L
+Temperatur: {2}
+Nutzbare Wärme: {3}
+Bereitschafts-Wärmeverlust: {4} kW</RealRim_ThermalTankStatus>
 	<RealRim_CoolantTankStatus>Coolant water: {0} L
 Equivalent temperature: {1}
 Frozen fraction: {2}
@@ -51,17 +52,22 @@ Internal waste: {2} / {3} L
 Fecal sludge: {4} / {5} kg</RealRim_LatrineStatus>
 	<RealRim_TroughStatus>Stored water: {0} / {1} L
 Current refill: {2} L/h</RealRim_TroughStatus>
-	<RealRim_PoolStatus>Pool water: {0} / {1} L ({2})
-Water temperature: {3}
-Target temperature: {4}
-Network heating: {5} kW
-Air exchange: {6} kW
-Solar gain: {7} kW
-Night-sky loss: {8} kW
-Evaporation: {9} L/day
-Rain collection: {10} L/day
-Fresh-water refill: {11} L/day
-Füllmengenregelung: {12}%</RealRim_PoolStatus>
+	<RealRim_PoolStatus>Beckenwasser: {0} / {1} L ({2})
+Wassertemperatur: {3}
+Zieltemperatur: {4}
+Heizung aus dem Netz: {5} kW
+Wärmeaustausch mit der Luft: {6} kW
+Solargewinn: {7} kW
+Wärmeverlust zum Nachthimmel: {8} kW
+Verdunstung: {9} L/Tag
+Wärmeverlust durch Verdunstung: {10} kW
+Regenwasseraufnahme: {11} L/Tag
+Frischwassernachspeisung: {12} L/Tag
+Füllmengenregelung: {13}%</RealRim_PoolStatus>
+	<RealRim_PoolDescription>Ein Schwimmbecken für Hydrotherapie, Entspannung und Erholung. Es muss mindestens zu 90 % gefüllt sein und eine für den jeweiligen Kolonisten angenehme Temperatur haben, bevor es benutzt werden kann.
+
+Statuseinträge: Beckenwasser zeigt das aktuelle Volumen und den Füllstand. Wassertemperatur ist die gemessene Temperatur; die Zieltemperatur steuert die Beheizung aus dem Heizwassernetz. Heizung aus dem Netz ist die momentan über den Wärmetauscher zugeführte Wärme. Wärmeaustausch mit der Luft ist positiv, wenn die Umgebungsluft das Wasser erwärmt, und negativ, wenn sie es abkühlt. Solargewinn ist im Freien aufgenommenes Sonnenlicht. Wärmeverlust zum Nachthimmel ist die Strahlungskühlung in klaren dunklen Nächten. Verdunstung zeigt den täglichen Wasserverlust und den damit verbundenen Wärmeverlust. Regenwasseraufnahme und Frischwassernachspeisung zeigen die aktuellen Füllraten. Die Füllmengenregelung begrenzt die automatische Frischwassernachspeisung.</RealRim_PoolDescription>
+	<RealRim_PoolNotFull>Das Schwimmbecken muss mindestens zu 90 % gefüllt sein.</RealRim_PoolNotFull>
 	<RealRim_TargetTemperatureDown>Lower target</RealRim_TargetTemperatureDown>
 	<RealRim_TargetTemperatureDownDesc>Lower the target temperature by 1 °C.</RealRim_TargetTemperatureDownDesc>
 	<RealRim_TargetTemperatureUp>Raise target</RealRim_TargetTemperatureUp>
@@ -104,4 +110,36 @@ Pathogen removal: {1}</RealRim_WaterTreatmentStatus>
 <RealRim_HotWaterTankStatus>Brauchwarmwasser: {0} / {1} L
 Temperatur: {2}
 Wärmetauscherleistung: {3} kW
-Kaltwassernachspeisung: {4} L/h</RealRim_HotWaterTankStatus><RealRim_WaterPumpAutomation>Automatische Pumpensteuerung</RealRim_WaterPumpAutomation><RealRim_WaterPumpAutomationDesc>Aktiviert die automatischen Start-/Stoppschwellen. Wenn deaktiviert, läuft die Pumpe bei eingeschaltetem Schalter, verbundener Quelle und freier Speicherkapazität.</RealRim_WaterPumpAutomationDesc><RealRim_WaterPumpConfigure>Pumpenschwellen konfigurieren</RealRim_WaterPumpConfigure><RealRim_WaterPumpConfigureDesc>Legt die Speicherfüllstände fest, bei denen diese Pumpe startet und stoppt.</RealRim_WaterPumpConfigureDesc><RealRim_WaterPumpThresholdTitle>Schwellenwerte der Wasserpumpe</RealRim_WaterPumpThresholdTitle><RealRim_WaterPumpStartThreshold>Pumpen bei oder unter {0} starten</RealRim_WaterPumpStartThreshold><RealRim_WaterPumpStopThreshold>Pumpen bei oder über {0} stoppen</RealRim_WaterPumpStopThreshold><RealRim_WaterPumpThresholdHint>Die Stoppschwelle muss mindestens 5 Prozentpunkte über der Startschwelle liegen.</RealRim_WaterPumpThresholdHint><RealRim_ResetDefaults>Standardwerte</RealRim_ResetDefaults><RealRim_WaterPumpThresholdStatus>Automatische Schwellen: Start {0}, Stopp {1}</RealRim_WaterPumpThresholdStatus><RealRim_WaterPumpDriveStatus>Verfügbare Antriebsleistung: {0}</RealRim_WaterPumpDriveStatus></LanguageData>
+Kaltwassernachspeisung: {4} L/h
+Bereitschafts-Wärmeverlust: {5} kW</RealRim_HotWaterTankStatus><RealRim_WaterPumpAutomation>Automatische Pumpensteuerung</RealRim_WaterPumpAutomation><RealRim_WaterPumpAutomationDesc>Aktiviert die automatischen Start-/Stoppschwellen. Wenn deaktiviert, läuft die Pumpe bei eingeschaltetem Schalter, verbundener Quelle und freier Speicherkapazität.</RealRim_WaterPumpAutomationDesc><RealRim_WaterPumpConfigure>Pumpenschwellen konfigurieren</RealRim_WaterPumpConfigure><RealRim_WaterPumpConfigureDesc>Legt die Speicherfüllstände fest, bei denen diese Pumpe startet und stoppt.</RealRim_WaterPumpConfigureDesc><RealRim_WaterPumpThresholdTitle>Schwellenwerte der Wasserpumpe</RealRim_WaterPumpThresholdTitle><RealRim_WaterPumpStartThreshold>Pumpen bei oder unter {0} starten</RealRim_WaterPumpStartThreshold><RealRim_WaterPumpStopThreshold>Pumpen bei oder über {0} stoppen</RealRim_WaterPumpStopThreshold><RealRim_WaterPumpThresholdHint>Die Stoppschwelle muss mindestens 5 Prozentpunkte über der Startschwelle liegen.</RealRim_WaterPumpThresholdHint><RealRim_ResetDefaults>Standardwerte</RealRim_ResetDefaults><RealRim_WaterPumpThresholdStatus>Automatische Schwellen: Start {0}, Stopp {1}</RealRim_WaterPumpThresholdStatus><RealRim_WaterPumpDriveStatus>Verfügbare Antriebsleistung: {0}</RealRim_WaterPumpDriveStatus>
+	<RealRim_HeatSourceTargetStatus>Puffersollwert: {0} (Neustart unter {1})</RealRim_HeatSourceTargetStatus>
+	<RealRim_HeatSourceConfigureTarget>Puffersollwert einstellen</RealRim_HeatSourceConfigureTarget>
+	<RealRim_HeatSourceConfigureTargetDesc>Legt die Heizpuffertemperatur fest, die diese aktive Wärmequelle hält.</RealRim_HeatSourceConfigureTargetDesc>
+	<RealRim_HeatSourceTargetTitle>Solltemperatur des Heizpuffers</RealRim_HeatSourceTargetTitle>
+	<RealRim_HeatSourceTargetCurrent>Solltemperatur: {0}</RealRim_HeatSourceTargetCurrent>
+	<RealRim_HeatSourceRestartCurrent>Neustart unter: {0}</RealRim_HeatSourceRestartCurrent>
+	<RealRim_HeatSourceTargetHint>Eine niedrigere Puffertemperatur verringert den Temperaturhub einer Wärmepumpe und verbessert normalerweise ihre Leistungszahl, muss aber für Heizkörper, Poolheizung und Brauchwarmwasserübertragung hoch genug bleiben. Die Wärmequelle startet 5 °C unter dem gewählten Sollwert neu.</RealRim_HeatSourceTargetHint>
+	<RealRim_HeatingOverview>Heizungsübersicht</RealRim_HeatingOverview>
+	<RealRim_HeatingOverviewDesc>Öffnet einen Live-Bericht für dieses verbundene Heizwassernetz.</RealRim_HeatingOverviewDesc>
+	<RealRim_HeatingReportTitle>Bericht für Heizungsnetz #{0}</RealRim_HeatingReportTitle>
+	<RealRim_HeatingReportTitleDisconnected>Heizungsnetzbericht</RealRim_HeatingReportTitleDisconnected>
+	<RealRim_HeatingReportDisconnected>Dieser Knoten ist nicht mehr mit einem Heizwassernetz verbunden.</RealRim_HeatingReportDisconnected>
+	<RealRim_HeatingReportProduction>Aktuelle Gesamtproduktion: +{0} kW</RealRim_HeatingReportProduction>
+	<RealRim_HeatingReportConsumption>Aktueller Gesamtverbrauch: {0} kW</RealRim_HeatingReportConsumption>
+	<RealRim_HeatingReportNet>Netto-Speicherrate: {0} kW</RealRim_HeatingReportNet>
+	<RealRim_HeatingReportPipeLength>Gesamte Rohrlänge: {0} m</RealRim_HeatingReportPipeLength>
+	<RealRim_HeatingReportOutdoors>Außenbereich</RealRim_HeatingReportOutdoors>
+	<RealRim_HeatingReportRoomFallback>Raum</RealRim_HeatingReportRoomFallback>
+	<RealRim_HeatingReportRoomHeader>{0} ({1} m²):</RealRim_HeatingReportRoomHeader>
+	<RealRim_HeatingReportBedroomSingle>{0}s {1}</RealRim_HeatingReportBedroomSingle>
+	<RealRim_HeatingReportBedroomPair>{0}s und {1}s {2}</RealRim_HeatingReportBedroomPair>
+	<RealRim_HeatingReportBedroomMany>{0}, {1}, … +{2} {3}</RealRim_HeatingReportBedroomMany>
+	<RealRim_HeatingReportNumberedNode>{0} #{1}</RealRim_HeatingReportNumberedNode>
+	<RealRim_HeatingReportConnected>verbunden</RealRim_HeatingReportConnected>
+	<RealRim_HeatingReportSourceDetails>{0} kW, Soll {1}, COP {2}</RealRim_HeatingReportSourceDetails>
+	<RealRim_HeatingReportPassiveSourceDetails>{0} kW</RealRim_HeatingReportPassiveSourceDetails>
+	<RealRim_HeatingReportThermalTankDetails>{0}, Bereitschaftsverlust {1} kW</RealRim_HeatingReportThermalTankDetails>
+	<RealRim_HeatingReportHotWaterTankDetails>{0}, Wärmeentnahme {1} kW, Bereitschaftsverlust {2} kW</RealRim_HeatingReportHotWaterTankDetails>
+	<RealRim_HeatingReportConsumerDetails>{0} kW</RealRim_HeatingReportConsumerDetails>
+	<RealRim_HeatingReportPoolDetails>{0}, Wärmeentnahme {1} kW</RealRim_HeatingReportPoolDetails>
+</LanguageData>

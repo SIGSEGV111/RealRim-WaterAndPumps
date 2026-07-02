@@ -45,13 +45,14 @@ namespace RealRim.WaterAndPumps
 			float fill = network == null || network.getColdEnergyCapacityKj() <= 0f
 				? 0f
 				: network.getStoredColdEnergyKj() / network.getColdEnergyCapacityKj();
-			return "RealRim_CoolingPlantStatus".Translate(
+			string status = "RealRim_CoolingPlantStatus".Translate(
 				cooling ? "RealRim_StatusRunning".Translate() : "RealRim_StatusStandby".Translate(),
 				fill.ToStringPercent(),
 				last_cooling_kw.ToString("N1"),
 				last_power_kw.ToString("N1"),
 				last_cop.ToString("N2"),
 				last_reason);
+			return status.TrimEnd('\r', '\n', ' ', '\t');
 		}
 
 		public void tickFluidSystem(float elapsed_seconds)

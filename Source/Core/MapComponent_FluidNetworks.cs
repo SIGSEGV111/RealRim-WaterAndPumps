@@ -93,36 +93,16 @@ namespace RealRim.WaterAndPumps
 		}
 
 
-		public List<IntVec3> getNetworkCells(CompFluidNode node, FluidNetworkType network_type)
-		{
-			FluidNetwork network = getNetwork(node, network_type);
-			return network == null ? new List<IntVec3>() : getCells(network.nodes);
-		}
-
-		public List<IntVec3> getAllNodeCells(FluidNetworkType network_type)
+		public List<CompFluidNode> getAllActiveNodes(FluidNetworkType network_type)
 		{
 			if (networks_dirty)
 			{
 				rebuildNetworks();
 			}
-			return getCells(nodes.Where(node => node.supportsNetwork(network_type)));
-		}
 
-		private static List<IntVec3> getCells(IEnumerable<CompFluidNode> source_nodes)
-		{
-			HashSet<IntVec3> cells = new HashSet<IntVec3>();
-			foreach (CompFluidNode node in source_nodes)
-			{
-				if (node?.parent == null)
-				{
-					continue;
-				}
-				foreach (IntVec3 cell in node.parent.OccupiedRect())
-				{
-					cells.Add(cell);
-				}
-			}
-			return cells.ToList();
+			return nodes
+				.Where(node => node.supportsNetwork(network_type) && node.isConnectionActive())
+				.ToList();
 		}
 
 		private void rebuildNetworks()

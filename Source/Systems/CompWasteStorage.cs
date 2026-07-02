@@ -53,7 +53,7 @@ namespace RealRim.WaterAndPumps
 
 		public override string CompInspectStringExtra()
 		{
-			return "RealRim_WasteStorageStatus".Translate(
+			string status = "RealRim_WasteStorageStatus".Translate(
 				stored_water_liters.ToString("N0"),
 				Props.water_capacity_liters.ToString("N0"),
 				stored_sludge_kg.ToString("N1"),
@@ -61,6 +61,7 @@ namespace RealRim.WaterAndPumps
 				last_processed_liters_per_day.ToString("N0"),
 				last_recovered_liters_per_day.ToString("N0"),
 				last_reason);
+			return status.TrimEnd('\r', '\n', ' ', '\t');
 		}
 
 		public float getWaterSpace()

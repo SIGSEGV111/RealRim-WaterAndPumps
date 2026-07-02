@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using RimWorld;
-using UnityEngine;
 using Verse;
 
 namespace RealRim.WaterAndPumps
@@ -45,89 +44,32 @@ namespace RealRim.WaterAndPumps
 			if (Props.valve)
 			{
 				getManager()?.markNetworksDirty();
+				FluidNetworkVisuals.markOverlayDirty(parent);
 			}
 		}
 
-		public override void PostDraw()
+		public override IEnumerable<Gizmo> CompGetGizmosExtra()
 		{
-			base.PostDraw();
-			if (isPipeDef())
+			foreach (Gizmo gizmo in base.CompGetGizmosExtra())
 			{
-				return;
+				yield return gizmo;
 			}
 
-			MapComponent_FluidNetworks manager = getManager();
-			if (manager == null || Props.networks.NullOrEmpty() || parent.Map == null)
+			if (!supportsNetwork(FluidNetworkType.Heating))
 			{
-				return;
+				yield break;
 			}
 
-			IntVec3[] offsets =
+			yield return new Command_Action
 			{
-				IntVec3.North,
-				IntVec3.East,
-				IntVec3.South,
-				IntVec3.West,
+				defaultLabel = "RealRim_HeatingOverview".Translate(),
+				defaultDesc = "RealRim_HeatingOverviewDesc".Translate(),
+				icon = parent.def.uiIcon,
+				action = delegate
+				{
+					Find.WindowStack.Add(new Dialog_HeatingNetworkReport(parent));
+				},
 			};
-			CellRect occupied = parent.OccupiedRect();
-			for (int network_index = 0; network_index < Props.networks.Count; network_index++)
-			{
-				FluidNetworkType network_type = Props.networks[network_index];
-				FluidNetwork own_network = manager.getNetwork(this, network_type);
-				if (own_network == null)
-				{
-					continue;
-				}
-				Material material = SolidColorMaterials.SimpleSolidColorMaterial(
-					FluidNetworkVisuals.getColor(network_type));
-				foreach (IntVec3 cell in occupied)
-				{
-					for (int offset_index = 0; offset_index < offsets.Length; offset_index++)
-					{
-						IntVec3 neighbor_cell = cell + offsets[offset_index];
-						if (occupied.Contains(neighbor_cell) || !neighbor_cell.InBounds(parent.Map))
-						{
-							continue;
-						}
-						List<Thing> things = neighbor_cell.GetThingList(parent.Map);
-						for (int thing_index = 0; thing_index < things.Count; thing_index++)
-						{
-							CompFluidNode neighbor = (things[thing_index] as ThingWithComps)?.TryGetComp<CompFluidNode>();
-							if (neighbor == null
-								|| !neighbor.supportsNetwork(network_type)
-								|| manager.getNetwork(neighbor, network_type) != own_network)
-							{
-								continue;
-							}
-							Vector3 start = cell.ToVector3Shifted();
-							Vector3 end = neighbor_cell.ToVector3Shifted();
-							float altitude = AltitudeLayer.Conduits.AltitudeFor() + 0.03f;
-							start.y = altitude;
-							end.y = altitude;
-							GenDraw.DrawLineBetween(start, end, material, 0.12f);
-							break;
-						}
-					}
-				}
-			}
-		}
-
-		public override void PostDrawExtraSelectionOverlays()
-		{
-			base.PostDrawExtraSelectionOverlays();
-			MapComponent_FluidNetworks manager = getManager();
-			if (manager == null || Props.networks.NullOrEmpty())
-			{
-				return;
-			}
-
-			for (int index = 0; index < Props.networks.Count; index++)
-			{
-				FluidNetworkType network_type = Props.networks[index];
-				FluidNetworkVisuals.drawCells(
-					manager.getNetworkCells(this, network_type),
-					network_type);
-			}
 		}
 
 		public override string CompInspectStringExtra()
@@ -168,24 +110,6 @@ namespace RealRim.WaterAndPumps
 
 			CompFlickable flickable = parent.TryGetComp<CompFlickable>();
 			return flickable == null || flickable.SwitchIsOn;
-		}
-
-		private bool isPipeDef()
-		{
-			if (parent?.def?.placeWorkers == null)
-			{
-				return false;
-			}
-			for (int index = 0; index < parent.def.placeWorkers.Count; index++)
-			{
-				System.Type worker_type = parent.def.placeWorkers[index];
-				if (worker_type == typeof(PlaceWorker_FluidPipe)
-					|| worker_type?.FullName == "DubsBadHygiene.PlaceWorker_Pipe")
-				{
-					return true;
-				}
-			}
-			return false;
 		}
 
 		public MapComponent_FluidNetworks getManager()

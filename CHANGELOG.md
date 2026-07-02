@@ -1,5 +1,104 @@
 # Changelog
 
+## 1.1.20 — Heating report bedroom-label fix
+
+- Use the generic localized room-role label for bedroom and barracks headings before adding bed-owner names.
+- Prevent duplicated headings such as `Elida's Elida's bedroom` and `Belle and Mono's Mono and Belle's bedroom`.
+- Updated release metadata and runtime version labels to 1.1.20.
+
+## 1.1.19 — Adjustable heating targets and network report
+
+- Added a per-building heating-buffer target to electric, gas and wood boilers and both active heat-pump types. Solar and geothermal sources remain passive and continue heating to the storage maximum.
+- Active sources now stop at their selected target and restart 5 °C below it. Existing saves default to the previous 75 °C stop temperature.
+- Added a target-temperature dialog and inspection status showing both the target and restart temperature. Lower targets reduce heat-pump temperature lift and therefore normally improve COP.
+- Added a Heating overview command to every heating-network node. The live report shows current production, consumption, net storage rate, total connected pipe length and every functional node grouped by room.
+- Bedroom and barracks headings use bed-owner names where available; other groups use RimWorld's room-role labels and measured room area.
+- Updated release metadata and runtime version labels to 1.1.19.
+
+## 1.1.18 — Visible pipe color correction
+
+- Changed the visible hot-water pipe tint from orange to red.
+- Changed the visible heating-pipe tint from red to orange.
+- The physical pipe colors now match the DBH-style network overlay colors.
+- Hidden pipes remain transparent and unchanged.
+- Updated release metadata and runtime version labels to 1.1.18.
+
+## 1.1.17 — Linked pipe material build fix
+
+- Replaced the direct call to the protected `Graphic_Linked.LinkedDrawMatFrom` method with a cached reflection lookup.
+- Preserves the 1.1.16 world-space visible-pipe offsets while compiling against RimWorld's public reference API.
+- Falls back to RimWorld's normal centered linked-pipe rendering if the internal material method cannot be resolved.
+- Updated release metadata and runtime version labels to 1.1.17.
+
+## 1.1.16 — Functional visible-pipe separation
+
+- Replaced the ineffective `GraphicData.drawOffset` approach for visible pipes. RimWorld's linked-graphic mesh printer ignores that field while printing linked pipe atlases.
+- Added a selective `Graphic_Linked.Print` bridge for the five visible pipe defs. It renders the same linked atlas material at a real world-space offset, so overlapping fresh-water, hot-water, heating, waste-water and coolant pipes remain simultaneously visible.
+- Hidden pipes are unchanged and remain centered.
+- Updated release metadata and runtime version labels to 1.1.16.
+
+## 1.1.15 — Pool recreation, boiler efficiency, tank losses and visible-pipe separation
+
+- Fixed pool recreation availability by redirecting DBH's inherited `Building_FillableThing.Working` check to the RealRim pool fill-state model. A pool is available at 90% fill or above; pawn-specific temperature selection remains active.
+- Added instantaneous evaporation heat loss to the pool inspection text and replaced the pool information description with a non-technical explanation of every status entry.
+- Made boiler conversion efficiency explicit: electric 98%, chemfuel 90%, and wood 85%. Gross fuel-energy values are used so existing realistic useful-energy accounting is retained.
+- Added ambient standing heat loss to domestic hot-water tanks and heating buffer tanks using a 2.5 W/K whole-tank heat-loss coefficient.
+- Offset only the visible pipe sprites for all five networks; hidden pipe sprites remain centered.
+- Confirmed that the bathtub is a hygiene fixture rather than a standalone joy giver. Its normal bathing job still grants joy, rest and comfort according to DBH's existing behavior.
+- Updated release metadata and runtime version labels to 1.1.15.
+
+## 1.1.14 — Network colors, wind pump restoration and fixture availability
+
+- Changed the hot-water overlay to red and the heating overlay to orange; fresh water remains blue.
+- The definition patcher now explicitly preserves DBH's `CompWindPump` and recreates its exact DBH component properties if another definition pass removed them, restoring the propeller, wind-path obstruction checks and wind-scaled pump output.
+- Added DBH's roof/tree wind-path obstruction reason to the RealRim pump inspection text.
+- Require the fresh-water network to contain enough water for the next fixture use before DBH offers a sink, shower, toilet or bath job, even when stored hot water is still available.
+- Updated release metadata and runtime version labels to 1.1.14.
+
+## 1.1.13 — Load-time inspection and overlay separation
+
+- Trimmed optional status-reason lines before returning inspection text, preventing RimWorld's trailing-whitespace error when a heat source or similar component is selected before the first game tick.
+- Removed DBH's circular floor-connector markers from all five fluid-network overlays while retaining the linked pipe-line atlas.
+- Applied a distinct diagonal sub-tile offset to each network so fresh water, hot water, heating, waste water and coolant remain separately visible on shared fixtures and pipe routes.
+- Updated release metadata and runtime version labels to 1.1.13.
+
+## 1.1.12 — Unity color API build fix
+
+- Replaced the unavailable `Color32.ToColor` extension calls in `FluidNetworkVisuals` with direct `UnityEngine.Color` construction.
+- Fixed all five CS1061 errors when building against the supplied RimWorld/Unity assemblies.
+- Updated release metadata and runtime version labels to 1.1.12.
+
+## 1.1.11 — DBH-style fluid network overlays
+
+- Removed the custom `GenDraw.DrawLineBetween` network renderer introduced in 1.1.9.
+- Reimplemented all five fluid overlays with DBH's linked pipe-atlas, section-layer and connector-base rendering approach.
+- Reused DBH's `PipeOverlay_Atlas`, connector-base texture and meta-overlay shader with distinct colors for fresh water, hot water, heating, waste water and coolant.
+- Disabled DBH's legacy pipe section layer so waste-water and coolant overlays are not drawn twice.
+- Pipe overlays now appear while placing a matching fluid building or pipe and while selecting any connected fluid node.
+- Marked fluid overlay meshes dirty when valves change state so their displayed connectivity updates immediately.
+- Updated release metadata and runtime version labels to 1.1.11.
+
+## 1.1.10 — C# 7.3 build compatibility fix
+
+- Replaced a target-typed conditional expression in `CompFluidNode.PostDrawExtraSelectionOverlays()` with an explicit C# 7.3-compatible branch.
+- Fixed CS8957 when building the project with its configured `<LangVersion>7.3</LangVersion>`.
+- Updated release metadata and runtime version labels to 1.1.10.
+
+## 1.1.9 — pump selection and network-overlay fix
+
+- Suppressed DBH's obsolete pump inspection and selection-overlay methods, preventing null-reference errors when selecting the wind pump after the RealRim network replacement.
+- Removed the permanently drawn colored building-to-network anchor lines introduced in 1.1.6.
+- Replaced translucent cell-edge highlighting with opaque, color-coded center-line network overlays for fresh water, hot water, heating, waste water and coolant.
+- Added anticipated pipe connections to the placement overlay, including the currently previewed pipe cell.
+- Updated release metadata and runtime version labels to 1.1.9.
+
+## 1.1.8 — linked-pipe save-load graphics fix
+
+- Fixed fresh-water, hot-water and heating pipe definitions declaring `Graphic_Linked` as their base graphic class. RimWorld requires `Graphic_Single` with `linkType` metadata and creates the linked wrapper internally.
+- Prevented `Graphic_Linked.MatSingle` null-reference errors while existing 1.1.6/1.1.7 pipe instances are printed immediately after loading a save.
+- Save data is unchanged; existing RealRim pipe instances continue using the same `ThingDef` identifiers.
+- Updated release metadata and runtime version labels to 1.1.8.
+
 ## 1.1.7 — RimWorld API build compatibility
 
 - Replaced invalid `ThingDef.UIIcon` accesses with the RimWorld 1.6 `ThingDef.uiIcon` field.

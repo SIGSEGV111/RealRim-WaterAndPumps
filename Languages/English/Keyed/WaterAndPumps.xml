@@ -11,7 +11,8 @@
 	<RealRim_WaterStored>Water: {0} / {1} L ({2})</RealRim_WaterStored>
 	<RealRim_ThermalTankStatus>Thermal tank: {0} / {1} L
 Temperature: {2}
-Usable heat: {3}</RealRim_ThermalTankStatus>
+Usable heat: {3}
+Standing heat loss: {4} kW</RealRim_ThermalTankStatus>
 	<RealRim_CoolantTankStatus>Coolant water: {0} L
 Equivalent temperature: {1}
 Frozen fraction: {2}
@@ -59,9 +60,14 @@ Air exchange: {6} kW
 Solar gain: {7} kW
 Night-sky loss: {8} kW
 Evaporation: {9} L/day
-Rain collection: {10} L/day
-Fresh-water refill: {11} L/day
-Fill-flow setting: {12}%</RealRim_PoolStatus>
+Evaporation heat loss: {10} kW
+Rain collection: {11} L/day
+Fresh-water refill: {12} L/day
+Fill-flow setting: {13}%</RealRim_PoolStatus>
+	<RealRim_PoolDescription>A swimming pool for hydrotherapy, relaxation and recreation. It must be at least 90% full and within a pawn's comfortable temperature range before it can be used.
+
+Status entries: Pool water is the current volume and fill percentage. Water temperature is the measured pool temperature; target temperature controls heating from the heating-water network. Network heating is heat currently supplied by the pool heat exchanger. Air exchange is positive when surrounding air warms the pool and negative when it cools it. Solar gain is sunlight absorbed outdoors. Night-sky loss is radiative cooling on clear dark nights. Evaporation shows both water lost per day and the associated heat loss. Rain collection and fresh-water refill show current filling rates. Fill-flow setting limits automatic fresh-water refill.</RealRim_PoolDescription>
+	<RealRim_PoolNotFull>The swimming pool must be at least 90% full.</RealRim_PoolNotFull>
 	<RealRim_TargetTemperatureDown>Lower target</RealRim_TargetTemperatureDown>
 	<RealRim_TargetTemperatureDownDesc>Lower the target temperature by 1 °C.</RealRim_TargetTemperatureDownDesc>
 	<RealRim_TargetTemperatureUp>Raise target</RealRim_TargetTemperatureUp>
@@ -104,4 +110,36 @@ Pathogen removal: {1}</RealRim_WaterTreatmentStatus>
 <RealRim_HotWaterTankStatus>Domestic hot water: {0} / {1} L
 Temperature: {2}
 Heat-exchanger transfer: {3} kW
-Cold-water refill: {4} L/h</RealRim_HotWaterTankStatus><RealRim_WaterPumpAutomation>Automatic pump control</RealRim_WaterPumpAutomation><RealRim_WaterPumpAutomationDesc>Enable automatic start/stop thresholds. When disabled, the pump runs whenever it is switched on, a source is connected, and storage has free capacity.</RealRim_WaterPumpAutomationDesc><RealRim_WaterPumpConfigure>Configure pump thresholds</RealRim_WaterPumpConfigure><RealRim_WaterPumpConfigureDesc>Set the storage levels at which this pump starts and stops.</RealRim_WaterPumpConfigureDesc><RealRim_WaterPumpThresholdTitle>Water-pump thresholds</RealRim_WaterPumpThresholdTitle><RealRim_WaterPumpStartThreshold>Start pumping at or below {0}</RealRim_WaterPumpStartThreshold><RealRim_WaterPumpStopThreshold>Stop pumping at or above {0}</RealRim_WaterPumpStopThreshold><RealRim_WaterPumpThresholdHint>The stop threshold must remain at least 5 percentage points above the start threshold.</RealRim_WaterPumpThresholdHint><RealRim_ResetDefaults>Reset defaults</RealRim_ResetDefaults><RealRim_WaterPumpThresholdStatus>Automatic thresholds: start {0}, stop {1}</RealRim_WaterPumpThresholdStatus><RealRim_WaterPumpDriveStatus>Drive availability: {0}</RealRim_WaterPumpDriveStatus></LanguageData>
+Cold-water refill: {4} L/h
+Standing heat loss: {5} kW</RealRim_HotWaterTankStatus><RealRim_WaterPumpAutomation>Automatic pump control</RealRim_WaterPumpAutomation><RealRim_WaterPumpAutomationDesc>Enable automatic start/stop thresholds. When disabled, the pump runs whenever it is switched on, a source is connected, and storage has free capacity.</RealRim_WaterPumpAutomationDesc><RealRim_WaterPumpConfigure>Configure pump thresholds</RealRim_WaterPumpConfigure><RealRim_WaterPumpConfigureDesc>Set the storage levels at which this pump starts and stops.</RealRim_WaterPumpConfigureDesc><RealRim_WaterPumpThresholdTitle>Water-pump thresholds</RealRim_WaterPumpThresholdTitle><RealRim_WaterPumpStartThreshold>Start pumping at or below {0}</RealRim_WaterPumpStartThreshold><RealRim_WaterPumpStopThreshold>Stop pumping at or above {0}</RealRim_WaterPumpStopThreshold><RealRim_WaterPumpThresholdHint>The stop threshold must remain at least 5 percentage points above the start threshold.</RealRim_WaterPumpThresholdHint><RealRim_ResetDefaults>Reset defaults</RealRim_ResetDefaults><RealRim_WaterPumpThresholdStatus>Automatic thresholds: start {0}, stop {1}</RealRim_WaterPumpThresholdStatus><RealRim_WaterPumpDriveStatus>Drive availability: {0}</RealRim_WaterPumpDriveStatus>
+	<RealRim_HeatSourceTargetStatus>Buffer target: {0} (restart below {1})</RealRim_HeatSourceTargetStatus>
+	<RealRim_HeatSourceConfigureTarget>Set buffer target</RealRim_HeatSourceConfigureTarget>
+	<RealRim_HeatSourceConfigureTargetDesc>Set the heating-buffer temperature this active heat source maintains.</RealRim_HeatSourceConfigureTargetDesc>
+	<RealRim_HeatSourceTargetTitle>Heating-buffer target temperature</RealRim_HeatSourceTargetTitle>
+	<RealRim_HeatSourceTargetCurrent>Target temperature: {0}</RealRim_HeatSourceTargetCurrent>
+	<RealRim_HeatSourceRestartCurrent>Restarts below: {0}</RealRim_HeatSourceRestartCurrent>
+	<RealRim_HeatSourceTargetHint>A lower buffer temperature reduces the temperature lift required from a heat pump and normally improves its COP, but it must remain hot enough for radiators, pool heating and domestic-hot-water transfer. The source restarts 5 °C below the selected target.</RealRim_HeatSourceTargetHint>
+	<RealRim_HeatingOverview>Heating overview</RealRim_HeatingOverview>
+	<RealRim_HeatingOverviewDesc>Open a live report for this connected heating-water network.</RealRim_HeatingOverviewDesc>
+	<RealRim_HeatingReportTitle>Report for Heating Network #{0}</RealRim_HeatingReportTitle>
+	<RealRim_HeatingReportTitleDisconnected>Heating network report</RealRim_HeatingReportTitleDisconnected>
+	<RealRim_HeatingReportDisconnected>This node is no longer connected to a heating-water network.</RealRim_HeatingReportDisconnected>
+	<RealRim_HeatingReportProduction>Total current production: +{0} kW</RealRim_HeatingReportProduction>
+	<RealRim_HeatingReportConsumption>Total current consumption: {0} kW</RealRim_HeatingReportConsumption>
+	<RealRim_HeatingReportNet>Net storage rate: {0} kW</RealRim_HeatingReportNet>
+	<RealRim_HeatingReportPipeLength>Total pipe length: {0} m</RealRim_HeatingReportPipeLength>
+	<RealRim_HeatingReportOutdoors>Outdoors</RealRim_HeatingReportOutdoors>
+	<RealRim_HeatingReportRoomFallback>Room</RealRim_HeatingReportRoomFallback>
+	<RealRim_HeatingReportRoomHeader>{0} ({1} m²):</RealRim_HeatingReportRoomHeader>
+	<RealRim_HeatingReportBedroomSingle>{0}'s {1}</RealRim_HeatingReportBedroomSingle>
+	<RealRim_HeatingReportBedroomPair>{0} and {1}'s {2}</RealRim_HeatingReportBedroomPair>
+	<RealRim_HeatingReportBedroomMany>{0}, {1}, … +{2} {3}</RealRim_HeatingReportBedroomMany>
+	<RealRim_HeatingReportNumberedNode>{0} #{1}</RealRim_HeatingReportNumberedNode>
+	<RealRim_HeatingReportConnected>connected</RealRim_HeatingReportConnected>
+	<RealRim_HeatingReportSourceDetails>{0} kW, target {1}, COP {2}</RealRim_HeatingReportSourceDetails>
+	<RealRim_HeatingReportPassiveSourceDetails>{0} kW</RealRim_HeatingReportPassiveSourceDetails>
+	<RealRim_HeatingReportThermalTankDetails>{0}, standing loss {1} kW</RealRim_HeatingReportThermalTankDetails>
+	<RealRim_HeatingReportHotWaterTankDetails>{0}, heat draw {1} kW, standing loss {2} kW</RealRim_HeatingReportHotWaterTankDetails>
+	<RealRim_HeatingReportConsumerDetails>{0} kW</RealRim_HeatingReportConsumerDetails>
+	<RealRim_HeatingReportPoolDetails>{0}, heat draw {1} kW</RealRim_HeatingReportPoolDetails>
+</LanguageData>

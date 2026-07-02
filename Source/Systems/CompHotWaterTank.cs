@@ -12,6 +12,7 @@ namespace RealRim.WaterAndPumps
 		public float heat_exchanger_surface_m2 = 1.5f;
 		public float heat_transfer_w_per_m2_k = 800f;
 		public float maximum_transfer_kw = 20f;
+		public float heat_loss_w_per_k = 2.5f;
 
 		public CompProperties_HotWaterTank()
 		{
@@ -25,6 +26,7 @@ namespace RealRim.WaterAndPumps
 		public float temperature_c;
 		public float last_transfer_kw;
 		public float last_refill_liters_per_hour;
+		public float last_heat_loss_kw;
 
 		public CompProperties_HotWaterTank Props
 		{
@@ -63,15 +65,18 @@ namespace RealRim.WaterAndPumps
 				Props.capacity_liters.ToString("N0"),
 				temperature_c.ToStringTemperature("F1"),
 				last_transfer_kw.ToString("N1"),
-				last_refill_liters_per_hour.ToString("N0"));
+				last_refill_liters_per_hour.ToString("N0"),
+				last_heat_loss_kw.ToString("N2"));
 		}
 
 		public void tickFluidSystem(float elapsed_seconds)
 		{
 			last_transfer_kw = 0f;
 			last_refill_liters_per_hour = 0f;
+			last_heat_loss_kw = 0f;
 			refillFromFreshWater(elapsed_seconds);
 			transferHeatFromHeatingNetwork(elapsed_seconds);
+			loseHeatToAmbient(elapsed_seconds);
 		}
 
 		public float drawHotWater(float requested_liters)
@@ -111,6 +116,28 @@ namespace RealRim.WaterAndPumps
 			last_refill_liters_per_hour = elapsed_seconds <= 0f
 				? 0f
 				: delivered * 3600f / elapsed_seconds;
+		}
+
+		private void loseHeatToAmbient(float elapsed_seconds)
+		{
+			if (elapsed_seconds <= 0f || stored_liters <= 0.001f || parent == null || !parent.Spawned)
+			{
+				return;
+			}
+
+			float ambient_temperature_c = parent.AmbientTemperature;
+			float minimum_target_c = Mathf.Max(Props.minimum_temperature_c, ambient_temperature_c);
+			float temperature_difference = temperature_c - minimum_target_c;
+			if (temperature_difference <= 0.001f)
+			{
+				return;
+			}
+
+			float requested_loss_kw = Props.heat_loss_w_per_k * temperature_difference / 1000f;
+			float available_energy_kj = RealPhysics.calculateWaterEnergy(stored_liters, temperature_difference);
+			float lost_energy_kj = Mathf.Min(requested_loss_kw * elapsed_seconds, available_energy_kj);
+			temperature_c -= RealPhysics.calculateWaterTemperatureChange(lost_energy_kj, stored_liters);
+			last_heat_loss_kw = lost_energy_kj / elapsed_seconds;
 		}
 
 		private void transferHeatFromHeatingNetwork(float elapsed_seconds)

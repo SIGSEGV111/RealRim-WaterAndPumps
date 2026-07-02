@@ -40,12 +40,13 @@ namespace RealRim.WaterAndPumps
 		public override string CompInspectStringExtra()
 		{
 			CompTargetTemperature controller = parent.TryGetComp<CompTargetTemperature>();
-			return "RealRim_HeatExchangerStatus".Translate(
+			string status = "RealRim_HeatExchangerStatus".Translate(
 				controller == null ? "-" : controller.target_temperature_c.ToStringTemperature("F1"),
 				last_room_temperature_c.ToStringTemperature("F1"),
 				last_medium_temperature_c.ToStringTemperature("F1"),
 				last_transfer_kw.ToString("N2"),
 				last_reason);
+			return status.TrimEnd('\r', '\n', ' ', '\t');
 		}
 
 		public void tickFluidSystem(float elapsed_seconds)

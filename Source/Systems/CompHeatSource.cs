@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -23,6 +25,10 @@ namespace RealRim.WaterAndPumps
 		public float minimum_source_temperature_c = -20f;
 		public float start_temperature_c = 55f;
 		public float stop_temperature_c = 75f;
+		public float minimum_target_temperature_c = 30f;
+		public float maximum_target_temperature_c = 85f;
+		public float control_hysteresis_c = 5f;
+		public float conversion_efficiency = 1f;
 		public float fuel_energy_kj_per_unit;
 
 		public CompProperties_HeatSource()
@@ -34,6 +40,7 @@ namespace RealRim.WaterAndPumps
 	public sealed class CompHeatSource : ThingComp, IFluidTickable
 	{
 		public bool heating;
+		public float target_buffer_temperature_c;
 		public float last_thermal_kw;
 		public float last_electrical_kw;
 		public float last_cop = 1f;
@@ -47,30 +54,107 @@ namespace RealRim.WaterAndPumps
 			}
 		}
 
+		public override void PostSpawnSetup(bool respawning_after_load)
+		{
+			base.PostSpawnSetup(respawning_after_load);
+			if (!respawning_after_load || target_buffer_temperature_c <= 0.001f)
+			{
+				target_buffer_temperature_c = Props.stop_temperature_c;
+			}
+			setTargetBufferTemperature(target_buffer_temperature_c);
+			last_cop = Mathf.Clamp(Props.conversion_efficiency, 0.01f, 1f);
+		}
+
 		public override void PostExposeData()
 		{
 			base.PostExposeData();
 			Scribe_Values.Look(ref heating, "heating", false);
+			Scribe_Values.Look(
+				ref target_buffer_temperature_c,
+				"target_buffer_temperature_c",
+				Props.stop_temperature_c);
+			if (Scribe.mode == LoadSaveMode.PostLoadInit)
+			{
+				setTargetBufferTemperature(target_buffer_temperature_c);
+			}
+		}
+
+		public override IEnumerable<Gizmo> CompGetGizmosExtra()
+		{
+			foreach (Gizmo gizmo in base.CompGetGizmosExtra())
+			{
+				yield return gizmo;
+			}
+
+			if (!hasAdjustableTarget())
+			{
+				yield break;
+			}
+
+			yield return new Command_Action
+			{
+				defaultLabel = "RealRim_HeatSourceConfigureTarget".Translate(),
+				defaultDesc = "RealRim_HeatSourceConfigureTargetDesc".Translate(),
+				icon = parent.def.uiIcon,
+				action = delegate
+				{
+					Find.WindowStack.Add(new Dialog_HeatSourceTargetTemperature(this));
+				},
+			};
 		}
 
 		public override string CompInspectStringExtra()
 		{
 			FluidNetwork network = FluidUtility.getNetwork(parent, FluidNetworkType.Heating);
 			float temperature = network == null ? 0f : network.getAverageThermalTemperature();
-			return "RealRim_HeatSourceStatus".Translate(
+			string status = "RealRim_HeatSourceStatus".Translate(
 				heating ? "RealRim_StatusRunning".Translate() : "RealRim_StatusStandby".Translate(),
 				temperature.ToStringTemperature("F1"),
 				last_thermal_kw.ToString("N1"),
 				last_electrical_kw.ToString("N1"),
 				last_cop.ToString("N2"),
 				last_reason);
+			if (hasAdjustableTarget())
+			{
+				status += "\n" + "RealRim_HeatSourceTargetStatus".Translate(
+					target_buffer_temperature_c.ToStringTemperature("F1"),
+					getRestartTemperatureC().ToStringTemperature("F1"));
+			}
+			return status.TrimEnd('\r', '\n', ' ', '\t');
+		}
+
+		public bool hasAdjustableTarget()
+		{
+			return Props.kind != HeatSourceKind.SolarThermal
+				&& Props.kind != HeatSourceKind.Geothermal;
+		}
+
+		public float getRestartTemperatureC()
+		{
+			return Mathf.Max(
+				0f,
+				target_buffer_temperature_c - Mathf.Max(0.5f, Props.control_hysteresis_c));
+		}
+
+		public void setTargetBufferTemperature(float requested_temperature_c)
+		{
+			float rounded_temperature_c = (float)Math.Round(requested_temperature_c);
+			target_buffer_temperature_c = Mathf.Clamp(
+				rounded_temperature_c,
+				Props.minimum_target_temperature_c,
+				Props.maximum_target_temperature_c);
+		}
+
+		public void resetTargetBufferTemperature()
+		{
+			setTargetBufferTemperature(Props.stop_temperature_c);
 		}
 
 		public void tickFluidSystem(float elapsed_seconds)
 		{
 			last_thermal_kw = 0f;
 			last_electrical_kw = 0f;
-			last_cop = 1f;
+			last_cop = Mathf.Clamp(Props.conversion_efficiency, 0.01f, 1f);
 			last_reason = string.Empty;
 
 			FluidNetwork heating_network = FluidUtility.getNetwork(parent, FluidNetworkType.Heating);
@@ -81,14 +165,17 @@ namespace RealRim.WaterAndPumps
 			}
 
 			float tank_temperature = heating_network.getAverageThermalTemperature();
-			float stop_temperature = Props.kind == HeatSourceKind.SolarThermal || Props.kind == HeatSourceKind.Geothermal
-				? RealPhysics.DEFAULT_HOT_WATER_MAX_C
-				: Props.stop_temperature_c;
+			float stop_temperature = hasAdjustableTarget()
+				? target_buffer_temperature_c
+				: RealPhysics.DEFAULT_HOT_WATER_MAX_C;
+			float start_temperature = hasAdjustableTarget()
+				? getRestartTemperatureC()
+				: Props.start_temperature_c;
 			if (heating && tank_temperature >= stop_temperature)
 			{
 				heating = false;
 			}
-			else if (!heating && tank_temperature <= Props.start_temperature_c)
+			else if (!heating && tank_temperature <= start_temperature)
 			{
 				heating = true;
 			}
@@ -124,6 +211,10 @@ namespace RealRim.WaterAndPumps
 						return;
 					}
 					break;
+				case HeatSourceKind.ElectricBoiler:
+					last_cop = Mathf.Clamp(Props.conversion_efficiency, 0.01f, 1f);
+					electrical_kw = output_kw / last_cop;
+					break;
 				case HeatSourceKind.AirToWaterHeatPump:
 					float source_temperature = parent.AmbientTemperature;
 					if (source_temperature < Props.minimum_source_temperature_c)
@@ -154,10 +245,10 @@ namespace RealRim.WaterAndPumps
 					break;
 				case HeatSourceKind.GasBoiler:
 				case HeatSourceKind.WoodBoiler:
-					fuel_energy_kj = output_kw * elapsed_seconds;
+					last_cop = Mathf.Clamp(Props.conversion_efficiency, 0.01f, 1f);
+					fuel_energy_kj = output_kw * elapsed_seconds / last_cop;
 					break;
 			}
-
 
 			if (fuel_energy_kj > 0f)
 			{

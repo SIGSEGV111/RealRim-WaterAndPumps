@@ -117,6 +117,11 @@ namespace RealRim.WaterAndPumps
 					stop_fill_fraction.ToStringPercent())
 				+ "\n"
 				+ "RealRim_WaterPumpDriveStatus".Translate(last_drive_multiplier.ToStringPercent());
+			string drive_reason = getWindDriveReason();
+			if (!drive_reason.NullOrEmpty())
+			{
+				status += "\n" + drive_reason;
+			}
 			return status.TrimEnd('\r', '\n', ' ', '\t');
 		}
 
@@ -204,31 +209,70 @@ namespace RealRim.WaterAndPumps
 
 		private float getDriveMultiplier()
 		{
-			if (parent?.AllComps == null)
+			ThingComp component = getWindComponent();
+			if (component == null)
 			{
 				return 1f;
 			}
+
+			PropertyInfo property = component.GetType().GetProperty("PumpPercent", REFLECTION_FLAGS);
+			if (property != null)
+			{
+				try
+				{
+					return Mathf.Clamp01(Convert.ToSingle(property.GetValue(component, null)));
+				}
+				catch
+				{
+					return 0f;
+				}
+			}
+			return 0f;
+		}
+
+		private ThingComp getWindComponent()
+		{
+			if (parent?.AllComps == null)
+			{
+				return null;
+			}
+
 			for (int index = 0; index < parent.AllComps.Count; index++)
 			{
 				ThingComp component = parent.AllComps[index];
-				if (component?.GetType().FullName != "DubsBadHygiene.CompWindPump")
+				if (component?.GetType().FullName == "DubsBadHygiene.CompWindPump")
 				{
-					continue;
-				}
-				PropertyInfo property = component.GetType().GetProperty("PumpPercent", REFLECTION_FLAGS);
-				if (property != null)
-				{
-					try
-					{
-						return Mathf.Clamp01(Convert.ToSingle(property.GetValue(component, null)));
-					}
-					catch
-					{
-						return 0f;
-					}
+					return component;
 				}
 			}
-			return 1f;
+			return null;
+		}
+
+		private string getWindDriveReason()
+		{
+			ThingComp component = getWindComponent();
+			if (component == null)
+			{
+				return string.Empty;
+			}
+
+			FieldInfo blocked_cells_field = component.GetType().GetField("windPathBlockedCells", REFLECTION_FLAGS);
+			ICollection blocked_cells = blocked_cells_field?.GetValue(component) as ICollection;
+			if (blocked_cells == null || blocked_cells.Count == 0)
+			{
+				return string.Empty;
+			}
+
+			FieldInfo blockers_field = component.GetType().GetField("windPathBlockedByThings", REFLECTION_FLAGS);
+			IList blockers = blockers_field?.GetValue(component) as IList;
+			Thing blocker = blockers != null && blockers.Count > 0 ? blockers[0] as Thing : null;
+			if (blocker != null)
+			{
+				return "WindTurbine_WindPathIsBlockedBy".Translate().ToString()
+					+ " " + blocker.Label;
+			}
+
+			return "WindTurbine_WindPathIsBlockedByRoof".Translate().ToString();
 		}
 
 		private static WaterContamination mixSourceContamination(List<CompWaterSource> sources)

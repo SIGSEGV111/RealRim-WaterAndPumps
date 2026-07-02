@@ -4,7 +4,7 @@ Physics-oriented replacement layer for **Dubs Bad Hygiene** on RimWorld 1.6.
 
 - Author: SIGSEGV11
 - Package ID: `sigsegv11.realrim.water`
-- Version: 1.1.7
+- Version: 1.1.20
 - Required: Harmony, Dubs Bad Hygiene
 
 This is a clean subsystem replacement. Save compatibility with versions 1.0.x is not intended. Existing DBH `ThingDef` identifiers are reused where practical so DBH buildings can still be loaded and constructed.
@@ -72,16 +72,19 @@ Domestic hot water and heating water now use separate storage:
 
 - the **domestic hot-water tank** stores 600 L, connects to fresh water, hot water and heating water, and contains a one-way internal heat exchanger;
 - the **heating-water buffer tank** stores 600 L on the closed heating circuit for boilers, heat pumps, radiators and pools.
+- both tank types lose heat to their surroundings at a whole-tank conductance of 2.5 W/K.
 
 Both tanks operate over 5–85 °C. The domestic tank refills with 12 °C fresh water and can only receive heat through its exchanger; domestic water cannot feed heat back into the heating circuit.
 
-Heat sources use hysteresis: they start below 55 °C and stop at 75 °C. Solar and geothermal sources continue to the tank maximum.
+Active heat sources have an individual heating-buffer target, adjustable from 30–85 °C. They stop at the selected target and restart 5 °C below it; existing saves initially retain the previous 75 °C target. Lower buffer targets reduce the temperature lift required from heat pumps and normally improve COP, but the target must still remain high enough to drive radiators, pool heating and domestic-hot-water transfer. Solar and geothermal sources are passive and continue to the tank maximum.
+
+Selecting any node on a heating network provides a **Heating overview** command. Its live report shows current production, current consumption, net storage rate, total connected pipe length, and all functional nodes grouped by room. Bedrooms and barracks use the names of bed owners where available.
 
 | Heat source | Nominal thermal output | Input model |
 |---|---:|---|
-| Wood boiler | 20 kW | 4,860 kJ useful heat per 400 g wood unit |
-| Chemfuel boiler | 24 kW | 1,935 kJ useful heat per 50 g chemfuel unit |
-| Electric boiler | 12 kW | 12 kW electrical |
+| Wood boiler | 20 kW | 85% conversion efficiency; about 4,860 kJ useful heat per 400 g wood unit |
+| Chemfuel boiler | 24 kW | 90% conversion efficiency; 1,935 kJ useful heat per 50 g chemfuel unit |
+| Electric boiler | 12 kW | 98% conversion efficiency; about 12.24 kW electrical at full output |
 | Solar collector | up to 5.5 kW | proportional to sky glow; blocked by a roof |
 | Geothermal heater | 12 kW | no fuel |
 | Air-to-water heat pump | up to 12 kW | dynamic COP; stops below -20 °C |

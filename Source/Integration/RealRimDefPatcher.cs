@@ -30,11 +30,11 @@ namespace RealRim.WaterAndPumps
 
 			if (failed_phases == 0)
 			{
-				Log.Message("[RealRim] Water & Pumps 1.1.7: replaced DBH water, heating, cooling and sewage definitions.");
+				Log.Message("[RealRim] Water & Pumps 1.1.20: replaced DBH water, heating, cooling and sewage definitions.");
 			}
 			else
 			{
-				Log.Error("[RealRim] Water & Pumps 1.1.7: definition replacement completed with "
+				Log.Error("[RealRim] Water & Pumps 1.1.20: definition replacement completed with "
 					+ failed_phases + " failed phase(s). Later phases were still applied; see the preceding errors.");
 			}
 		}
@@ -110,6 +110,7 @@ namespace RealRim.WaterAndPumps
 					maximum_temperature_c = 85f,
 					heat_exchanger_surface_m2 = 1.5f,
 					maximum_transfer_kw = 20f,
+					heat_loss_w_per_k = 2.5f,
 				});
 			}
 
@@ -123,6 +124,7 @@ namespace RealRim.WaterAndPumps
 					initial_temperature_c = 20f,
 					minimum_temperature_c = 5f,
 					maximum_temperature_c = 85f,
+					heat_loss_w_per_k = 2.5f,
 				});
 			}
 
@@ -147,12 +149,12 @@ namespace RealRim.WaterAndPumps
 
 		private static void patchHeating()
 		{
-			setHeatSource("LogBoiler", HeatSourceKind.WoodBoiler, 20f, 0f, 4860f);
-			setHeatSource("GasBoiler", HeatSourceKind.GasBoiler, 24f, 0f, 1935f);
-			setHeatSource("ElectricBoiler", HeatSourceKind.ElectricBoiler, 12f, 12000f, 0f);
-			setHeatSource("SolarHeater", HeatSourceKind.SolarThermal, 5.5f, 0f, 0f);
-			setHeatSource("GeothermHeater", HeatSourceKind.Geothermal, 12f, 0f, 0f);
-			setHeatSource("RealRim_AirToWaterHeatPump", HeatSourceKind.AirToWaterHeatPump, 12f, 4500f, 0f);
+			setHeatSource("LogBoiler", HeatSourceKind.WoodBoiler, 20f, 0f, 0.85f, 5718f);
+			setHeatSource("GasBoiler", HeatSourceKind.GasBoiler, 24f, 0f, 0.90f, 2150f);
+			setHeatSource("ElectricBoiler", HeatSourceKind.ElectricBoiler, 12f, 12000f, 0.98f, 0f);
+			setHeatSource("SolarHeater", HeatSourceKind.SolarThermal, 5.5f, 0f, 1f, 0f);
+			setHeatSource("GeothermHeater", HeatSourceKind.Geothermal, 12f, 0f, 1f, 0f);
+			setHeatSource("RealRim_AirToWaterHeatPump", HeatSourceKind.AirToWaterHeatPump, 12f, 4500f, 1f, 0f);
 
 			ThingDef recovery_pump = preparePassiveBuilding("RealRim_CoolantToWaterHeatPump", false);
 			if (recovery_pump != null)
@@ -218,6 +220,7 @@ namespace RealRim.WaterAndPumps
 			if (pool != null)
 			{
 				removeReplacementComps(pool, false);
+				pool.description = "RealRim_PoolDescription".Translate().ToString();
 				addNode(pool, false, FluidNetworkType.FreshWater, FluidNetworkType.Heating);
 				addComp(pool, new CompProperties_PoolPhysics
 				{
@@ -383,6 +386,7 @@ namespace RealRim.WaterAndPumps
 		}
 
 
+
 		private static void setWaterSource(
 			string def_name,
 			WaterSourceKind source_kind)
@@ -435,7 +439,13 @@ namespace RealRim.WaterAndPumps
 			setPower(def, power_watts);
 		}
 
-		private static void setHeatSource(string def_name, HeatSourceKind kind, float thermal_kw, float power_watts, float fuel_kj_per_unit)
+		private static void setHeatSource(
+			string def_name,
+			HeatSourceKind kind,
+			float thermal_kw,
+			float power_watts,
+			float conversion_efficiency,
+			float fuel_kj_per_unit)
 		{
 			ThingDef def = preparePassiveBuilding(def_name, false);
 			if (def == null)
@@ -448,6 +458,7 @@ namespace RealRim.WaterAndPumps
 				kind = kind,
 				nominal_thermal_kw = thermal_kw,
 				nominal_power_watts = power_watts,
+				conversion_efficiency = conversion_efficiency,
 				fuel_energy_kj_per_unit = fuel_kj_per_unit,
 			});
 			setPower(def, power_watts);
@@ -547,6 +558,9 @@ namespace RealRim.WaterAndPumps
 
 		private static ThingDef prepareWindPump()
 		{
+			const string WIND_PROPERTIES_TYPE = "DubsBadHygiene.CompProperties_WaterPumpingStation";
+			const string WIND_COMPONENT_TYPE = "DubsBadHygiene.CompWindPump";
+
 			ThingDef def = getDef("WindPump");
 			if (def == null)
 			{
@@ -556,6 +570,18 @@ namespace RealRim.WaterAndPumps
 			{
 				def.comps = new List<CompProperties>();
 			}
+
+			CompProperties wind_properties = null;
+			for (int index = 0; index < def.comps.Count; index++)
+			{
+				CompProperties candidate = def.comps[index];
+				if (candidate != null && candidate.GetType().FullName == WIND_PROPERTIES_TYPE)
+				{
+					wind_properties = candidate;
+					break;
+				}
+			}
+
 			def.comps.RemoveAll(comp =>
 			{
 				if (comp == null)
@@ -563,12 +589,56 @@ namespace RealRim.WaterAndPumps
 					return true;
 				}
 				Type properties_type = comp.GetType();
-				Type component_type = comp.compClass;
 				bool ours = properties_type.Namespace == typeof(RealRimDefPatcher).Namespace;
-				bool wind_component = component_type?.FullName == "DubsBadHygiene.CompWindPump";
-				return ours || (properties_type.Namespace == "DubsBadHygiene" && !wind_component);
+				bool other_dbh_component = properties_type.Namespace == "DubsBadHygiene"
+					&& !ReferenceEquals(comp, wind_properties);
+				return ours || other_dbh_component;
 			});
+
+			Type wind_properties_type = findType(WIND_PROPERTIES_TYPE);
+			Type wind_component_type = findType(WIND_COMPONENT_TYPE);
+			if (wind_properties == null && wind_properties_type != null)
+			{
+				wind_properties = Activator.CreateInstance(wind_properties_type) as CompProperties;
+				if (wind_properties != null)
+				{
+					def.comps.Add(wind_properties);
+				}
+			}
+
+			if (wind_properties == null || wind_component_type == null)
+			{
+				Log.Error("[RealRim] Water & Pumps: could not restore DBH's wind-pump component. "
+					+ "Properties found=" + (wind_properties != null)
+					+ ", component type found=" + (wind_component_type != null) + ".");
+				return def;
+			}
+
+			wind_properties.compClass = wind_component_type;
+			setFloatMember(wind_properties, "Capacity", 2000f);
 			return def;
+		}
+
+		private static void setFloatMember(object instance, string member_name, float value)
+		{
+			if (instance == null)
+			{
+				return;
+			}
+
+			const BindingFlags FLAGS = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+			FieldInfo field = instance.GetType().GetField(member_name, FLAGS);
+			if (field != null && field.FieldType == typeof(float))
+			{
+				field.SetValue(instance, value);
+				return;
+			}
+
+			PropertyInfo property = instance.GetType().GetProperty(member_name, FLAGS);
+			if (property != null && property.CanWrite && property.PropertyType == typeof(float))
+			{
+				property.SetValue(instance, value, null);
+			}
 		}
 
 		private static ThingDef preparePassiveBuilding(string def_name, bool preserve_legacy_pipe)

@@ -53,6 +53,14 @@ namespace RealRim.WaterAndPumps
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.PlumbingNet", "PushSewage", nameof(pushSewagePrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.PlumbingNet", "PullHotWater", nameof(pullHotWaterPrefix));
 
+				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.CompWaterPumpingStation", "PostDrawExtraSelectionOverlays", nameof(skipOriginal));
+				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.CompWaterPumpingStation", "CompInspectStringExtra", nameof(nullStringPrefix));
+				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.CompWindPump", "CompInspectStringExtra", nameof(nullStringPrefix));
+
+				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.SectionLayer_PipeOverlay", "DrawLayer", nameof(skipOriginal));
+				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.SectionLayer_PipeOverlay", "Regenerate", nameof(skipOriginal));
+				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "Verse.Graphic_Linked", "Print", nameof(visiblePipeGraphicPrintPrefix));
+
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.Alert_BlockedSewer", "GetReport", nameof(emptyAlertPrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.Alert_WaterTemp", "GetReport", nameof(emptyAlertPrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.Alert_ContamLevels", "GetReport", nameof(emptyAlertPrefix));
@@ -70,6 +78,7 @@ namespace RealRim.WaterAndPumps
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.bibblefuckwit", "TryUseFlush", nameof(toiletTryUsePrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.Building_SpacerToilet", "TryUseFlush", nameof(toiletTryUsePrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.Building_Latrine", "TryUseFlush", nameof(latrineTryUsePrefix));
+				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.Building_FillableThing", "Working", nameof(poolWorkingPrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.Building_Pool", "GoodTemp", nameof(poolGoodTemperaturePrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.Building_Pool", "GetInspectString", nameof(poolInspectStringPrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.CompWaterFillable", "CompInspectStringExtra", nameof(waterFillableInspectPrefix));
@@ -86,7 +95,7 @@ namespace RealRim.WaterAndPumps
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.JobDriver_GoSwimming", "swimticker", nameof(swimTickerPrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "Verse.AI.Toils_Recipe+<>c__DisplayClass2_0", "<DoRecipeWork>b__2", nameof(recipeWorkTickPrefix));
 
-				Log.Message("[RealRim] Water & Pumps 1.1.7: redirected " + patched_methods
+				Log.Message("[RealRim] Water & Pumps 1.1.20: redirected " + patched_methods
 					+ " DBH runtime methods to RealRim physics.");
 			}
 			catch (Exception exception)
@@ -95,8 +104,22 @@ namespace RealRim.WaterAndPumps
 			}
 		}
 
+		public static bool visiblePipeGraphicPrintPrefix(
+			Graphic_Linked __instance,
+			SectionLayer layer,
+			Thing thing)
+		{
+			return !FluidNetworkVisuals.tryPrintVisiblePipe(thing, layer, __instance);
+		}
+
 		public static bool skipOriginal()
 		{
+			return false;
+		}
+
+		public static bool nullStringPrefix(ref string __result)
+		{
+			__result = null;
 			return false;
 		}
 
@@ -296,6 +319,19 @@ namespace RealRim.WaterAndPumps
 		{
 			ThingWithComps thing = __instance as ThingWithComps;
 			return thing == null || thing.TryGetComp<CompWaterTrough>() == null;
+		}
+
+		public static bool poolWorkingPrefix(object __instance, ref AcceptanceReport __result)
+		{
+			ThingWithComps thing = __instance as ThingWithComps;
+			CompPoolPhysics pool = thing == null ? null : thing.TryGetComp<CompPoolPhysics>();
+			if (pool == null)
+			{
+				return true;
+			}
+
+			__result = pool.getWorkingReport();
+			return false;
 		}
 
 		public static bool poolGoodTemperaturePrefix(object __instance, ref bool __result)

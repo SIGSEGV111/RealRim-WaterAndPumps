@@ -1,4 +1,4 @@
-# Known limitations — 1.1.7
+# Known limitations — 1.1.20
 
 1. **Kitchen-sink linkage**
    - Active cooking work first uses RimWorld's existing `CompAffectedByFacilities` links when a kitchen sink is linked to the stove.

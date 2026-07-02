@@ -39,6 +39,7 @@ namespace RealRim.WaterAndPumps
 		public float last_solar_kw;
 		public float last_sky_kw;
 		public float last_evaporation_liters_per_day;
+		public float last_evaporation_heat_loss_kw;
 		public float last_rain_liters_per_day;
 		public float last_refill_liters_per_day;
 
@@ -83,6 +84,7 @@ namespace RealRim.WaterAndPumps
 				last_solar_kw.ToString("N1"),
 				last_sky_kw.ToString("N1"),
 				last_evaporation_liters_per_day.ToString("N0"),
+				last_evaporation_heat_loss_kw.ToString("N1"),
 				last_rain_liters_per_day.ToString("N0"),
 				last_refill_liters_per_day.ToString("N0"),
 				(getLegacyFlowRate() / 10f).ToString("N0"));
@@ -95,6 +97,7 @@ namespace RealRim.WaterAndPumps
 			last_solar_kw = 0f;
 			last_sky_kw = 0f;
 			last_evaporation_liters_per_day = 0f;
+			last_evaporation_heat_loss_kw = 0f;
 			last_rain_liters_per_day = 0f;
 			last_refill_liters_per_day = 0f;
 
@@ -118,9 +121,19 @@ namespace RealRim.WaterAndPumps
 			syncLegacyVisualState();
 		}
 
-		public bool canPawnUse(Pawn pawn)
+		public AcceptanceReport getWorkingReport()
 		{
 			if (stored_liters < Props.capacity_liters * 0.90f)
+			{
+				return "RealRim_PoolNotFull".Translate();
+			}
+
+			return true;
+		}
+
+		public bool canPawnUse(Pawn pawn)
+		{
+			if (!getWorkingReport().Accepted)
 			{
 				return false;
 			}
@@ -220,6 +233,7 @@ namespace RealRim.WaterAndPumps
 				* RealPhysics.WATER_EVAPORATION_LATENT_HEAT_KJ_PER_KG;
 			addPoolEnergy(-energy_loss_kj);
 			last_evaporation_liters_per_day = elapsed_seconds <= 0f ? 0f : evaporated_liters * RealPhysics.SECONDS_PER_GAME_DAY / elapsed_seconds;
+			last_evaporation_heat_loss_kw = elapsed_seconds <= 0f ? 0f : energy_loss_kj / elapsed_seconds;
 		}
 
 		private void processSolar(bool outdoors, float elapsed_seconds)

@@ -9,6 +9,7 @@ namespace RealRim.WaterAndPumps
 		public float initial_temperature_c = 20f;
 		public float minimum_temperature_c = 5f;
 		public float maximum_temperature_c = 85f;
+		public float heat_loss_w_per_k = 2.5f;
 
 		public CompProperties_ThermalTank()
 		{
@@ -16,10 +17,11 @@ namespace RealRim.WaterAndPumps
 		}
 	}
 
-	public sealed class CompThermalTank : ThingComp
+	public sealed class CompThermalTank : ThingComp, IFluidTickable
 	{
 		public float stored_liters;
 		public float temperature_c;
+		public float last_heat_loss_kw;
 
 		public CompProperties_ThermalTank Props
 		{
@@ -57,7 +59,31 @@ namespace RealRim.WaterAndPumps
 				stored_liters.ToString("N0"),
 				Props.capacity_liters.ToString("N0"),
 				temperature_c.ToStringTemperature("F1"),
-				getEnergyFillFraction().ToStringPercent());
+				getEnergyFillFraction().ToStringPercent(),
+				last_heat_loss_kw.ToString("N2"));
+		}
+
+		public void tickFluidSystem(float elapsed_seconds)
+		{
+			last_heat_loss_kw = 0f;
+			if (elapsed_seconds <= 0f || stored_liters <= 0.001f || parent == null || !parent.Spawned)
+			{
+				return;
+			}
+
+			float ambient_temperature_c = parent.AmbientTemperature;
+			float minimum_target_c = Mathf.Max(Props.minimum_temperature_c, ambient_temperature_c);
+			float temperature_difference = temperature_c - minimum_target_c;
+			if (temperature_difference <= 0.001f)
+			{
+				return;
+			}
+
+			float requested_loss_kw = Props.heat_loss_w_per_k * temperature_difference / 1000f;
+			float available_energy_kj = RealPhysics.calculateWaterEnergy(stored_liters, temperature_difference);
+			float lost_energy_kj = Mathf.Min(requested_loss_kw * elapsed_seconds, available_energy_kj);
+			temperature_c -= RealPhysics.calculateWaterTemperatureChange(lost_energy_kj, stored_liters);
+			last_heat_loss_kw = lost_energy_kj / elapsed_seconds;
 		}
 
 		public float getUsableEnergyKj()

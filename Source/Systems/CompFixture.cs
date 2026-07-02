@@ -239,6 +239,13 @@ namespace RealRim.WaterAndPumps
 		private AcceptanceReport getWorkingReport(float water_liters, float waste_water_liters, float sludge_kg)
 		{
 			FluidNetwork fresh_network = FluidUtility.getNetwork(parent, FluidNetworkType.FreshWater);
+			if (water_liters > 0.001f
+				&& (fresh_network == null
+					|| fresh_network.getStoredFreshWater() + 0.001f < water_liters))
+			{
+				return "RealRim_NoFreshWater".Translate();
+			}
+
 			FluidNetwork hot_network = FluidUtility.getNetwork(parent, FluidNetworkType.HotWater);
 			float hot_temperature = hot_network == null
 				? RealPhysics.COLD_WATER_TEMPERATURE_C

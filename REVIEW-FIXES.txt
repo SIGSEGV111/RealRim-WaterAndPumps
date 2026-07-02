@@ -1,12 +1,28 @@
-Version 1.1.7 review notes
+Version 1.1.20 review notes
 
-- The sink log warning was caused by CompFixture returning a translated status string with a trailing newline when the reason field was empty. All fixture status text is now trimmed.
-- New pipes are steel-only because the replacement defs explicitly use `<costList><Steel>1</Steel></costList>`. This was a deliberate replacement-def choice, not a DBH constraint; the material requirement remains unchanged in 1.1.7.
-- DBH CompPipe remains only on fixtures/processors that actually use the waste-water network. It is removed from tanks, pumps, thermal equipment, pools, troughs and latrines. RealRim draws independent colored network overlays and connection stubs for every network.
+- Wind-pump selection no longer invokes DBH pump UI code that depends on the removed DBH plumbing network.
+- Fluid connections are no longer rendered permanently on buildings.
+- Selection and placement overlays now use DBH-style linked pipe atlases in per-network colors without circular connector bases. Each network is shifted by a distinct sub-tile offset so shared routes remain readable.
+
+- Existing 1.1.6/1.1.7 saves no longer throw Graphic_Linked.MatSingle null-reference errors when placed RealRim pipes are rebuilt into the map mesh.
+- RimWorld inspect-string warnings were caused by translated status strings ending with a blank optional-reason line before the first system tick. Fixture, heat-source, cooling, heat-exchanger and waste-storage status text is trimmed.
+- New pipes are steel-only because the replacement defs explicitly use `<costList><Steel>1</Steel></costList>`. This was a deliberate replacement-def choice, not a DBH constraint; the material requirement remains unchanged in 1.1.17.
+- DBH CompPipe remains only on fixtures/processors that actually use the waste-water network. It is removed from tanks, pumps, thermal equipment, pools, troughs and latrines. RealRim now renders every network through its own DBH-style linked-atlas section layer and suppresses the legacy DBH section layer to avoid duplicate overlays.
 - Warm domestic water below the fixture target now remains warm instead of being discarded and replaced by a 12 °C display value.
 - DBH CompWaterFillable inspection output is suppressed only for the RealRim latrine, removing its meaningless negative refill-time suffix.
 - Pump thresholds and enable state are persisted per pump.
 - Hot-water and heating storage are separate. The domestic tank has a one-way heating-side exchanger and a fresh-water feed; the new heating buffer tank is the only bulk heating storage.
 - Heating-pipe thermal mass was not added because correct split/merge persistence is a significant network-state change rather than a low-cost addition.
 - The wind pump retains DBH CompWindPump for its propeller, wind-path cells, roof/tree obstruction and PumpPercent output.
+
+- Overlay colors now use blue for fresh water, red for hot water and orange for heating.
+- The WindPump definition explicitly retains or recreates DBH CompWindPump, so its propeller and wind obstruction model cannot be lost when replacement comps are rebuilt. RealRim inspection text reports the first blocking tree/building or a blocking roof.
+- Fixtures require a full next-use quantity in the fresh-water network before DBH can select them for hygiene or sanitation jobs; hot-water storage alone is not sufficient.
 - Pool flowRate and fuel fields are synchronized with the RealRim pool model so DBH controls and graphics remain useful without restoring DBH physics.
+
+- Visible hot-water pipes are red and visible heating pipes are orange, matching their overlay colors. Hidden pipe definitions remain transparent.
+
+- Active boilers and heat pumps now store an individual buffer-temperature target. Passive solar and geothermal sources intentionally have no target control.
+- Every heating node exposes a live network report with current thermal production/consumption, net storage rate, heating-pipe length and room-grouped equipment. Bedroom labels are derived from bed owners where available.
+
+- Heating-report bedroom and barracks headings now combine owner names with the generic localized room-role label instead of RimWorld's already owner-qualified room label.

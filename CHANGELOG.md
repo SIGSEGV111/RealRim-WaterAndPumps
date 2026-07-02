@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.44 — Swimming-pool pathfinding avoidance
+
+- Made the DBH swimming-pool building and its pool-water terrain effectively impassable to ordinary route selection by assigning a very high path cost.
+- Pawns and animals now route around the 9 × 5 pool instead of treating it as a zero-cost shortcut and then suffering the water movement slowdown.
+- Kept the pool technically traversable so the dedicated `DBHGoSwimming` job can still enter, move within, and leave the pool normally.
+- Updated release metadata and runtime labels to 1.1.44.
+
 ## 1.1.43 — Sewage dump port integration and compile fix
 
 - Fixed the sewage-outlet build failure by importing `RimWorld.FilthMaker` from its correct namespace.

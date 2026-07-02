@@ -9,6 +9,8 @@ namespace RealRim.WaterAndPumps
 	[StaticConstructorOnStartup]
 	internal static class RealRimDefPatcher
 	{
+		private const int POOL_PATH_COST = 10000;
+
 		static RealRimDefPatcher()
 		{
 			LongEventHandler.ExecuteWhenFinished(applyDefinitions);
@@ -33,11 +35,11 @@ namespace RealRim.WaterAndPumps
 
 			if (failed_phases == 0)
 			{
-				Log.Message("[RealRim] Water & Pumps 1.1.43: replaced DBH water, heating, cooling, sprinkler and sewage definitions.");
+				Log.Message("[RealRim] Water & Pumps 1.1.44: replaced DBH water, heating, cooling, sprinkler and sewage definitions.");
 			}
 			else
 			{
-				Log.Error("[RealRim] Water & Pumps 1.1.43: definition replacement completed with "
+				Log.Error("[RealRim] Water & Pumps 1.1.44: definition replacement completed with "
 					+ failed_phases + " failed phase(s). Later phases were still applied; see the preceding errors.");
 			}
 		}
@@ -254,6 +256,13 @@ namespace RealRim.WaterAndPumps
 					minimum_temperature_c = 10f,
 					maximum_temperature_c = 40f,
 				});
+				pool.pathCost = POOL_PATH_COST;
+
+				TerrainDef pool_water = DefDatabase<TerrainDef>.GetNamedSilentFail("PoolWater");
+				if (pool_water != null)
+				{
+					pool_water.pathCost = POOL_PATH_COST;
+				}
 			}
 
 			ThingDef latrine = getDef("PitLatrine");

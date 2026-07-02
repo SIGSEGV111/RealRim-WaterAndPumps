@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+	<RealRim.WaterAndPumps.WaterbornePathogenDef>
+		<defName>RealRim_Pathogen_Diarrhea</defName>
+		<label>diarrhea</label>
+		<hediff>Diarrhea</hediff>
+		<selection_weight>2.0</selection_weight>
+	</RealRim.WaterAndPumps.WaterbornePathogenDef>
+	<RealRim.WaterAndPumps.WaterbornePathogenDef>
+		<defName>RealRim_Pathogen_Dysentery</defName>
+		<label>dysentery</label>
+		<hediff>Dysentery</hediff>
+		<selection_weight>1.2</selection_weight>
+	</RealRim.WaterAndPumps.WaterbornePathogenDef>
+	<RealRim.WaterAndPumps.WaterbornePathogenDef>
+		<defName>RealRim_Pathogen_Cholera</defName>
+		<label>cholera</label>
+		<hediff>Cholera</hediff>
+		<selection_weight>0.8</selection_weight>
+	</RealRim.WaterAndPumps.WaterbornePathogenDef>
+	<RealRim.WaterAndPumps.WaterbornePathogenDef>
+		<defName>RealRim_Pathogen_FoodPoisoning</defName>
+		<label>food poisoning</label>
+		<hediff>FoodPoisoning</hediff>
+		<selection_weight>1.5</selection_weight>
+	</RealRim.WaterAndPumps.WaterbornePathogenDef>
+	<RealRim.WaterAndPumps.WaterbornePathogenDef>
+		<defName>RealRim_Pathogen_GutWorms</defName>
+		<label>gut worms</label>
+		<hediff>GutWorms</hediff>
+		<selection_weight>1.2</selection_weight>
+	</RealRim.WaterAndPumps.WaterbornePathogenDef>
+	<RealRim.WaterAndPumps.WaterbornePathogenDef>
+		<defName>RealRim_Pathogen_MuscleParasites</defName>
+		<label>muscle parasites</label>
+		<hediff>MuscleParasites</hediff>
+		<selection_weight>0.8</selection_weight>
+	</RealRim.WaterAndPumps.WaterbornePathogenDef>
+	<RealRim.WaterAndPumps.WaterbornePathogenDef>
+		<defName>RealRim_Pathogen_Malaria</defName>
+		<label>malaria</label>
+		<hediff>Malaria</hediff>
+		<selection_weight>0.5</selection_weight>
+	</RealRim.WaterAndPumps.WaterbornePathogenDef>
+	<RealRim.WaterAndPumps.WaterbornePathogenDef>
+		<defName>RealRim_Pathogen_SleepingSickness</defName>
+		<label>sleeping sickness</label>
+		<hediff>SleepingSickness</hediff>
+		<selection_weight>0.35</selection_weight>
+	</RealRim.WaterAndPumps.WaterbornePathogenDef>
+	<RealRim.WaterAndPumps.WaterbornePathogenDef>
+		<defName>RealRim_Pathogen_Flu</defName>
+		<label>flu</label>
+		<hediff>Flu</hediff>
+		<selection_weight>0.6</selection_weight>
+	</RealRim.WaterAndPumps.WaterbornePathogenDef>
+	<RealRim.WaterAndPumps.WaterbornePathogenDef>
+		<defName>RealRim_Pathogen_Plague</defName>
+		<label>plague</label>
+		<hediff>Plague</hediff>
+		<selection_weight>0.15</selection_weight>
+	</RealRim.WaterAndPumps.WaterbornePathogenDef>
+	<RealRim.WaterAndPumps.WaterbornePathogenDef>
+		<defName>RealRim_Pathogen_SensoryMechanites</defName>
+		<label>sensory mechanites</label>
+		<hediff>SensoryMechanites</hediff>
+		<selection_weight>0.05</selection_weight>
+	</RealRim.WaterAndPumps.WaterbornePathogenDef>
+	<RealRim.WaterAndPumps.WaterbornePathogenDef>
+		<defName>RealRim_Pathogen_FibrousMechanites</defName>
+		<label>fibrous mechanites</label>
+		<hediff>FibrousMechanites</hediff>
+		<selection_weight>0.05</selection_weight>
+	</RealRim.WaterAndPumps.WaterbornePathogenDef>
+</Defs>

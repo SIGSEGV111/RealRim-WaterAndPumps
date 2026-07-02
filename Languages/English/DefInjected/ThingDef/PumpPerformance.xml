@@ -1,0 +1,5 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<LanguageData>
+	<ElectricPump.description>A compact 250 W electric pump that supplies up to 1,200 L/h before long-network flow losses.</ElectricPump.description>
+	<PumpingStation.description>A 10 kW industrial pumping station that supplies up to 50,000 L/h before long-network flow losses.</PumpingStation.description>
+<WindPump.description>A wind-driven pump supplying up to 1,500 L/h in unobstructed wind. Trees, buildings and roofs in its wind path reduce or stop its output.</WindPump.description></LanguageData>

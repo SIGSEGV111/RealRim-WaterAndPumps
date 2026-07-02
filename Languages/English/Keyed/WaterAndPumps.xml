@@ -1,0 +1,107 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<LanguageData>
+	<RealRim_Fluid_FreshWater>fresh water</RealRim_Fluid_FreshWater>
+	<RealRim_Fluid_HotWater>hot water</RealRim_Fluid_HotWater>
+	<RealRim_Fluid_Heating>heating water</RealRim_Fluid_Heating>
+	<RealRim_Fluid_WasteWater>waste water</RealRim_Fluid_WasteWater>
+	<RealRim_Fluid_Coolant>air-con coolant</RealRim_Fluid_Coolant>
+	<RealRim_FluidNetworkLine>{0} network #{1}: {2} connected nodes</RealRim_FluidNetworkLine>
+	<RealRim_StatusRunning>running</RealRim_StatusRunning>
+	<RealRim_StatusStandby>standby</RealRim_StatusStandby>
+	<RealRim_WaterStored>Water: {0} / {1} L ({2})</RealRim_WaterStored>
+	<RealRim_ThermalTankStatus>Thermal tank: {0} / {1} L
+Temperature: {2}
+Usable heat: {3}</RealRim_ThermalTankStatus>
+	<RealRim_CoolantTankStatus>Coolant water: {0} L
+Equivalent temperature: {1}
+Frozen fraction: {2}
+Cold-energy storage: {3}</RealRim_CoolantTankStatus>
+	<RealRim_WaterPumpStatus>Pump: {0}
+Current flow: {1} L/h
+Connected storage: {2} / {3} L
+Longest connected route: {4} m
+Hydraulic multiplier: {5}</RealRim_WaterPumpStatus>
+	<RealRim_HeatSourceStatus>Heat source: {0}
+Tank temperature: {1}
+Thermal output: {2} kW
+Electrical input: {3} kW
+COP: {4}
+{5}</RealRim_HeatSourceStatus>
+	<RealRim_HeatExchangerStatus>Target: {0}
+Room: {1}
+Network medium: {2}
+Current transfer: {3} kW
+{4}</RealRim_HeatExchangerStatus>
+	<RealRim_CoolingPlantStatus>Cooling plant: {0}
+Cold storage: {1}
+Cooling output: {2} kW
+Electrical input: {3} kW
+COP: {4}
+{5}</RealRim_CoolingPlantStatus>
+	<RealRim_WasteStorageStatus>Waste water: {0} / {1} L
+Fecal sludge: {2} / {3} kg
+Current processing: {4} L/day
+Fresh-water recovery: {5} L/day
+{6}</RealRim_WasteStorageStatus>
+	<RealRim_FixtureStatus>Last water temperature: {0}
+Total water used: {1} L
+{2}</RealRim_FixtureStatus>
+	<RealRim_LatrineStatus>Flush tank: {0} / {1} L
+Internal waste: {2} / {3} L
+Fecal sludge: {4} / {5} kg</RealRim_LatrineStatus>
+	<RealRim_TroughStatus>Stored water: {0} / {1} L
+Current refill: {2} L/h</RealRim_TroughStatus>
+	<RealRim_PoolStatus>Pool water: {0} / {1} L ({2})
+Water temperature: {3}
+Target temperature: {4}
+Network heating: {5} kW
+Air exchange: {6} kW
+Solar gain: {7} kW
+Night-sky loss: {8} kW
+Evaporation: {9} L/day
+Rain collection: {10} L/day
+Fresh-water refill: {11} L/day
+Fill-flow setting: {12}%</RealRim_PoolStatus>
+	<RealRim_TargetTemperatureDown>Lower target</RealRim_TargetTemperatureDown>
+	<RealRim_TargetTemperatureDownDesc>Lower the target temperature by 1 °C.</RealRim_TargetTemperatureDownDesc>
+	<RealRim_TargetTemperatureUp>Raise target</RealRim_TargetTemperatureUp>
+	<RealRim_TargetTemperatureUpDesc>Raise the target temperature by 1 °C.</RealRim_TargetTemperatureUpDesc>
+	<RealRim_NoFreshWater>No connected fresh water or insufficient stored water.</RealRim_NoFreshWater>
+	<RealRim_NoWasteCapacity>No connected waste-water storage has enough water and sludge capacity.</RealRim_NoWasteCapacity>
+	<RealRim_TroughEmpty>Not enough water in the trough.</RealRim_TroughEmpty>
+	<RealRim_LatrineUnavailable>The latrine needs flush water or its internal waste storage must be emptied.</RealRim_LatrineUnavailable>
+	<RealRim_ReasonNoHeatingStorage>No connected thermal storage.</RealRim_ReasonNoHeatingStorage>
+	<RealRim_ReasonThresholdReached>Storage threshold reached.</RealRim_ReasonThresholdReached>
+	<RealRim_ReasonRoofed>Solar collector is roofed.</RealRim_ReasonRoofed>
+	<RealRim_ReasonNoSun>Insufficient sunlight.</RealRim_ReasonNoSun>
+	<RealRim_ReasonSourceTooCold>Heat source is too cold ({0}).</RealRim_ReasonSourceTooCold>
+	<RealRim_ReasonNoStoredCold>No stored cooling energy.</RealRim_ReasonNoStoredCold>
+	<RealRim_ReasonNoPower>No electrical power.</RealRim_ReasonNoPower>
+	<RealRim_ReasonNoFuel>No usable fuel.</RealRim_ReasonNoFuel>
+	<RealRim_ReasonSwitchedOff>Switched off or broken down.</RealRim_ReasonSwitchedOff>
+	<RealRim_ReasonNoHeatingNetwork>No connected heating-water network.</RealRim_ReasonNoHeatingNetwork>
+	<RealRim_ReasonTargetReached>Target temperature reached.</RealRim_ReasonTargetReached>
+	<RealRim_ReasonNoStoredHeat>No usable heat in connected tanks.</RealRim_ReasonNoStoredHeat>
+	<RealRim_ReasonNoCoolantNetwork>No connected air-con coolant network.</RealRim_ReasonNoCoolantNetwork>
+	<RealRim_ReasonNoCoolantStorage>No connected coolant tank.</RealRim_ReasonNoCoolantStorage>
+	<RealRim_ReasonAmbientOutOfRange>Ambient temperature is outside the operating range.</RealRim_ReasonAmbientOutOfRange>
+	<RealRim_ReasonNoSoilInfiltration>Septic drainage requires natural soil and cannot operate on a gravship.</RealRim_ReasonNoSoilInfiltration>
+	<RealRim_ReasonNoHotWater>No sufficiently hot water is connected; cold water was used.</RealRim_ReasonNoHotWater>
+	<RealRim_DuplicateFluidPipe>A {0} pipe already occupies this tile.</RealRim_DuplicateFluidPipe>
+	<RealRim_ReasonNoCoolantHeatCapacity>The coolant tank cannot absorb more extracted heat.</RealRim_ReasonNoCoolantHeatCapacity>
+	<RealRim_KitchenSinkStatus>Active linked stoves: {0}
+Current sink load: {1} L/h
+Captured food solids: {2} g/h</RealRim_KitchenSinkStatus>
+	<RealRim_WaterPumpSources>Connected water sources: {0}</RealRim_WaterPumpSources>
+	<RealRim_WaterSourceStatus>Water source: {0}</RealRim_WaterSourceStatus>
+	<RealRim_SourceRegularWell>regular well</RealRim_SourceRegularWell>
+	<RealRim_SourceDeepWell>deep well</RealRim_SourceDeepWell>
+	<RealRim_SourceSurfaceWater>surface water</RealRim_SourceSurfaceWater>
+	<RealRim_SourceMudWater>mud water</RealRim_SourceMudWater>
+	<RealRim_SourceClean>clean source</RealRim_SourceClean>
+	<RealRim_WaterTreatmentStatus>Water treatment: {0}
+Pathogen removal: {1}</RealRim_WaterTreatmentStatus>
+<RealRim_HotWaterTankStatus>Domestic hot water: {0} / {1} L
+Temperature: {2}
+Heat-exchanger transfer: {3} kW
+Cold-water refill: {4} L/h</RealRim_HotWaterTankStatus><RealRim_WaterPumpAutomation>Automatic pump control</RealRim_WaterPumpAutomation><RealRim_WaterPumpAutomationDesc>Enable automatic start/stop thresholds. When disabled, the pump runs whenever it is switched on, a source is connected, and storage has free capacity.</RealRim_WaterPumpAutomationDesc><RealRim_WaterPumpConfigure>Configure pump thresholds</RealRim_WaterPumpConfigure><RealRim_WaterPumpConfigureDesc>Set the storage levels at which this pump starts and stops.</RealRim_WaterPumpConfigureDesc><RealRim_WaterPumpThresholdTitle>Water-pump thresholds</RealRim_WaterPumpThresholdTitle><RealRim_WaterPumpStartThreshold>Start pumping at or below {0}</RealRim_WaterPumpStartThreshold><RealRim_WaterPumpStopThreshold>Stop pumping at or above {0}</RealRim_WaterPumpStopThreshold><RealRim_WaterPumpThresholdHint>The stop threshold must remain at least 5 percentage points above the start threshold.</RealRim_WaterPumpThresholdHint><RealRim_ResetDefaults>Reset defaults</RealRim_ResetDefaults><RealRim_WaterPumpThresholdStatus>Automatic thresholds: start {0}, stop {1}</RealRim_WaterPumpThresholdStatus><RealRim_WaterPumpDriveStatus>Drive availability: {0}</RealRim_WaterPumpDriveStatus></LanguageData>

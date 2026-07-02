@@ -1,0 +1,784 @@
+using System;
+using System.Collections.Generic;
+using System.Reflection;
+using RimWorld;
+using Verse;
+
+namespace RealRim.WaterAndPumps
+{
+	[StaticConstructorOnStartup]
+	internal static class RealRimDefPatcher
+	{
+		static RealRimDefPatcher()
+		{
+			LongEventHandler.ExecuteWhenFinished(applyDefinitions);
+		}
+
+		private static void applyDefinitions()
+		{
+			int failed_phases = 0;
+
+			runPatchPhase("pipes", patchPipes, ref failed_phases);
+			runPatchPhase("water sources", patchWaterSources, ref failed_phases);
+			runPatchPhase("water storage", patchWaterStorage, ref failed_phases);
+			runPatchPhase("pumps", patchPumps, ref failed_phases);
+			runPatchPhase("heating", patchHeating, ref failed_phases);
+			runPatchPhase("cooling", patchCooling, ref failed_phases);
+			runPatchPhase("fixtures", patchFixtures, ref failed_phases);
+			runPatchPhase("waste processing", patchWaste, ref failed_phases);
+			runPatchPhase("work definitions", patchWorkDefinitions, ref failed_phases);
+
+			if (failed_phases == 0)
+			{
+				Log.Message("[RealRim] Water & Pumps 1.1.7: replaced DBH water, heating, cooling and sewage definitions.");
+			}
+			else
+			{
+				Log.Error("[RealRim] Water & Pumps 1.1.7: definition replacement completed with "
+					+ failed_phases + " failed phase(s). Later phases were still applied; see the preceding errors.");
+			}
+		}
+
+		private static void runPatchPhase(string phase_name, Action patch_action, ref int failed_phases)
+		{
+			try
+			{
+				patch_action();
+			}
+			catch (Exception exception)
+			{
+				failed_phases++;
+				Log.Error("[RealRim] Water & Pumps: failed to patch " + phase_name + ": " + exception);
+			}
+		}
+
+		private static void patchPipes()
+		{
+			setNode("sewagePipeStuff", FluidNetworkType.WasteWater);
+			setNode("sewagePipeHidden", FluidNetworkType.WasteWater);
+			setNode("plumbingValve", true, FluidNetworkType.WasteWater);
+			setNode("airPipe", FluidNetworkType.Coolant);
+			setNode("airPipeHidden", FluidNetworkType.Coolant);
+			setNode("RealRim_FreshWaterPipe", FluidNetworkType.FreshWater);
+			setNode("RealRim_FreshWaterPipeHidden", FluidNetworkType.FreshWater);
+			setNode("RealRim_HotWaterPipe", FluidNetworkType.HotWater);
+			setNode("RealRim_HotWaterPipeHidden", FluidNetworkType.HotWater);
+			setNode("RealRim_HeatingPipe", FluidNetworkType.Heating);
+			setNode("RealRim_HeatingPipeHidden", FluidNetworkType.Heating);
+			setNode("RealRim_FreshWaterValve", true, FluidNetworkType.FreshWater);
+			setNode("RealRim_HotWaterValve", true, FluidNetworkType.HotWater);
+			setNode("RealRim_HeatingValve", true, FluidNetworkType.Heating);
+			setNode("RealRim_CoolantValve", true, FluidNetworkType.Coolant);
+			setLabel("sewagePipeStuff", "waste-water pipe");
+			setLabel("sewagePipeHidden", "waste-water pipe (hidden)");
+			setLabel("plumbingValve", "waste-water valve");
+			setLabel("airPipe", "air-con coolant pipe");
+			setLabel("airPipeHidden", "air-con coolant pipe (hidden)");
+		}
+
+
+		private static void patchWaterSources()
+		{
+			setWaterSource("WaterWellInlet", WaterSourceKind.RegularWell);
+			setWaterSource("DeepWaterWellInlet", WaterSourceKind.DeepWell);
+			setWaterSource("PrimitiveWell", WaterSourceKind.Auto);
+			setWaterSource("CryogenicExtractionNode", WaterSourceKind.Clean);
+		}
+
+		private static void patchWaterStorage()
+		{
+			setWaterTank("WaterButt", 100f);
+			setWaterTank("WaterTowerS", 8000f);
+			setWaterTank("WaterTowerL", 50000f);
+			setWaterTank("WaterTankSmall", 2000f);
+
+			ThingDef hot_tank = preparePassiveBuilding("HotWaterTank", false);
+			if (hot_tank != null)
+			{
+				hot_tank.description = "A 600 L domestic hot-water tank. Its internal heat exchanger transfers heat one-way from the heating-water circuit, while the tank supplies the separate hot-water network and refills from fresh water.";
+				addNode(
+					hot_tank,
+					false,
+					FluidNetworkType.FreshWater,
+					FluidNetworkType.HotWater,
+					FluidNetworkType.Heating);
+				addComp(hot_tank, new CompProperties_HotWaterTank
+				{
+					capacity_liters = 600f,
+					initial_temperature_c = 20f,
+					minimum_temperature_c = 5f,
+					maximum_temperature_c = 85f,
+					heat_exchanger_surface_m2 = 1.5f,
+					maximum_transfer_kw = 20f,
+				});
+			}
+
+			ThingDef heating_tank = preparePassiveBuilding("RealRim_HeatingTank", false);
+			if (heating_tank != null)
+			{
+				addNode(heating_tank, false, FluidNetworkType.Heating);
+				addComp(heating_tank, new CompProperties_ThermalTank
+				{
+					capacity_liters = 600f,
+					initial_temperature_c = 20f,
+					minimum_temperature_c = 5f,
+					maximum_temperature_c = 85f,
+				});
+			}
+
+			ThingDef coolant_tank = preparePassiveBuilding("RealRim_CoolantTank", false);
+			if (coolant_tank != null)
+			{
+				addNode(coolant_tank, false, FluidNetworkType.Coolant);
+				addComp(coolant_tank, new CompProperties_CoolantTank
+				{
+					water_liters = 600f,
+					warm_temperature_c = 12f,
+				});
+			}
+		}
+
+		private static void patchPumps()
+		{
+			setWaterPump("WindPump", 1500f, 0f, false, 100f);
+			setWaterPump("ElectricPump", 1200f, 250f, true, 50f);
+			setWaterPump("PumpingStation", 50000f, 10000f, true, 250f);
+		}
+
+		private static void patchHeating()
+		{
+			setHeatSource("LogBoiler", HeatSourceKind.WoodBoiler, 20f, 0f, 4860f);
+			setHeatSource("GasBoiler", HeatSourceKind.GasBoiler, 24f, 0f, 1935f);
+			setHeatSource("ElectricBoiler", HeatSourceKind.ElectricBoiler, 12f, 12000f, 0f);
+			setHeatSource("SolarHeater", HeatSourceKind.SolarThermal, 5.5f, 0f, 0f);
+			setHeatSource("GeothermHeater", HeatSourceKind.Geothermal, 12f, 0f, 0f);
+			setHeatSource("RealRim_AirToWaterHeatPump", HeatSourceKind.AirToWaterHeatPump, 12f, 4500f, 0f);
+
+			ThingDef recovery_pump = preparePassiveBuilding("RealRim_CoolantToWaterHeatPump", false);
+			if (recovery_pump != null)
+			{
+				addNode(recovery_pump, false, FluidNetworkType.Coolant, FluidNetworkType.Heating);
+				addComp(recovery_pump, new CompProperties_HeatSource
+				{
+					kind = HeatSourceKind.CoolantToWaterHeatPump,
+					nominal_thermal_kw = 12f,
+					nominal_power_watts = 4500f,
+				});
+				setPower(recovery_pump, 4500f);
+			}
+
+			setRadiator("RadiatorStuffed", 1.5f);
+			setRadiator("RadiatorLarge", 3.0f);
+			setRadiator("RadiatorTowelRail", 1.2f);
+		}
+
+		private static void patchCooling()
+		{
+			ThingDef outdoor = preparePassiveBuilding("AirConOutdoorUnit", false);
+			if (outdoor != null)
+			{
+				addNode(outdoor, false, FluidNetworkType.Coolant);
+				addComp(outdoor, new CompProperties_CoolingPlant
+				{
+					nominal_cooling_kw = 12f,
+					start_fill_fraction = 0.25f,
+					stop_fill_fraction = 0.90f,
+				});
+				setPower(outdoor, 5000f);
+			}
+
+			setCoolingEmitter("AirconIndoorUnit", 3.5f, 100f, 21f, 5f, 35f);
+			setCoolingEmitter("FreezerUnit", 8f, 250f, -4f, -22f, 2f);
+		}
+
+		private static void patchFixtures()
+		{
+			setFixture("Fountain", FixtureKind.Fountain, 1f, 12f, 0f, 0f, false, false,
+				FluidNetworkType.FreshWater);
+			setFixture("BasinStuff", FixtureKind.Sink, 0.04f, 35f, 0.04f, 0f, true, true,
+				FluidNetworkType.FreshWater, FluidNetworkType.HotWater, FluidNetworkType.WasteWater);
+			setFixture("KitchenSink", FixtureKind.KitchenSink, 0.15f, 38f, 0.15f, 0f, true, true,
+				FluidNetworkType.FreshWater, FluidNetworkType.HotWater, FluidNetworkType.WasteWater);
+			setFixture("ToiletStuff", FixtureKind.Toilet, 9f, 12f, 10.5f, 0.225f, false, true,
+				FluidNetworkType.FreshWater, FluidNetworkType.WasteWater);
+			setFixture("ToiletAdvStuff", FixtureKind.Toilet, 6f, 12f, 7.5f, 0.225f, false, true,
+				FluidNetworkType.FreshWater, FluidNetworkType.WasteWater);
+			setFixture("ToiletSpacer", FixtureKind.Toilet, 3f, 12f, 4.5f, 0.225f, false, true,
+				FluidNetworkType.FreshWater, FluidNetworkType.WasteWater);
+			setFixture("ShowerStuff", FixtureKind.Shower, 0.13f, 40f, 0.13f, 0f, true, true,
+				FluidNetworkType.FreshWater, FluidNetworkType.HotWater, FluidNetworkType.WasteWater);
+			setFixture("ShowerSimple", FixtureKind.Shower, 0.13f, 39f, 0.13f, 0f, true, true,
+				FluidNetworkType.FreshWater, FluidNetworkType.HotWater, FluidNetworkType.WasteWater);
+			setFixture("ShowerAdvStuff", FixtureKind.Shower, 0.16f, 40f, 0.16f, 0f, true, true,
+				FluidNetworkType.FreshWater, FluidNetworkType.HotWater, FluidNetworkType.WasteWater);
+			setFixture("BathtubStuff", FixtureKind.Bath, 1f, 39f, 1f, 0f, true, true,
+				FluidNetworkType.FreshWater, FluidNetworkType.HotWater, FluidNetworkType.WasteWater);
+
+			ThingDef pool = getDef("DBHSwimmingPool");
+			if (pool != null)
+			{
+				removeReplacementComps(pool, false);
+				addNode(pool, false, FluidNetworkType.FreshWater, FluidNetworkType.Heating);
+				addComp(pool, new CompProperties_PoolPhysics
+				{
+					capacity_liters = 65000f,
+					water_surface_m2 = 45f,
+					heat_exchanger_surface_m2 = 0.6f,
+					refill_liters_per_hour = 5000f,
+				});
+				addComp(pool, new CompProperties_TargetTemperature
+				{
+					default_temperature_c = 28f,
+					minimum_temperature_c = 10f,
+					maximum_temperature_c = 40f,
+				});
+			}
+
+			ThingDef latrine = getDef("PitLatrine");
+			if (latrine != null)
+			{
+				removeReplacementComps(latrine, false);
+				if (latrine.placeWorkers != null)
+				{
+					latrine.placeWorkers.RemoveAll(type => type != null && type.Namespace == "DubsBadHygiene");
+				}
+				addComp(latrine, new CompProperties_Latrine());
+				addLatrineRefillComponent(latrine);
+			}
+
+			setTrough("WaterTrough", 200f, 500f);
+			setTrough("PetWaterBowl", 12f, 60f);
+		}
+
+		private static void addLatrineRefillComponent(ThingDef latrine)
+		{
+			Type water_fillable_type = findType("DubsBadHygiene.CompWaterFillable");
+			ThingDef water_bottle = DefDatabase<ThingDef>.GetNamedSilentFail("DBH_WaterBottle");
+			if (water_fillable_type == null || water_bottle == null)
+			{
+				Log.Error("[RealRim] Water & Pumps: latrine refill integration is unavailable. "
+					+ "CompWaterFillable found=" + (water_fillable_type != null)
+					+ ", DBH_WaterBottle found=" + (water_bottle != null) + ".");
+				return;
+			}
+
+			ThingFilter fuel_filter = new ThingFilter();
+			fuel_filter.SetAllow(water_bottle, true);
+
+			CompProperties_Refuelable refill_properties = new CompProperties_Refuelable
+			{
+				compClass = water_fillable_type,
+				fuelCapacity = 30f,
+				fuelConsumptionRate = 0f,
+				fuelFilter = fuel_filter,
+				showAllowAutoRefuelToggle = true,
+			};
+
+			// ResolveReferences expects a non-null filter and, on some RimWorld builds,
+			// expects the properties object to already be present on the parent def.
+			addComp(latrine, refill_properties);
+			try
+			{
+				refill_properties.ResolveReferences(latrine);
+			}
+			catch (Exception exception)
+			{
+				latrine.comps.Remove(refill_properties);
+				Log.Error("[RealRim] Water & Pumps: failed to initialize DBH latrine refill component; "
+					+ "the latrine remains usable through its internal water state but will not receive DBH refill jobs. "
+					+ exception);
+			}
+		}
+
+		private static void patchWaste()
+		{
+			ThingDef septic = preparePassiveBuilding("SewageSepticTank", true);
+			if (septic != null)
+			{
+				addNode(septic, false, FluidNetworkType.WasteWater);
+				addComp(septic, new CompProperties_WasteStorage
+				{
+					water_capacity_liters = 12000f,
+					sludge_capacity_kg = 600f,
+					infiltration_liters_per_day = 1200f,
+					treatment_liters_per_day = 0f,
+					automatically_eject_sludge = false,
+				});
+			}
+
+			ThingDef treatment = preparePassiveBuilding("SewageTreatment", true);
+			if (treatment != null)
+			{
+				addNode(treatment, false, FluidNetworkType.WasteWater, FluidNetworkType.FreshWater);
+				addComp(treatment, new CompProperties_WasteStorage
+				{
+					water_capacity_liters = 50000f,
+					sludge_capacity_kg = 1000f,
+					treatment_liters_per_day = 5000f,
+					recovery_fraction = 0.95f,
+					automatically_eject_sludge = false,
+					automatic_ejection_kg = 10f,
+				});
+				setPower(treatment, 2000f);
+			}
+
+			ThingDef spacer_recovery = preparePassiveBuilding("SpacerWaterRecoverySystem", true);
+			if (spacer_recovery != null)
+			{
+				addNode(spacer_recovery, false, FluidNetworkType.WasteWater, FluidNetworkType.FreshWater);
+				addComp(spacer_recovery, new CompProperties_WasteStorage
+				{
+					water_capacity_liters = 20000f,
+					sludge_capacity_kg = 600f,
+					treatment_liters_per_day = 10000f,
+					recovery_fraction = 0.98f,
+					automatically_eject_sludge = false,
+					automatic_ejection_kg = 10f,
+				});
+				setPower(spacer_recovery, 1500f);
+			}
+
+			ThingDef water_treatment = preparePassiveBuilding("WaterTreatment", false);
+			if (water_treatment != null)
+			{
+				addNode(water_treatment, false, FluidNetworkType.FreshWater);
+				addComp(water_treatment, new CompProperties_WaterTreatment
+				{
+					pathogen_removal_fraction = 0.99f,
+					power_watts = 800f,
+				});
+				setPower(water_treatment, 800f);
+				water_treatment.description = "Removes 99% of waterborne pathogens from all water drawn through its connected fresh-water network. Requires power.";
+			}
+
+			ThingDef sludge = getDef("FecalSludge");
+			if (sludge != null)
+			{
+				sludge.SetStatBaseValue(StatDefOf.Mass, 0.05f);
+				sludge.stackLimit = 2000;
+			}
+		}
+
+		private static void patchWorkDefinitions()
+		{
+			JobDef empty_job = DefDatabase<JobDef>.GetNamedSilentFail("emptySeptictank");
+			if (empty_job != null)
+			{
+				empty_job.driverClass = typeof(JobDriver_EmptyWasteStorage);
+			}
+
+			string[] work_giver_names =
+			{
+				"emptySepticTank",
+				"WardenEmptySepticTank",
+			};
+			for (int index = 0; index < work_giver_names.Length; index++)
+			{
+				WorkGiverDef work_giver = DefDatabase<WorkGiverDef>.GetNamedSilentFail(work_giver_names[index]);
+				if (work_giver != null)
+				{
+					work_giver.giverClass = typeof(WorkGiver_EmptyWasteStorage);
+				}
+			}
+		}
+
+
+		private static void setWaterSource(
+			string def_name,
+			WaterSourceKind source_kind)
+		{
+			ThingDef def = getDef(def_name);
+			if (def == null)
+			{
+				return;
+			}
+			removeComp<CompProperties_WaterSource>(def);
+			addNode(def, false, FluidNetworkType.FreshWater);
+			addComp(def, new CompProperties_WaterSource
+			{
+				source_kind = source_kind,
+			});
+		}
+
+		private static void setWaterTank(string def_name, float capacity_liters)
+		{
+			ThingDef def = preparePassiveBuilding(def_name, false);
+			if (def == null)
+			{
+				return;
+			}
+			addNode(def, false, FluidNetworkType.FreshWater);
+			addComp(def, new CompProperties_WaterTank
+			{
+				capacity_liters = capacity_liters,
+				initial_fill_fraction = 0f,
+			});
+		}
+
+		private static void setWaterPump(string def_name, float liters_per_hour, float power_watts, bool requires_power, float hydraulic_reference_length_m)
+		{
+			ThingDef def = def_name == "WindPump"
+				? prepareWindPump()
+				: preparePassiveBuilding(def_name, false);
+			if (def == null)
+			{
+				return;
+			}
+			addNode(def, false, FluidNetworkType.FreshWater);
+			addComp(def, new CompProperties_WaterPump
+			{
+				nominal_liters_per_hour = liters_per_hour,
+				power_watts = power_watts,
+				requires_power = requires_power,
+				hydraulic_reference_length_m = hydraulic_reference_length_m,
+			});
+			setPower(def, power_watts);
+		}
+
+		private static void setHeatSource(string def_name, HeatSourceKind kind, float thermal_kw, float power_watts, float fuel_kj_per_unit)
+		{
+			ThingDef def = preparePassiveBuilding(def_name, false);
+			if (def == null)
+			{
+				return;
+			}
+			addNode(def, false, FluidNetworkType.Heating);
+			addComp(def, new CompProperties_HeatSource
+			{
+				kind = kind,
+				nominal_thermal_kw = thermal_kw,
+				nominal_power_watts = power_watts,
+				fuel_energy_kj_per_unit = fuel_kj_per_unit,
+			});
+			setPower(def, power_watts);
+		}
+
+		private static void setRadiator(string def_name, float rated_output_kw)
+		{
+			ThingDef def = preparePassiveBuilding(def_name, false);
+			if (def == null)
+			{
+				return;
+			}
+			addNode(def, false, FluidNetworkType.Heating);
+			addComp(def, new CompProperties_RoomHeatExchanger
+			{
+				kind = RoomHeatExchangerKind.Radiator,
+				rated_output_kw = rated_output_kw,
+			});
+			addComp(def, new CompProperties_TargetTemperature
+			{
+				default_temperature_c = 21f,
+				minimum_temperature_c = 5f,
+				maximum_temperature_c = 35f,
+			});
+		}
+
+		private static void setCoolingEmitter(string def_name, float output_kw, float power_watts, float target_c, float minimum_c, float maximum_c)
+		{
+			ThingDef def = preparePassiveBuilding(def_name, false);
+			if (def == null)
+			{
+				return;
+			}
+			addNode(def, false, FluidNetworkType.Coolant);
+			addComp(def, new CompProperties_RoomHeatExchanger
+			{
+				kind = RoomHeatExchangerKind.CoolingUnit,
+				rated_output_kw = output_kw,
+				fan_power_watts = power_watts,
+			});
+			addComp(def, new CompProperties_TargetTemperature
+			{
+				default_temperature_c = target_c,
+				minimum_temperature_c = minimum_c,
+				maximum_temperature_c = maximum_c,
+			});
+			setPower(def, power_watts);
+		}
+
+		private static void setFixture(
+			string def_name,
+			FixtureKind kind,
+			float water_liters,
+			float desired_temperature_c,
+			float waste_liters,
+			float sludge_kg,
+			bool wants_hot,
+			bool needs_drain,
+			params FluidNetworkType[] networks)
+		{
+			ThingDef def = getDef(def_name);
+			if (def == null)
+			{
+				return;
+			}
+			removeReplacementComps(def, needs_drain);
+			addNode(def, false, networks);
+			addComp(def, new CompProperties_Fixture
+			{
+				kind = kind,
+				water_per_use_liters = water_liters,
+				desired_temperature_c = desired_temperature_c,
+				waste_water_liters = waste_liters,
+				sludge_kg = sludge_kg,
+				wants_hot_water = wants_hot,
+				needs_drain = needs_drain,
+				linked_stove_water_liters_per_hour = kind == FixtureKind.KitchenSink ? 12f : 0f,
+				linked_stove_sludge_kg_per_hour = kind == FixtureKind.KitchenSink ? 0.075f : 0f,
+			});
+		}
+
+		private static void setTrough(string def_name, float capacity_liters, float refill_liters_per_hour)
+		{
+			ThingDef def = getDef(def_name);
+			if (def == null)
+			{
+				return;
+			}
+			removeReplacementComps(def, false);
+			addNode(def, false, FluidNetworkType.FreshWater);
+			addComp(def, new CompProperties_WaterTrough
+			{
+				capacity_liters = capacity_liters,
+				refill_liters_per_hour = refill_liters_per_hour,
+			});
+		}
+
+		private static ThingDef prepareWindPump()
+		{
+			ThingDef def = getDef("WindPump");
+			if (def == null)
+			{
+				return null;
+			}
+			if (def.comps == null)
+			{
+				def.comps = new List<CompProperties>();
+			}
+			def.comps.RemoveAll(comp =>
+			{
+				if (comp == null)
+				{
+					return true;
+				}
+				Type properties_type = comp.GetType();
+				Type component_type = comp.compClass;
+				bool ours = properties_type.Namespace == typeof(RealRimDefPatcher).Namespace;
+				bool wind_component = component_type?.FullName == "DubsBadHygiene.CompWindPump";
+				return ours || (properties_type.Namespace == "DubsBadHygiene" && !wind_component);
+			});
+			return def;
+		}
+
+		private static ThingDef preparePassiveBuilding(string def_name, bool preserve_legacy_pipe)
+		{
+			ThingDef def = getDef(def_name);
+			if (def == null)
+			{
+				return null;
+			}
+			def.thingClass = typeof(Building);
+			removeReplacementComps(def, preserve_legacy_pipe);
+			return def;
+		}
+
+		private static void setNode(string def_name, params FluidNetworkType[] networks)
+		{
+			setNode(def_name, false, networks);
+		}
+
+		private static void setNode(string def_name, bool valve, params FluidNetworkType[] networks)
+		{
+			ThingDef def = getDef(def_name);
+			if (def == null)
+			{
+				return;
+			}
+			removeComp<CompProperties_FluidNode>(def);
+			addNode(def, valve, networks);
+		}
+
+		private static void addNode(ThingDef def, bool valve, params FluidNetworkType[] networks)
+		{
+			removeComp<CompProperties_FluidNode>(def);
+			addComp(def, new CompProperties_FluidNode
+			{
+				networks = new List<FluidNetworkType>(networks),
+				valve = valve,
+			});
+		}
+
+		private static void removeReplacementComps(ThingDef def, bool preserve_legacy_pipe = true)
+		{
+			if (def.comps == null)
+			{
+				def.comps = new List<CompProperties>();
+				return;
+			}
+
+			def.comps.RemoveAll(comp =>
+			{
+				if (comp == null)
+				{
+					return true;
+				}
+				Type properties_type = comp.GetType();
+				Type comp_type = comp.compClass;
+				bool legacy_pipe = properties_type.FullName == "DubsBadHygiene.CompProperties_Pipe";
+				bool old_dbh = properties_type.Namespace == "DubsBadHygiene"
+					|| (comp_type != null && comp_type.Namespace == "DubsBadHygiene");
+				bool ours = properties_type.Namespace == typeof(RealRimDefPatcher).Namespace;
+				return ours || (old_dbh && !(preserve_legacy_pipe && legacy_pipe));
+			});
+		}
+
+		private static void setPower(ThingDef def, float watts)
+		{
+			if (def.comps == null)
+			{
+				return;
+			}
+
+			for (int index = 0; index < def.comps.Count; index++)
+			{
+				CompProperties_Power power = def.comps[index] as CompProperties_Power;
+				if (power == null)
+				{
+					continue;
+				}
+
+				if (!trySetPowerConsumption(power, watts))
+				{
+					Log.ErrorOnce(
+						"[RealRim] Water & Pumps: could not set power consumption for " + def.defName
+						+ ". Runtime CompProperties_Power exposes " + power.PowerConsumption.ToString("N1") + " W.",
+						Gen.HashCombineInt(def.defName.GetHashCode(), 0x52415750));
+				}
+				return;
+			}
+		}
+
+		private static bool trySetPowerConsumption(CompProperties_Power power, float watts)
+		{
+			const BindingFlags FLAGS = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+			PropertyInfo property = typeof(CompProperties_Power).GetProperty("PowerConsumption", FLAGS);
+			if (property != null && property.CanWrite)
+			{
+				try
+				{
+					property.SetValue(power, watts, null);
+					return Math.Abs(power.PowerConsumption - watts) <= Math.Max(0.01f, Math.Abs(watts) * 0.001f);
+				}
+				catch
+				{
+				}
+			}
+
+			float current = power.PowerConsumption;
+			FieldInfo[] fields = typeof(CompProperties_Power).GetFields(FLAGS);
+			for (int index = 0; index < fields.Length; index++)
+			{
+				FieldInfo field = fields[index];
+				if (field.IsStatic || field.IsLiteral || field.IsInitOnly || field.FieldType != typeof(float))
+				{
+					continue;
+				}
+
+				float original;
+				try
+				{
+					original = (float)field.GetValue(power);
+				}
+				catch
+				{
+					continue;
+				}
+
+				float probe_delta = Math.Max(1f, Math.Abs(original) * 0.01f);
+				try
+				{
+					field.SetValue(power, original + probe_delta);
+					float sensitivity = (power.PowerConsumption - current) / probe_delta;
+					field.SetValue(power, original);
+
+					if (Math.Abs(sensitivity) < 0.0001f)
+					{
+						continue;
+					}
+
+					float adjusted = original + (watts - current) / sensitivity;
+					field.SetValue(power, adjusted);
+					if (Math.Abs(power.PowerConsumption - watts) <= Math.Max(0.01f, Math.Abs(watts) * 0.001f))
+					{
+						return true;
+					}
+					field.SetValue(power, original);
+				}
+				catch
+				{
+					try
+					{
+						field.SetValue(power, original);
+					}
+					catch
+					{
+					}
+				}
+			}
+
+			return false;
+		}
+
+		private static void addComp(ThingDef def, CompProperties comp)
+		{
+			if (def.comps == null)
+			{
+				def.comps = new List<CompProperties>();
+			}
+			def.comps.Add(comp);
+		}
+
+		private static void removeComp<T>(ThingDef def) where T : CompProperties
+		{
+			if (def.comps != null)
+			{
+				def.comps.RemoveAll(comp => comp is T);
+			}
+		}
+
+		private static void setLabel(string def_name, string label)
+		{
+			ThingDef def = getDef(def_name);
+			if (def != null)
+			{
+				def.label = label;
+			}
+		}
+
+		private static Type findType(string full_name)
+		{
+			System.Reflection.Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+			for (int index = 0; index < assemblies.Length; index++)
+			{
+				Type type = assemblies[index].GetType(full_name, false);
+				if (type != null)
+				{
+					return type;
+				}
+			}
+			return null;
+		}
+
+		private static ThingDef getDef(string def_name)
+		{
+			ThingDef def = DefDatabase<ThingDef>.GetNamedSilentFail(def_name);
+			if (def == null)
+			{
+				Log.Warning("[RealRim] Water & Pumps: DBH ThingDef not found: " + def_name);
+			}
+			return def;
+		}
+	}
+}

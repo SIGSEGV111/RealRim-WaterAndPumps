@@ -1,0 +1,32 @@
+[h1][RealRim] Water & Pumps[/h1]
+
+Physics-oriented replacement for the water, hot-water, heating, sewage and air-conditioning systems in Dubs Bad Hygiene.
+
+[h2]Independent networks[/h2]
+[list]
+[*]Fresh/cold water
+[*]Domestic hot water
+[*]Heating water
+[*]Waste water
+[*]Air-con coolant
+[/list]
+
+[h2]Metric physical accounting[/h2]
+[list]
+[*]Pump flow in L/h and electrical input in W/kW
+[*]Water and wastewater storage in liters
+[*]Sludge in kilograms and 50 g units
+[*]Heat/cooling transfer in kW
+[*]Tank, room and pool temperatures in °C
+[*]Fuel energy based on 50 g chemfuel and 400 g wood units
+[/list]
+
+Includes realistic pump values, long-network flow loss, thermal tanks, boilers, solar/geothermal heating, two heat-pump types, ΔT radiators, phase-change coolant storage, demand-driven air conditioning, detailed pool thermodynamics, body-size-based thirst, trough storage, refillable independent latrines, active-stove kitchen-sink accounting, trait-aware water preferences, automatic pawn sludge extraction, septic infiltration and sewage recovery.
+
+Water sources now carry hidden, persistent pathogen profiles. Contamination mixes by volume through tanks and troughs, drinking applies dose-based disease rolls to pawns and animals, and a powered water-treatment unit removes 99% of pathogens from delivered water.
+
+The mod reuses DBH buildings where practical and redirects verified DBH jobs/callbacks to the new resource networks. This is a clean 1.1 rewrite and is not intended to load 1.0.x saves unchanged.
+
+[b]Required:[/b] Harmony, Dubs Bad Hygiene
+[b]RimWorld:[/b] 1.6
+[b]Author:[/b] SIGSEGV11

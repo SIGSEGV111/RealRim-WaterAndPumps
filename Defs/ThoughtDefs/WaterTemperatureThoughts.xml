@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+	<ThoughtDef>
+		<defName>RealRim_ColdWaterComplaint</defName>
+		<durationDays>0.25</durationDays>
+		<stackLimit>1</stackLimit>
+		<stages>
+			<li>
+				<label>uncomfortably cold water</label>
+				<description>The water was much colder than I wanted.</description>
+				<baseMoodEffect>-3</baseMoodEffect>
+			</li>
+		</stages>
+	</ThoughtDef>
+	<ThoughtDef>
+		<defName>RealRim_HotWaterComplaint</defName>
+		<durationDays>0.25</durationDays>
+		<stackLimit>1</stackLimit>
+		<stages>
+			<li>
+				<label>uncomfortably hot water</label>
+				<description>The water was much hotter than I wanted.</description>
+				<baseMoodEffect>-3</baseMoodEffect>
+			</li>
+		</stages>
+	</ThoughtDef>
+	<ThoughtDef>
+		<defName>RealRim_ColdWaterEnjoyment</defName>
+		<durationDays>0.25</durationDays>
+		<stackLimit>1</stackLimit>
+		<stages>
+			<li>
+				<label>refreshingly cold water</label>
+				<description>The cold water felt invigorating.</description>
+				<baseMoodEffect>4</baseMoodEffect>
+			</li>
+		</stages>
+	</ThoughtDef>
+	<ThoughtDef>
+		<defName>RealRim_HotWaterEnjoyment</defName>
+		<durationDays>0.25</durationDays>
+		<stackLimit>1</stackLimit>
+		<stages>
+			<li>
+				<label>pleasantly hot water</label>
+				<description>The heat of the water felt wonderful.</description>
+				<baseMoodEffect>4</baseMoodEffect>
+			</li>
+		</stages>
+	</ThoughtDef>
+</Defs>

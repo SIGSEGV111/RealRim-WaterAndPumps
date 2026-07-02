@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net472</TargetFramework>
+		<LangVersion>7.3</LangVersion>
+		<Nullable>disable</Nullable>
+		<ImplicitUsings>disable</ImplicitUsings>
+		<EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+		<AssemblyName>RealRim.WaterAndPumps</AssemblyName>
+		<RootNamespace>RealRim.WaterAndPumps</RootNamespace>
+		<Version>1.1.7</Version>
+		<AssemblyVersion>1.1.7.0</AssemblyVersion>
+		<FileVersion>1.1.7.0</FileVersion>
+		<GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<OutputPath>../Assemblies/</OutputPath>
+		<DebugType>portable</DebugType>
+		<DebugSymbols>true</DebugSymbols>
+		<CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+	</PropertyGroup>
+	<ItemGroup>
+		<Compile Include="Core/**/*.cs" />
+		<Compile Include="Integration/**/*.cs" />
+		<Compile Include="Systems/**/*.cs" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Krafs.Rimworld.Ref" Version="1.6.4850" PrivateAssets="all" />
+		<PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net472" Version="1.0.3" PrivateAssets="all" />
+	</ItemGroup>
+</Project>

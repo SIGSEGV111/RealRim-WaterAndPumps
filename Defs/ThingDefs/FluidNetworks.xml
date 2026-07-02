@@ -1,0 +1,92 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<Defs>
+	<ThingDef ParentName="DubsDirtyPipeBase" Name="RealRim_FreshWaterPipe">
+		<thingClass>Building</thingClass>
+		<defName>RealRim_FreshWaterPipe</defName>
+		<label>fresh-water pipe</label>
+		<description>Pipe carrying cold fresh water at approximately 12 °C.</description>
+		<designationCategory>Hygiene</designationCategory>
+		<uiIconPath>DBH/UI/Plumbing</uiIconPath>
+		<graphicData>
+			<texPath>DBH/Things/Building/SewagePipe_Atlas</texPath>
+			<graphicClass>Graphic_Linked</graphicClass>
+			<color>(0.35,0.70,1.00)</color>
+			<linkType>Basic</linkType>
+			<linkFlags><li>Custom1</li></linkFlags>
+		</graphicData>
+		<costList><Steel>1</Steel></costList><researchPrerequisites><li>Plumbing</li></researchPrerequisites>
+		<placeWorkers Inherit="False"><li>RealRim.WaterAndPumps.PlaceWorker_FluidPipe</li></placeWorkers>
+	</ThingDef>
+	<ThingDef ParentName="RealRim_FreshWaterPipe">
+		<defName>RealRim_FreshWaterPipeHidden</defName>
+		<label>fresh-water pipe (hidden)</label>
+		<graphicData><color>(0,0,0,0)</color><shaderType>Transparent</shaderType></graphicData>
+		<statBases><MaxHitPoints>100</MaxHitPoints><WorkToBuild>290</WorkToBuild><Flammability>0</Flammability><Beauty>0</Beauty></statBases>
+	</ThingDef>
+
+	<ThingDef ParentName="DubsDirtyPipeBase" Name="RealRim_HotWaterPipe">
+		<thingClass>Building</thingClass>
+		<defName>RealRim_HotWaterPipe</defName>
+		<label>hot-water pipe</label>
+		<description>Pipe carrying domestic hot water from thermal storage to sinks, showers and baths.</description>
+		<designationCategory>Hygiene</designationCategory>
+		<uiIconPath>DBH/UI/Plumbing</uiIconPath>
+		<graphicData>
+			<texPath>DBH/Things/Building/SewagePipe_Atlas</texPath>
+			<graphicClass>Graphic_Linked</graphicClass>
+			<color>(1.00,0.58,0.20)</color>
+			<linkType>Basic</linkType>
+			<linkFlags><li>Custom2</li></linkFlags>
+		</graphicData>
+		<costList><Steel>1</Steel></costList><researchPrerequisites><li>Plumbing</li></researchPrerequisites>
+		<placeWorkers Inherit="False"><li>RealRim.WaterAndPumps.PlaceWorker_FluidPipe</li></placeWorkers>
+	</ThingDef>
+	<ThingDef ParentName="RealRim_HotWaterPipe">
+		<defName>RealRim_HotWaterPipeHidden</defName>
+		<label>hot-water pipe (hidden)</label>
+		<graphicData><color>(0,0,0,0)</color><shaderType>Transparent</shaderType></graphicData>
+		<statBases><MaxHitPoints>100</MaxHitPoints><WorkToBuild>290</WorkToBuild><Flammability>0</Flammability><Beauty>0</Beauty></statBases>
+	</ThingDef>
+
+	<ThingDef ParentName="DubsDirtyPipeBase" Name="RealRim_HeatingPipe">
+		<thingClass>Building</thingClass>
+		<defName>RealRim_HeatingPipe</defName>
+		<label>heating pipe</label>
+		<description>Closed-loop heating pipe connecting heat sources, thermal tanks, radiators and pools.</description>
+		<designationCategory>Temperature</designationCategory>
+		<uiIconPath>DBH/UI/Plumbing</uiIconPath>
+		<graphicData>
+			<texPath>DBH/Things/Building/SewagePipe_Atlas</texPath>
+			<graphicClass>Graphic_Linked</graphicClass>
+			<color>(0.85,0.20,0.15)</color>
+			<linkType>Basic</linkType>
+			<linkFlags><li>Custom3</li></linkFlags>
+		</graphicData>
+		<costList><Steel>1</Steel></costList><researchPrerequisites><li>CentralHeating</li></researchPrerequisites>
+		<placeWorkers Inherit="False"><li>RealRim.WaterAndPumps.PlaceWorker_FluidPipe</li></placeWorkers>
+	</ThingDef>
+	<ThingDef ParentName="RealRim_HeatingPipe">
+		<defName>RealRim_HeatingPipeHidden</defName>
+		<label>heating pipe (hidden)</label>
+		<graphicData><color>(0,0,0,0)</color><shaderType>Transparent</shaderType></graphicData>
+		<statBases><MaxHitPoints>100</MaxHitPoints><WorkToBuild>290</WorkToBuild><Flammability>0</Flammability><Beauty>0</Beauty></statBases>
+	</ThingDef>
+
+	<ThingDef ParentName="BuildingBase" Name="RealRim_FluidValveBase" Abstract="True">
+		<thingClass>Building</thingClass>
+		<altitudeLayer>Building</altitudeLayer>
+		<passability>Standable</passability>
+		<minifiedDef>MinifiedThing</minifiedDef>
+		<size>(1,1)</size>
+		<rotatable>false</rotatable>
+		<graphicData><texPath>DBH/Things/Building/Valve</texPath><graphicClass>Graphic_Single</graphicClass></graphicData>
+		<statBases><MaxHitPoints>80</MaxHitPoints><WorkToBuild>350</WorkToBuild><Mass>2</Mass></statBases>
+		<costList><Steel>15</Steel></costList>
+		<building><isEdifice>false</isEdifice></building>
+		<comps><li Class="CompProperties_Flickable"/></comps>
+	</ThingDef>
+	<ThingDef ParentName="RealRim_FluidValveBase"><defName>RealRim_FreshWaterValve</defName><label>fresh-water valve</label><designationCategory>Hygiene</designationCategory></ThingDef>
+	<ThingDef ParentName="RealRim_FluidValveBase"><defName>RealRim_HotWaterValve</defName><label>hot-water valve</label><designationCategory>Hygiene</designationCategory></ThingDef>
+	<ThingDef ParentName="RealRim_FluidValveBase"><defName>RealRim_HeatingValve</defName><label>heating valve</label><designationCategory>Temperature</designationCategory></ThingDef>
+	<ThingDef ParentName="RealRim_FluidValveBase"><defName>RealRim_CoolantValve</defName><label>coolant valve</label><designationCategory>Temperature</designationCategory></ThingDef>
+</Defs>

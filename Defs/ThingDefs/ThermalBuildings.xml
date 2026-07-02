@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<Defs>
+	<ThingDef ParentName="BasedHeating"><defName>RealRim_HeatingTank</defName><label>heating-water buffer tank</label><description>A 600 L buffer tank for the closed heating-water circuit. It stores heat from boilers and heat pumps for radiators, pools and domestic-hot-water heat exchangers.</description><thingClass>Building</thingClass><designationCategory>Temperature</designationCategory><graphicData><texPath>DBH/Things/Building/Heating/Boiler</texPath><graphicClass>Graphic_Single</graphicClass><color>(0.82,0.22,0.15)</color><drawSize>(1,2)</drawSize></graphicData><size>(1,1)</size><rotatable>false</rotatable><blockWind>true</blockWind><costList><Steel>75</Steel><ComponentIndustrial>1</ComponentIndustrial></costList><statBases><MaxHitPoints>350</MaxHitPoints><WorkToBuild>1200</WorkToBuild><Mass>50</Mass><Beauty>-10</Beauty></statBases><researchPrerequisites><li>CentralHeating</li></researchPrerequisites></ThingDef><ThingDef ParentName="BasedHeating">
+		<defName>RealRim_CoolantTank</defName>
+		<label>air-con coolant tank</label>
+		<description>A 600 L phase-change water tank storing cooling energy for the air-conditioning network.</description>
+		<thingClass>Building</thingClass>
+		<designationCategory>Temperature</designationCategory>
+		<graphicData><texPath>DBH/Things/Building/Heating/Boiler</texPath><graphicClass>Graphic_Single</graphicClass><color>(0.55,0.80,1.00)</color><drawSize>(1,2)</drawSize></graphicData>
+		<size>(1,1)</size><rotatable>false</rotatable><blockWind>true</blockWind>
+		<costList><Steel>75</Steel><ComponentIndustrial>1</ComponentIndustrial></costList>
+		<statBases><MaxHitPoints>350</MaxHitPoints><WorkToBuild>1200</WorkToBuild><Mass>50</Mass><Beauty>-10</Beauty></statBases>
+		<researchPrerequisites><li>MultiSplitAirCon</li></researchPrerequisites>
+	</ThingDef>
+
+	<ThingDef ParentName="BasedHeating" Name="RealRim_HeatPumpBase" Abstract="True">
+		<thingClass>Building</thingClass>
+		<designationCategory>Temperature</designationCategory>
+		<graphicData><texPath>DBH/Things/Building/Heating/Aircon</texPath><graphicClass>Graphic_Single</graphicClass><drawSize>(1,1)</drawSize></graphicData>
+		<size>(1,1)</size><rotatable>false</rotatable><blockWind>false</blockWind><pathCost>8</pathCost>
+		<costList><Steel>120</Steel><ComponentIndustrial>5</ComponentIndustrial></costList>
+		<statBases><MaxHitPoints>160</MaxHitPoints><WorkToBuild>2400</WorkToBuild><Mass>90</Mass></statBases>
+		<comps>
+			<li Class="CompProperties_Power"><compClass>CompPowerTrader</compClass><basePowerConsumption>4500</basePowerConsumption></li>
+			<li Class="CompProperties_Flickable"/><li Class="CompProperties_Breakdownable"/>
+		</comps>
+	</ThingDef>
+	<ThingDef ParentName="RealRim_HeatPumpBase">
+		<defName>RealRim_AirToWaterHeatPump</defName><label>air-to-water heat pump</label>
+		<description>A commercial air-source heat pump that transfers heat from the surrounding air to the heating-water network. It also cools the room when installed indoors and stops below its operating temperature limit.</description>
+		<researchPrerequisites><li>CentralHeating</li><li>MultiSplitAirCon</li></researchPrerequisites>
+	</ThingDef>
+	<ThingDef ParentName="RealRim_HeatPumpBase">
+		<defName>RealRim_CoolantToWaterHeatPump</defName><label>coolant-to-water heat pump</label>
+		<description>Transfers recovered heat from the air-conditioning coolant network into the heating-water network.</description>
+		<researchPrerequisites><li>CentralHeating</li><li>MultiSplitAirCon</li></researchPrerequisites>
+	</ThingDef>
+</Defs>

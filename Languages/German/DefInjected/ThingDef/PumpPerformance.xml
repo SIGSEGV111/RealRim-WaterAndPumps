@@ -1,0 +1,5 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<LanguageData>
+	<ElectricPump.description>Eine kompakte elektrische Pumpe mit 250 W, die vor Verlusten in langen Rohrnetzen bis zu 1.200 L/h fördert.</ElectricPump.description>
+	<PumpingStation.description>Eine industrielle Pumpstation mit 10 kW, die vor Verlusten in langen Rohrnetzen bis zu 50.000 L/h fördert.</PumpingStation.description>
+<WindPump.description>Eine windbetriebene Pumpe mit bis zu 1.500 L/h bei ungehindertem Wind. Bäume, Gebäude und Dächer im Windpfad verringern oder stoppen die Förderleistung.</WindPump.description></LanguageData>

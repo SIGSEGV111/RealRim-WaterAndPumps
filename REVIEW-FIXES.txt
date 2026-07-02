@@ -1,0 +1,12 @@
+Version 1.1.7 review notes
+
+- The sink log warning was caused by CompFixture returning a translated status string with a trailing newline when the reason field was empty. All fixture status text is now trimmed.
+- New pipes are steel-only because the replacement defs explicitly use `<costList><Steel>1</Steel></costList>`. This was a deliberate replacement-def choice, not a DBH constraint; the material requirement remains unchanged in 1.1.7.
+- DBH CompPipe remains only on fixtures/processors that actually use the waste-water network. It is removed from tanks, pumps, thermal equipment, pools, troughs and latrines. RealRim draws independent colored network overlays and connection stubs for every network.
+- Warm domestic water below the fixture target now remains warm instead of being discarded and replaced by a 12 °C display value.
+- DBH CompWaterFillable inspection output is suppressed only for the RealRim latrine, removing its meaningless negative refill-time suffix.
+- Pump thresholds and enable state are persisted per pump.
+- Hot-water and heating storage are separate. The domestic tank has a one-way heating-side exchanger and a fresh-water feed; the new heating buffer tank is the only bulk heating storage.
+- Heating-pipe thermal mass was not added because correct split/merge persistence is a significant network-state change rather than a low-cost addition.
+- The wind pump retains DBH CompWindPump for its propeller, wind-path cells, roof/tree obstruction and PumpPercent output.
+- Pool flowRate and fuel fields are synchronized with the RealRim pool model so DBH controls and graphics remain useful without restoring DBH physics.

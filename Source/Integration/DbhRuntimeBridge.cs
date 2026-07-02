@@ -16,6 +16,7 @@ namespace RealRim.WaterAndPumps
 		private const string HARMONY_ID = "sigsegv11.realrim.water.physics-replacement";
 		private const string THIRST_NEED_DEF = "DBHThirst";
 		private const string HYGIENE_NEED_DEF = "Hygiene";
+		private const string BLADDER_NEED_DEF = "Bladder";
 		private const string SWIMMING_JOB_DEF = "DBHGoSwimming";
 		private const string SLUDGE_DEF_NAME = "FecalSludge";
 		private const float DRINK_NEED_PER_TICK = 0.006f;
@@ -98,11 +99,13 @@ namespace RealRim.WaterAndPumps
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.JobDriver_DrinkFromGround", "<MakeNewToils>b__1_2", nameof(groundDrinkFinishedPrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.JobDriver_washHands", "<MakeNewToils>b__3_3", nameof(washHandsTickPrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.JobDriver_emptyLatrine", "<MakeNewToils>b__1_0", nameof(emptyLatrinePrefix));
+				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.JobDriver_takeShower+<>c__DisplayClass4_0", "<MakeNewToils>b__1", nameof(requiredNeedConditionPrefix));
+				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.JobDriver_UseToilet", "<MakeNewToils>b__1_1", nameof(requiredNeedConditionPrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.JobDriver_GoSwimming", "swimticker", nameof(swimTickerPostfix), true);
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.JobDriver_GoSwimming", "Finishac", nameof(poolSwimmingFinishPostfix), true);
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "Verse.AI.Toils_Recipe+<>c__DisplayClass2_0", "<DoRecipeWork>b__2", nameof(recipeWorkTickPrefix));
 
-				Log.Message("[RealRim] Water & Pumps 1.1.44: redirected " + patched_methods
+				Log.Message("[RealRim] Water & Pumps 1.1.45: redirected " + patched_methods
 					+ " DBH runtime methods to RealRim physics.");
 			}
 			catch (Exception exception)
@@ -567,6 +570,49 @@ namespace RealRim.WaterAndPumps
 			{
 				clean_method.Invoke(hygiene, new object[] { HAND_WASH_HYGIENE_PER_TICK });
 			}
+			return false;
+		}
+
+		private static bool requiredNeedConditionPrefix(object __instance, MethodBase __originalMethod, ref JobCondition __result)
+		{
+			string declaring_type_name = __originalMethod?.DeclaringType?.FullName ?? string.Empty;
+			string need_def_name;
+			if (declaring_type_name.Contains("JobDriver_takeShower"))
+			{
+				need_def_name = HYGIENE_NEED_DEF;
+			}
+			else if (declaring_type_name.Contains("JobDriver_UseToilet"))
+			{
+				need_def_name = BLADDER_NEED_DEF;
+			}
+			else
+			{
+				return true;
+			}
+
+			object driver_instance = __instance;
+			if (!(driver_instance is JobDriver))
+			{
+				FieldInfo outer_driver_field = __instance == null
+					? null
+					: getField(__instance.GetType(), "<>4__this");
+				driver_instance = outer_driver_field?.GetValue(__instance);
+			}
+
+			FieldInfo pawn_field = driver_instance == null
+				? null
+				: getField(driver_instance.GetType(), "pawn");
+			Pawn pawn = pawn_field?.GetValue(driver_instance) as Pawn;
+			NeedDef need_def = DefDatabase<NeedDef>.GetNamedSilentFail(need_def_name);
+			Need need = pawn?.needs == null || need_def == null
+				? null
+				: pawn.needs.TryGetNeed(need_def);
+			if (need != null)
+			{
+				return true;
+			}
+
+			__result = JobCondition.Incompletable;
 			return false;
 		}
 

@@ -1,4 +1,4 @@
-# Known limitations — 1.1.44
+# Known limitations — 1.1.45
 
 1. **Kitchen-sink resource failures**
    - Stove integration uses only RimWorld's existing `CompAffectedByFacilities` link. No proximity or room-based fallback is used.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.45 — DBH shower and toilet job null-safety
+
+- Fixed two `NullReferenceException` errors from DBH shower and toilet fail conditions when a saved job resumes for a pawn whose Hygiene or Bladder need is absent.
+- Added narrow Harmony guards around the two failing DBH-generated callbacks. Valid jobs retain DBH's original completion logic; invalid stale jobs end as incompletable instead of repeatedly erroring.
+- Updated release metadata and runtime labels to 1.1.45.
+
 ## 1.1.44 — Swimming-pool pathfinding avoidance
 
 - Made the DBH swimming-pool building and its pool-water terrain effectively impassable to ordinary route selection by assigning a very high path cost.

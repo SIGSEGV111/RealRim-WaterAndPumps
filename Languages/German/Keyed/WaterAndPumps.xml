@@ -143,4 +143,30 @@ Bereitschafts-Wärmeverlust: {5} kW</RealRim_HotWaterTankStatus><RealRim_WaterPu
 	<RealRim_HeatingReportHotWaterTankDetails>{0}, Wärmeentnahme {1} kW, Bereitschaftsverlust {2} kW</RealRim_HeatingReportHotWaterTankDetails>
 	<RealRim_HeatingReportConsumerDetails>{0} kW</RealRim_HeatingReportConsumerDetails>
 	<RealRim_HeatingReportPoolDetails>{0}, Wärmeentnahme {1} kW</RealRim_HeatingReportPoolDetails>
+
+	<RealRim_IrrigationSprinklerDescription>Bewässert jeden Morgen fruchtbaren Boden aus dem Frischwassernetz und füllt den vorübergehenden Bewässerungsbonus von DBH mit dem ursprünglichen einstündigen Impulszyklus auf. Der Wasserverbrauch richtet sich nach der ungehinderten Sprühfläche: 5 L/m² je Bewässerung, beziehungsweise 725 L bei vollen 145 m² Reichweite; nur fruchtbare Felder erhalten den Fruchtbarkeitsbonus von DBH. Der ursprüngliche rotierende Sprüheffekt und das Regnergeräusch bleiben erhalten.</RealRim_IrrigationSprinklerDescription>
+	<RealRim_FireSprinklerDescription>Wird bei Feuer oder extremer Hitze automatisch ausgelöst und kann auch manuell aktiviert werden. Während des Sprühens entnimmt er fortlaufend Wasser aus dem Frischwassernetz und kühlt überhitzte Innenräume. Der Auslegungsvolumenstrom richtet sich nach der freien geschützten Fläche und beträgt bei vollen 145 m² höchstens 80 L/min.</RealRim_FireSprinklerDescription>
+	<RealRim_SprinklerRadiusDown>Sprinklerradius verkleinern</RealRim_SprinklerRadiusDown>
+	<RealRim_SprinklerRadiusDownDesc>Verkleinert den Sprinklerradius um 1 m. Wasserbedarf und geschützte Fläche werden für den neuen Radius neu berechnet.</RealRim_SprinklerRadiusDownDesc>
+	<RealRim_SprinklerRadiusUp>Sprinklerradius vergrößern</RealRim_SprinklerRadiusUp>
+	<RealRim_SprinklerRadiusUpDesc>Vergrößert den Sprinklerradius um 1 m. Wasserbedarf und geschützte Fläche werden für den neuen Radius neu berechnet.</RealRim_SprinklerRadiusUpDesc>
+	<RealRim_SprinklerAlreadyHere>Auf diesem Feld befindet sich bereits ein Sprinkler.</RealRim_SprinklerAlreadyHere>
+	<RealRim_SprinklerNoEligibleCells>Im gewählten Radius befindet sich kein ungehindert erreichbarer fruchtbarer Boden.</RealRim_SprinklerNoEligibleCells>
+	<RealRim_SprinklerIrrigationPartial>Die Bewässerung wurde nur auf {0} von {1} Feldern angewendet, weil das Bewässerungsraster von DBH keine weiteren Aktualisierungen annahm.</RealRim_SprinklerIrrigationPartial>
+	<RealRim_SprinklerIrrigationUnavailable>Das Bewässerungsraster von DBH ist nicht verfügbar.</RealRim_SprinklerIrrigationUnavailable>
+	<RealRim_IrrigationSprinklerStatus>Sprinkler: {0}
+Radius: {1} m
+Sprühfläche: {2} m²
+Bewässerte fruchtbare Felder: {3}
+Tägliche Wassermenge: {4} L ({5} L/m²)
+Letzte Bewässerung: {6} L
+Gesamter Wasserverbrauch: {7} L
+{8}</RealRim_IrrigationSprinklerStatus>
+	<RealRim_FireSprinklerStatus>Sprinkler: {0}
+Radius: {1} m
+Geschützte Fläche: {2} m²
+Auslegungsvolumenstrom: {3} L/min
+Aktueller Volumenstrom: {4} L/min
+Gesamter Wasserverbrauch: {5} L
+{6}</RealRim_FireSprinklerStatus>
 </LanguageData>

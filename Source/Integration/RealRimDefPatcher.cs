@@ -25,6 +25,7 @@ namespace RealRim.WaterAndPumps
 			runPatchPhase("heating", patchHeating, ref failed_phases);
 			runPatchPhase("cooling", patchCooling, ref failed_phases);
 			runPatchPhase("fixtures", patchFixtures, ref failed_phases);
+			runPatchPhase("sprinklers", patchSprinklers, ref failed_phases);
 			runPatchPhase("swimming recreation", patchSwimmingRecreation, ref failed_phases);
 			runPatchPhase("kitchen sink", patchKitchenSink, ref failed_phases);
 			runPatchPhase("waste processing", patchWaste, ref failed_phases);
@@ -32,11 +33,11 @@ namespace RealRim.WaterAndPumps
 
 			if (failed_phases == 0)
 			{
-				Log.Message("[RealRim] Water & Pumps 1.1.35: replaced DBH water, heating, cooling and sewage definitions.");
+				Log.Message("[RealRim] Water & Pumps 1.1.38: replaced DBH water, heating, cooling, sprinkler and sewage definitions.");
 			}
 			else
 			{
-				Log.Error("[RealRim] Water & Pumps 1.1.35: definition replacement completed with "
+				Log.Error("[RealRim] Water & Pumps 1.1.38: definition replacement completed with "
 					+ failed_phases + " failed phase(s). Later phases were still applied; see the preceding errors.");
 			}
 		}
@@ -251,6 +252,47 @@ namespace RealRim.WaterAndPumps
 
 			setTrough("WaterTrough", 200f, 500f);
 			setTrough("PetWaterBowl", 12f, 60f);
+		}
+
+		private static void patchSprinklers()
+		{
+			setSprinkler("IrrigationSprinkler", SprinklerKind.Irrigation);
+			setSprinkler("FireSprinkler", SprinklerKind.FireSuppression);
+
+			JobDef trigger_job = DefDatabase<JobDef>.GetNamedSilentFail("TriggerFireSprinkler");
+			if (trigger_job == null)
+			{
+				throw new InvalidOperationException("TriggerFireSprinkler JobDef was not loaded.");
+			}
+			trigger_job.driverClass = typeof(JobDriver_TriggerSprinkler);
+		}
+
+		private static void setSprinkler(string def_name, SprinklerKind kind)
+		{
+			ThingDef def = getDef(def_name);
+			if (def == null)
+			{
+				throw new InvalidOperationException(def_name + " ThingDef was not loaded.");
+			}
+
+			removeReplacementComps(def, false);
+			addNode(def, false, FluidNetworkType.FreshWater);
+			addComp(def, new CompProperties_Sprinkler
+			{
+				kind = kind,
+			});
+
+			def.description = (kind == SprinklerKind.Irrigation
+				? "RealRim_IrrigationSprinklerDescription"
+				: "RealRim_FireSprinklerDescription").Translate().ToString();
+
+			if (def.placeWorkers == null)
+			{
+				def.placeWorkers = new List<Type>();
+			}
+			def.placeWorkers.RemoveAll(type => type == typeof(PlaceWorker_Sprinkler)
+				|| (type != null && type.FullName == "DubsBadHygiene.PlaceWorker_Sprinkler"));
+			def.placeWorkers.Insert(0, typeof(PlaceWorker_Sprinkler));
 		}
 
 		private static void patchSwimmingRecreation()

@@ -4,7 +4,7 @@ Physics-oriented replacement layer for **Dubs Bad Hygiene** on RimWorld 1.6.
 
 - Author: SIGSEGV11
 - Package ID: `sigsegv11.realrim.water`
-- Version: 1.1.35
+- Version: 1.1.38
 - Required: Harmony, Dubs Bad Hygiene
 
 This is a clean subsystem replacement. Save compatibility with versions 1.0.x is not intended. Existing DBH `ThingDef` identifiers are reused where practical so DBH buildings can still be loaded and constructed.
@@ -115,6 +115,17 @@ The DBH pool is modeled as:
 DBH's existing pool fill-flow controls now directly scale the RealRim refill rate, and the original water-surface graphic is synchronized to the physical 65,000 L volume.
 
 Pawns can use a pool only above 90% fill and within their ungarbed comfortable-temperature range plus a 5 °C allowance. Optional `VTE_ColdInclined` and `VTE_HeatInclined` traits extend the corresponding comfort limit by 10 °C and provide positive cold/hot-water mood effects. Pool selection prefers the pawn's temperature preference and then distance.
+
+## Sprinklers
+
+DBH's irrigation and fire-sprinkler buildings are retained, including their graphics, research, rotating spray fleck, sound and irrigation-fertility overlay, but their old plumbing and runtime components are replaced.
+
+Both sprinkler types connect to the fresh-water network and expose an adjustable 1.9–6.9 m radius. Walls block both the effective area and the associated water demand.
+
+- **Irrigation sprinkler:** runs once during the local 05:00 hour and replenishes DBH's temporary irrigation fertility bonus on unobstructed fertile cells using the original repeated pulse cadence. It uses 5 L/m² over the unobstructed spray footprint per daily cycle, equivalent to a 5 mm water application. A full 145 m² circle therefore consumes 725 L once per morning; the DBH fertility bonus itself is applied only to fertile cells. The spray animation and fertility pulses continue for one in-game hour (2,500 ticks) without repeatedly charging the network. The original command for creating a growing zone matching the irrigated area is retained.
+- **Fire sprinkler:** detects fire anywhere in its unobstructed protected area or activates above 100 °C. It can also be triggered manually. Flow follows a constant area density and reaches 80 L/min over the full 145 m² radius; water is drawn for each 60-tick accounting interval using the mod's 1.44 in-world seconds per tick, and suppression stops when the fresh-water network cannot supply the next interval. Indoors, the spray retains DBH's emergency cooling behavior so the 100 °C trigger can clear instead of running indefinitely.
+
+The inspect panel reports actual unobstructed coverage, calculated demand or design flow, current flow, the last irrigation volume and cumulative water use.
 
 ## Air conditioning
 

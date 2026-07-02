@@ -16,5 +16,7 @@ namespace RealRim.WaterAndPumps
 			"RealRim/UI/ConfigurePump");
 		public static readonly Texture2D configure_heat_source = ContentFinder<Texture2D>.Get(
 			"RealRim/UI/ConfigureHeatSource");
+		public static readonly Texture2D growing_zone = ContentFinder<Texture2D>.Get(
+			"UI/Designators/ZoneCreate_Growing");
 	}
 }

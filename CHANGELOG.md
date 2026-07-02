@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.1.38 — Sprinkler compile fix
+
+- Fixed the DBH irrigation-grid reflection signature check by qualifying `MapMeshFlagDef` with its `RimWorld` namespace.
+- No runtime sprinkler behavior or water-use values changed.
+- Updated release metadata and runtime labels to 1.1.38.
+
+## 1.1.37 — Fresh-water sprinkler integration
+
+- Replaced DBH's irrigation- and fire-sprinkler runtime components with RealRim implementations connected to the fresh-water network.
+- Irrigation now consumes one daily volume based on the unobstructed spray footprint: 5 L/m², up to 725 L for the full 145 m² radius. It drives DBH's existing irrigation fertility grid with the original repeated pulse cadence while charging the daily water volume only once.
+- Fire sprinklers now consume water continuously at a constant application density, up to 80 L/min at maximum radius. Flow conversion uses the mod's 1.44 in-world seconds per game tick, and spraying stops immediately when the network cannot supply the next interval.
+- Fire triggering checks every unobstructed protected cell for fire and retains DBH's 100 °C emergency trigger, indoor cooling behavior and manual-use job.
+- Reimplemented radius controls, placement checks, matching growing-zone creation and manual triggering while retaining DBH's building graphics, research, rotating spray fleck, looping sprinkler sound and irrigation overlay.
+- Added live English and German sprinkler status text with coverage, demand, current flow and cumulative water use.
+- Updated release metadata and runtime labels to 1.1.37.
+
 ## 1.1.36 — Kitchen-sink multi-stove status fix
 
 - The kitchen sink now reads its total linked-stove count from RimWorld's authoritative `CompFacility.LinkedBuildings` list.

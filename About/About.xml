@@ -3,7 +3,7 @@
 	<name>[RealRim] Water &amp; Pumps</name>
 	<author>SIGSEGV11</author>
 	<packageId>sigsegv11.realrim.water</packageId>
-	<modVersion>1.1.36</modVersion>
+	<modVersion>1.1.38</modVersion>
 	<supportedVersions>
 		<li>1.6</li>
 	</supportedVersions>
@@ -23,5 +23,5 @@
 		<li>brrainz.harmony</li>
 		<li>Dubwise.DubsBadHygiene</li>
 	</loadAfter>
-	<description>Physics-oriented replacement for Dubs Bad Hygiene water, hot-water, heating, sewage and air-conditioning networks. Reuses DBH buildings while providing separate fresh-water, hot-water, heating-water, waste-water and coolant networks with metric storage, flow, heat, waste and waterborne-pathogen accounting.</description>
+	<description>Physics-oriented replacement for Dubs Bad Hygiene water, hot-water, heating, sewage, sprinkler and air-conditioning systems. Reuses DBH buildings while providing separate fresh-water, hot-water, heating-water, waste-water and coolant networks with metric storage, flow, heat, waste and waterborne-pathogen accounting.</description>
 </ModMetaData>

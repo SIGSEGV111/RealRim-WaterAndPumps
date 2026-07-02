@@ -7,9 +7,9 @@
 		<EnableDefaultCompileItems>false</EnableDefaultCompileItems>
 		<AssemblyName>RealRim.WaterAndPumps</AssemblyName>
 		<RootNamespace>RealRim.WaterAndPumps</RootNamespace>
-		<Version>1.1.36</Version>
-		<AssemblyVersion>1.1.36.0</AssemblyVersion>
-		<FileVersion>1.1.36.0</FileVersion>
+		<Version>1.1.38</Version>
+		<AssemblyVersion>1.1.38.0</AssemblyVersion>
+		<FileVersion>1.1.38.0</FileVersion>
 		<GenerateAssemblyInfo>true</GenerateAssemblyInfo>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<OutputPath>../Assemblies/</OutputPath>

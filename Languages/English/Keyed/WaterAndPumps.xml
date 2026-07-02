@@ -143,4 +143,30 @@ Standing heat loss: {5} kW</RealRim_HotWaterTankStatus><RealRim_WaterPumpAutomat
 	<RealRim_HeatingReportHotWaterTankDetails>{0}, heat draw {1} kW, standing loss {2} kW</RealRim_HeatingReportHotWaterTankDetails>
 	<RealRim_HeatingReportConsumerDetails>{0} kW</RealRim_HeatingReportConsumerDetails>
 	<RealRim_HeatingReportPoolDetails>{0}, heat draw {1} kW</RealRim_HeatingReportPoolDetails>
+
+	<RealRim_IrrigationSprinklerDescription>Waters fertile ground once every morning through the fresh-water network and replenishes DBH's temporary irrigation fertility bonus with the original one-hour pulse cycle. Water use is based on the unobstructed spray footprint: 5 L/m² per cycle, or 725 L for the full 145 m² radius; only fertile cells receive DBH's fertility bonus. The original rotating spray and sprinkler sound are retained.</RealRim_IrrigationSprinklerDescription>
+	<RealRim_FireSprinklerDescription>Automatically activates when fire or extreme heat is detected and can also be triggered manually. It draws continuously from the fresh-water network while spraying and cools overheated indoor rooms. Design flow is proportional to the unobstructed protected area, up to 80 L/min at the full 145 m² radius.</RealRim_FireSprinklerDescription>
+	<RealRim_SprinklerRadiusDown>Reduce sprinkler radius</RealRim_SprinklerRadiusDown>
+	<RealRim_SprinklerRadiusDownDesc>Reduce the sprinkler radius by 1 m. Water demand and protected area are recalculated from the new radius.</RealRim_SprinklerRadiusDownDesc>
+	<RealRim_SprinklerRadiusUp>Increase sprinkler radius</RealRim_SprinklerRadiusUp>
+	<RealRim_SprinklerRadiusUpDesc>Increase the sprinkler radius by 1 m. Water demand and protected area are recalculated from the new radius.</RealRim_SprinklerRadiusUpDesc>
+	<RealRim_SprinklerAlreadyHere>A sprinkler already occupies this tile.</RealRim_SprinklerAlreadyHere>
+	<RealRim_SprinklerNoEligibleCells>No unobstructed fertile ground is within the selected radius.</RealRim_SprinklerNoEligibleCells>
+	<RealRim_SprinklerIrrigationPartial>Irrigation was applied to only {0} of {1} cells because DBH's irrigation grid stopped accepting updates.</RealRim_SprinklerIrrigationPartial>
+	<RealRim_SprinklerIrrigationUnavailable>DBH's irrigation fertility grid is unavailable.</RealRim_SprinklerIrrigationUnavailable>
+	<RealRim_IrrigationSprinklerStatus>Sprinkler: {0}
+Radius: {1} m
+Spray area: {2} m²
+Fertile cells irrigated: {3}
+Daily application: {4} L ({5} L/m²)
+Last irrigation: {6} L
+Total water used: {7} L
+{8}</RealRim_IrrigationSprinklerStatus>
+	<RealRim_FireSprinklerStatus>Sprinkler: {0}
+Radius: {1} m
+Protected area: {2} m²
+Design flow: {3} L/min
+Current flow: {4} L/min
+Total water used: {5} L
+{6}</RealRim_FireSprinklerStatus>
 </LanguageData>

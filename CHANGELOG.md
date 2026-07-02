@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.36 — Kitchen-sink multi-stove status fix
+
+- The kitchen sink now reads its total linked-stove count from RimWorld's authoritative `CompFacility.LinkedBuildings` list.
+- Active cooking is tracked separately for each linked stove over a short rolling activity window instead of requiring every stove callback to occur during the same game tick.
+- The inspect text now reports linked and active stoves separately. Current water load and captured-food-solids rates update from the active count, so two operating stoves report 24 L/h and 150 g/h.
+- Updated release metadata and runtime version labels to 1.1.36.
+
 ## 1.1.35 — Use Odyssey's actual Job swimming-pose flag
 
 - Corrected the Odyssey integration after decoding `JobDriver_GoSwimming.CheckForSwimmingPose()`.

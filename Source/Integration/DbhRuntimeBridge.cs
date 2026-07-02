@@ -102,7 +102,7 @@ namespace RealRim.WaterAndPumps
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.JobDriver_GoSwimming", "Finishac", nameof(poolSwimmingFinishPostfix), true);
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "Verse.AI.Toils_Recipe+<>c__DisplayClass2_0", "<DoRecipeWork>b__2", nameof(recipeWorkTickPrefix));
 
-				Log.Message("[RealRim] Water & Pumps 1.1.35: redirected " + patched_methods
+				Log.Message("[RealRim] Water & Pumps 1.1.36: redirected " + patched_methods
 					+ " DBH runtime methods to RealRim physics.");
 			}
 			catch (Exception exception)
@@ -620,7 +620,7 @@ namespace RealRim.WaterAndPumps
 			CompFixture kitchen_sink = findFacilityLinkedKitchenSink(work_table);
 			if (kitchen_sink != null)
 			{
-				kitchen_sink.recordLinkedStoveUse(delta * RealPhysics.SECONDS_PER_GAME_TICK);
+				kitchen_sink.recordLinkedStoveUse(work_table, delta * RealPhysics.SECONDS_PER_GAME_TICK);
 			}
 			return true;
 		}

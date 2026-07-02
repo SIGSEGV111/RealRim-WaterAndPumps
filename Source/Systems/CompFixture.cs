@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -25,12 +26,12 @@ namespace RealRim.WaterAndPumps
 	public sealed class CompFixture : ThingComp
 	{
 		private const int THOUGHT_COOLDOWN_TICKS = 2500;
+		private const int STOVE_ACTIVITY_TIMEOUT_TICKS = 120;
 
 		public float last_water_temperature_c = RealPhysics.COLD_WATER_TEMPERATURE_C;
 		public float total_water_used_liters;
 		public string last_reason = string.Empty;
-		public int last_stove_activity_tick = -999999;
-		public int active_stove_count;
+		private readonly Dictionary<int, int> stove_activity_ticks = new Dictionary<int, int>();
 		private int last_thought_tick = -999999;
 		private int last_thought_pawn_id = -1;
 
@@ -59,12 +60,12 @@ namespace RealRim.WaterAndPumps
 				.TrimEnd('\r', '\n', ' ', '\t');
 			if (Props.kitchen_sink)
 			{
-				int current_tick = Find.TickManager?.TicksGame ?? 0;
-				int stove_count = current_tick - last_stove_activity_tick <= 120 ? active_stove_count : 0;
+				getKitchenSinkStoveCounts(out int linked_stove_count, out int active_stove_count);
 				string kitchen_status = "RealRim_KitchenSinkStatus".Translate(
-					stove_count,
-					(stove_count * Props.linked_stove_water_liters_per_hour).ToString("N1"),
-					(stove_count * Props.linked_stove_sludge_kg_per_hour * 1000f).ToString("N0"))
+					linked_stove_count,
+					active_stove_count,
+					(active_stove_count * Props.linked_stove_water_liters_per_hour).ToString("N1"),
+					(active_stove_count * Props.linked_stove_sludge_kg_per_hour * 1000f).ToString("N0"))
 					.ToString()
 					.TrimEnd('\r', '\n', ' ', '\t');
 				if (!kitchen_status.NullOrEmpty())
@@ -178,20 +179,15 @@ namespace RealRim.WaterAndPumps
 			return true;
 		}
 
-		public bool recordLinkedStoveUse(float elapsed_seconds)
+		public bool recordLinkedStoveUse(Building_WorkTable stove, float elapsed_seconds)
 		{
-			if (!Props.kitchen_sink || elapsed_seconds <= 0f)
+			if (!Props.kitchen_sink || stove == null || elapsed_seconds <= 0f)
 			{
 				return false;
 			}
 
 			int current_tick = Find.TickManager?.TicksGame ?? 0;
-			if (current_tick != last_stove_activity_tick)
-			{
-				last_stove_activity_tick = current_tick;
-				active_stove_count = 0;
-			}
-			active_stove_count++;
+			stove_activity_ticks[stove.thingIDNumber] = current_tick;
 
 			float water_liters = Props.linked_stove_water_liters_per_hour * elapsed_seconds / 3600f;
 			float sludge_kg = Props.linked_stove_sludge_kg_per_hour * elapsed_seconds / 3600f;
@@ -207,6 +203,36 @@ namespace RealRim.WaterAndPumps
 				sludge_kg,
 				false,
 				out _);
+		}
+
+		private void getKitchenSinkStoveCounts(out int linked_stove_count, out int active_stove_count)
+		{
+			linked_stove_count = 0;
+			active_stove_count = 0;
+
+			CompFacility facility = parent.TryGetComp<CompFacility>();
+			List<Thing> linked_buildings = facility?.LinkedBuildings;
+			if (linked_buildings == null)
+			{
+				return;
+			}
+
+			int current_tick = Find.TickManager?.TicksGame ?? 0;
+			for (int index = 0; index < linked_buildings.Count; index++)
+			{
+				Building_WorkTable stove = linked_buildings[index] as Building_WorkTable;
+				if (stove == null || stove.Destroyed)
+				{
+					continue;
+				}
+
+				linked_stove_count++;
+				if (stove_activity_ticks.TryGetValue(stove.thingIDNumber, out int activity_tick)
+					&& current_tick - activity_tick <= STOVE_ACTIVITY_TIMEOUT_TICKS)
+				{
+					active_stove_count++;
+				}
+			}
 		}
 
 		public WaterSample drawDrinkingWaterSample(float requested_liters)

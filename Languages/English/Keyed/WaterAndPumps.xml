@@ -95,9 +95,10 @@ Status entries: Pool water is the current volume and fill percentage. Water temp
 	<RealRim_ReasonNoHotWater>No sufficiently hot water is connected; cold water was used.</RealRim_ReasonNoHotWater>
 	<RealRim_DuplicateFluidPipe>A {0} pipe already occupies this tile.</RealRim_DuplicateFluidPipe>
 	<RealRim_ReasonNoCoolantHeatCapacity>The coolant tank cannot absorb more extracted heat.</RealRim_ReasonNoCoolantHeatCapacity>
-	<RealRim_KitchenSinkStatus>Active linked stoves: {0}
-Current sink load: {1} L/h
-Captured food solids: {2} g/h</RealRim_KitchenSinkStatus>
+	<RealRim_KitchenSinkStatus>Linked stoves: {0}
+Active linked stoves: {1}
+Current sink load: {2} L/h
+Captured food solids: {3} g/h</RealRim_KitchenSinkStatus>
 	<RealRim_WaterPumpSources>Connected water sources: {0}</RealRim_WaterPumpSources>
 	<RealRim_WaterSourceStatus>Water source: {0}</RealRim_WaterSourceStatus>
 	<RealRim_SourceRegularWell>regular well</RealRim_SourceRegularWell>

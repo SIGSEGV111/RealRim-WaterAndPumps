@@ -33,11 +33,11 @@ namespace RealRim.WaterAndPumps
 
 			if (failed_phases == 0)
 			{
-				Log.Message("[RealRim] Water & Pumps 1.1.40: replaced DBH water, heating, cooling, sprinkler and sewage definitions.");
+				Log.Message("[RealRim] Water & Pumps 1.1.43: replaced DBH water, heating, cooling, sprinkler and sewage definitions.");
 			}
 			else
 			{
-				Log.Error("[RealRim] Water & Pumps 1.1.40: definition replacement completed with "
+				Log.Error("[RealRim] Water & Pumps 1.1.43: definition replacement completed with "
 					+ failed_phases + " failed phase(s). Later phases were still applied; see the preceding errors.");
 			}
 		}
@@ -463,6 +463,22 @@ namespace RealRim.WaterAndPumps
 
 		private static void patchWaste()
 		{
+			ThingDef outlet = preparePassiveBuilding("SewageOutlet", true);
+			if (outlet != null)
+			{
+				addNode(outlet, false, FluidNetworkType.WasteWater);
+				addComp(outlet, new CompProperties_SewageOutlet());
+				outlet.description = "RealRim_SewageOutletDescription".Translate().ToString();
+			}
+
+			ThingDef dump_port = preparePassiveBuilding("SewageDumpPort", true);
+			if (dump_port != null)
+			{
+				addNode(dump_port, false, FluidNetworkType.WasteWater);
+				addComp(dump_port, new CompProperties_SewageDumpPort());
+				dump_port.description = "RealRim_SewageDumpPortDescription".Translate().ToString();
+			}
+
 			ThingDef septic = preparePassiveBuilding("SewageSepticTank", true);
 			if (septic != null)
 			{

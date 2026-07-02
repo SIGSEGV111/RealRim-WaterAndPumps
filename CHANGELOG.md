@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.1.43 — Sewage dump port integration and compile fix
+
+- Fixed the sewage-outlet build failure by importing `RimWorld.FilthMaker` from its correct namespace.
+- Replaced DBH's inactive sewage dump-port component with a RealRim waste-water network node and discharge component.
+- A powered, switched-on dump port ejects waste directly into vacuum when the cell immediately in front of it is exposed to vacuum. Vacuum discharge creates no surface filth and requires no 3 × 5 terrain area.
+- In atmosphere, the dump port requires the same complete 3 × 5 natural-soil discharge area as a ground sewage outlet and creates harmless-water or raw-sewage filth according to the network's storage state.
+- Dump ports participate in direct untreated discharge and in septic-tank/treatment-plant overflow routing alongside normal sewage outlets.
+- Updated release metadata and runtime labels to 1.1.43.
+
+## 1.1.42 — Sewage-outlet atmosphere and terrain requirements
+
+- Sewage outlets now participate in waste routing only while their complete DBH-compatible 3 × 5 discharge area is operational.
+- Every discharge-area cell must be natural soil. Floors, rock and gravship substructure invalidate the outlet, while the one-cell building itself may still stand on a gravship or other constructed surface.
+- Outlets cannot discharge into vacuum. On asteroid and other space maps, the complete discharge area must additionally be inside one airtight, pressurized room.
+- Invalid outlets are excluded before capacity checks, so fixtures cannot silently discard sewage through an unusable outlet. Connected septic tanks and treatment plants continue accepting waste until their independent water or sludge capacity is exhausted.
+- Pending filth remains queued while an outlet is invalid and resumes only after the terrain and atmospheric requirements are restored. The inspect text reports the exact inactive reason.
+- Filth is now confined to the same 3 × 5 discharge area shown by DBH's placement overlay.
+- Updated release metadata and runtime labels to 1.1.42.
+
+## 1.1.41 — Functional sewage outlet and overflow routing
+
+- Replaced DBH's inactive sewage-outlet component with a RealRim waste-water node and discharge component.
+- Waste-water networks without a septic tank or treatment plant now require a connected sewage outlet; the complete waste-water and fecal-sludge stream is released there as raw-sewage filth.
+- When storage is connected, waste water and fecal sludge are accepted independently. Water beyond the aggregate liquid capacity overflows through connected outlets as short-lived standing-water filth, while solids continue to accumulate in available sludge capacity.
+- Raw-sewage contamination occurs only after the aggregate fecal-sludge capacity is exhausted. A full liquid volume alone therefore causes harmless water overflow rather than sewage contamination.
+- Multiple connected outlets share discharge evenly. Pending fractional filth and cumulative harmless/untreated discharge totals are saved and shown in the outlet inspect text.
+- Updated the standing-water description so the same filth can represent simple-shower runoff and harmless sewage overflow.
+- Updated release metadata and runtime labels to 1.1.41.
+
 ## 1.1.40 — Fresh-water-only simple shower
 
 - The DBH simple shower now connects only to the fresh-water network. It no longer has hot-water or waste-water connectors and does not require drain capacity.

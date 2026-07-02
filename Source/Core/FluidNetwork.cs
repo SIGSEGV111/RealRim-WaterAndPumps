@@ -357,30 +357,107 @@ namespace RealRim.WaterAndPumps
 
 		public bool canAcceptWaste(float water_liters, float sludge_kg)
 		{
-			float water_space = getComponents<CompWasteStorage>().Sum(storage => storage.getWaterSpace());
-			float sludge_space = getComponents<CompWasteStorage>().Sum(storage => storage.getSludgeSpace());
-			return water_space + 0.001f >= water_liters && sludge_space + 0.0001f >= sludge_kg;
+			float requested_water = Mathf.Max(0f, water_liters);
+			float requested_sludge = Mathf.Max(0f, sludge_kg);
+			if (requested_water <= 0.001f && requested_sludge <= 0.0001f)
+			{
+				return true;
+			}
+
+			List<CompWasteStorage> storages = getComponents<CompWasteStorage>().ToList();
+			bool has_outlet = getComponents<CompSewageOutlet>().Any(outlet => outlet.isOperational());
+			if (storages.Count == 0)
+			{
+				return has_outlet;
+			}
+			if (has_outlet)
+			{
+				return true;
+			}
+
+			float water_space = storages.Sum(storage => storage.getWaterSpace());
+			float sludge_space = storages.Sum(storage => storage.getSludgeSpace());
+			return water_space + 0.001f >= requested_water
+				&& sludge_space + 0.0001f >= requested_sludge;
 		}
 
 		public bool pushWaste(float water_liters, float sludge_kg)
 		{
-			if (!canAcceptWaste(water_liters, sludge_kg))
+			float remaining_water = Mathf.Max(0f, water_liters);
+			float remaining_sludge = Mathf.Max(0f, sludge_kg);
+			if (remaining_water <= 0.001f && remaining_sludge <= 0.0001f)
+			{
+				return true;
+			}
+
+			List<CompWasteStorage> storages = getComponents<CompWasteStorage>()
+				.OrderBy(storage => storage.getFillFraction())
+				.ToList();
+			List<CompSewageOutlet> outlets = getComponents<CompSewageOutlet>()
+				.Where(outlet => outlet.isOperational())
+				.OrderBy(outlet => outlet.parent.thingIDNumber)
+				.ToList();
+			if (storages.Count == 0)
+			{
+				if (outlets.Count == 0)
+				{
+					return false;
+				}
+				dischargeUntreated(outlets, remaining_water, remaining_sludge);
+				return true;
+			}
+
+			if (outlets.Count == 0 && !canAcceptWaste(remaining_water, remaining_sludge))
 			{
 				return false;
 			}
 
-			float remaining_water = Mathf.Max(0f, water_liters);
-			float remaining_sludge = Mathf.Max(0f, sludge_kg);
-			List<CompWasteStorage> storages = getComponents<CompWasteStorage>()
-				.OrderBy(storage => storage.getFillFraction())
-				.ToList();
 			for (int index = 0; index < storages.Count; index++)
 			{
 				remaining_water -= storages[index].addWasteWater(remaining_water);
 				remaining_sludge -= storages[index].addSludge(remaining_sludge);
 			}
 
-			return remaining_water <= 0.001f && remaining_sludge <= 0.0001f;
+			if (remaining_water > 0.001f)
+			{
+				dischargeHarmlessWater(outlets, remaining_water);
+			}
+			if (remaining_sludge > 0.0001f)
+			{
+				dischargeUntreated(outlets, 0f, remaining_sludge);
+			}
+			return true;
+		}
+
+		private static void dischargeHarmlessWater(
+			List<CompSewageOutlet> outlets,
+			float water_liters)
+		{
+			float remaining_water = Mathf.Max(0f, water_liters);
+			for (int index = 0; index < outlets.Count; index++)
+			{
+				float share = remaining_water / (outlets.Count - index);
+				outlets[index].dischargeHarmlessWater(share);
+				remaining_water -= share;
+			}
+		}
+
+		private static void dischargeUntreated(
+			List<CompSewageOutlet> outlets,
+			float water_liters,
+			float sludge_kg)
+		{
+			float remaining_water = Mathf.Max(0f, water_liters);
+			float remaining_sludge = Mathf.Max(0f, sludge_kg);
+			for (int index = 0; index < outlets.Count; index++)
+			{
+				int remaining_outlet_count = outlets.Count - index;
+				float water_share = remaining_water / remaining_outlet_count;
+				float sludge_share = remaining_sludge / remaining_outlet_count;
+				outlets[index].dischargeUntreated(water_share, sludge_share);
+				remaining_water -= water_share;
+				remaining_sludge -= sludge_share;
+			}
 		}
 
 		private void calculatePipeHeatExchanger(

@@ -3,7 +3,7 @@
 	<ThingDef>
 		<defName>RealRim_WaterDirt</defName>
 		<label>standing water</label>
-		<description>Water pooled on the floor beneath an open shower.</description>
+		<description>Relatively clean water pooled on the ground from an open shower or a sewage overflow.</description>
 		<thingClass>Filth</thingClass>
 		<category>Filth</category>
 		<altitudeLayer>Filth</altitudeLayer>

@@ -73,7 +73,7 @@ Status entries: Pool water is the current volume and fill percentage. Water temp
 	<RealRim_TargetTemperatureUp>Raise target</RealRim_TargetTemperatureUp>
 	<RealRim_TargetTemperatureUpDesc>Raise the target temperature by 1 °C.</RealRim_TargetTemperatureUpDesc>
 	<RealRim_NoFreshWater>No connected fresh water or insufficient stored water.</RealRim_NoFreshWater>
-	<RealRim_NoWasteCapacity>No connected waste-water storage has enough water and sludge capacity.</RealRim_NoWasteCapacity>
+	<RealRim_NoWasteCapacity>No connected waste-water storage or sewage outlet can accept this discharge.</RealRim_NoWasteCapacity>
 	<RealRim_TroughEmpty>Not enough water in the trough.</RealRim_TroughEmpty>
 	<RealRim_LatrineUnavailable>The latrine needs flush water or its internal waste storage must be emptied.</RealRim_LatrineUnavailable>
 	<RealRim_ReasonNoHeatingStorage>No connected thermal storage.</RealRim_ReasonNoHeatingStorage>
@@ -189,4 +189,26 @@ Total water used: {5} L
 
 	<RealRim_SimpleShowerDescription>A primitive, unregulated shower head connected only to fresh water. It cannot use hot water and has no drain, so it leaves standing water on the floor. Uses about 100 L for a full wash.</RealRim_SimpleShowerDescription>
 
+
+	<RealRim_SewageOutletDescription>Discharges a connected waste-water network through the 3 × 5 outlet area in front of the building. The entire outlet area must be natural soil without floors, rock or gravship substructure, and the outlet cannot operate in vacuum. On asteroid and other space maps, the complete outlet area must also be inside one airtight, pressurized room. Without a septic tank or treatment plant, all waste water and fecal sludge are released untreated and contaminate the ground. With connected storage, excess waste water overflows as relatively clean standing water; raw sewage is released only after the network's fecal-sludge capacity is full.</RealRim_SewageOutletDescription>
+	<RealRim_SewageOutletOperatingState>Operating state: {0}</RealRim_SewageOutletOperatingState>
+	<RealRim_SewageOutletOperational>operational</RealRim_SewageOutletOperational>
+	<RealRim_SewageOutletInactiveNoMap>inactive: not spawned on a map</RealRim_SewageOutletInactiveNoMap>
+	<RealRim_SewageOutletInactiveOutsideMap>inactive: the complete 3 × 5 outlet area must remain inside the map</RealRim_SewageOutletInactiveOutsideMap>
+	<RealRim_SewageOutletInactiveVacuum>inactive: the outlet area is exposed to vacuum</RealRim_SewageOutletInactiveVacuum>
+	<RealRim_SewageOutletInactiveNoNaturalSoil>inactive: the complete 3 × 5 outlet area must be natural soil without floors, rock or gravship substructure</RealRim_SewageOutletInactiveNoNaturalSoil>
+	<RealRim_SewageOutletInactiveNotPressurized>inactive: on an asteroid or other space map, the complete outlet area must be inside one airtight, pressurized room</RealRim_SewageOutletInactiveNotPressurized>
+	<RealRim_SewageOutletModeDisconnected>disconnected</RealRim_SewageOutletModeDisconnected>
+	<RealRim_SewageOutletModeInactive>inactive outlet</RealRim_SewageOutletModeInactive>
+	<RealRim_SewageOutletModeDirect>direct untreated discharge</RealRim_SewageOutletModeDirect>
+	<RealRim_SewageOutletModeOverflow>storage overflow</RealRim_SewageOutletModeOverflow>
+	<RealRim_SewageOutletStatus>Discharge mode: {0}
+Harmless overflow released: {1} L
+Untreated waste water released: {2} L
+Fecal sludge released: {3} kg
+Pending surface-filth layers: {4}</RealRim_SewageOutletStatus>
+
+	<RealRim_SewageDumpPortDescription>A powered sewage expulsion port for waste-water networks. When its discharge cell faces vacuum, it ejects waste directly into space without creating filth and does not require a ground discharge area. In atmosphere, it behaves like a ground outlet and requires the complete 3 × 5 area in front of it to be natural soil. It participates in direct untreated discharge and septic/treatment overflow routing.</RealRim_SewageDumpPortDescription>
+	<RealRim_SewageOutletInactiveNoPower>inactive: no power</RealRim_SewageOutletInactiveNoPower>
+	<RealRim_SewageOutletInactiveSwitchedOff>inactive: switched off</RealRim_SewageOutletInactiveSwitchedOff>
 </LanguageData>

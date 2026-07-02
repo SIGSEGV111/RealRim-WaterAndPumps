@@ -4,7 +4,7 @@ Physics-oriented replacement layer for **Dubs Bad Hygiene** on RimWorld 1.6.
 
 - Author: SIGSEGV11
 - Package ID: `sigsegv11.realrim.water`
-- Version: 1.1.40
+- Version: 1.1.43
 - Required: Harmony, Dubs Bad Hygiene
 
 This is a clean subsystem replacement. Save compatibility with versions 1.0.x is not intended. Existing DBH `ThingDef` identifiers are reused where practical so DBH buildings can still be loaded and constructed.
@@ -171,6 +171,10 @@ A race or pawn kind can override both values with `RealRim.WaterAndPumps.WaterRe
 The septic tank stores 12,000 L of waste water and 600 kg of sludge. It infiltrates up to 1,200 L/day only when its entire footprint is on natural soil and it is not aboard a gravship.
 
 The sewage treatment plant stores 50,000 L, processes up to 5,000 L/day and returns up to 95% to a connected fresh-water network. The spacer recovery system stores 20,000 L, processes 10,000 L/day, returns up to 98%, and uses 1.5 kW while operating.
+
+The sewage outlet is the terminal discharge point for a waste-water network. Its DBH-compatible 3 × 5 discharge area extends forward from the building and must consist entirely of natural soil; floors, rock and gravship substructure make the outlet inactive. The building itself may stand on a gravship as long as the full area in front is natural soil. The outlet never works in vacuum. On asteroid and other space maps, all 15 discharge cells must also belong to one airtight, pressurized indoor room. The inspect text reports the current operating condition.
+
+If no septic tank, treatment plant or recovery system is connected, every litre of waste water and all fecal sludge are discharged untreated as raw sewage within that area. If storage exists, liquid and sludge capacity are tracked separately: liquid beyond the connected tanks' water capacity overflows as relatively clean standing-water filth, while fecal solids remain captured until the network's sludge capacity is also full. Only sludge overflow creates raw-sewage contamination. Multiple operational outlets divide the discharge evenly; invalid outlets are ignored by capacity checks and routing.
 
 Toilet use creates 225 g of fecal sludge, representing a realistic per-use amount scaled by 50% for reduced RimWorld fixture-use frequency. Non-toilet fixtures produce waste water but no fecal sludge.
 

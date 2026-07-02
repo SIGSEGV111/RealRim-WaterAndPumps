@@ -86,6 +86,46 @@ namespace RealRim.WaterAndPumps
 			return delivered;
 		}
 
+		public float addEnergyTowardTemperature(float requested_kj, float target_temperature_c)
+		{
+			if (stored_liters <= 0.001f)
+			{
+				return 0f;
+			}
+
+			float target_c = Mathf.Min(Props.maximum_temperature_c, target_temperature_c);
+			float temperature_room_c = target_c - temperature_c;
+			if (temperature_room_c <= 0.001f)
+			{
+				return 0f;
+			}
+
+			float room_kj = RealPhysics.calculateWaterEnergy(stored_liters, temperature_room_c);
+			float accepted_kj = Mathf.Min(Mathf.Max(0f, requested_kj), room_kj);
+			temperature_c += RealPhysics.calculateWaterTemperatureChange(accepted_kj, stored_liters);
+			return accepted_kj;
+		}
+
+		public float drawEnergyTowardTemperature(float requested_kj, float target_temperature_c)
+		{
+			if (stored_liters <= 0.001f)
+			{
+				return 0f;
+			}
+
+			float target_c = Mathf.Max(Props.minimum_temperature_c, target_temperature_c);
+			float temperature_room_c = temperature_c - target_c;
+			if (temperature_room_c <= 0.001f)
+			{
+				return 0f;
+			}
+
+			float available_kj = RealPhysics.calculateWaterEnergy(stored_liters, temperature_room_c);
+			float delivered_kj = Mathf.Min(Mathf.Max(0f, requested_kj), available_kj);
+			temperature_c -= RealPhysics.calculateWaterTemperatureChange(delivered_kj, stored_liters);
+			return delivered_kj;
+		}
+
 		private void refillFromFreshWater(float elapsed_seconds)
 		{
 			float missing = Props.capacity_liters - stored_liters;

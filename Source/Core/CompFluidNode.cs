@@ -8,6 +8,7 @@ namespace RealRim.WaterAndPumps
 	{
 		public List<FluidNetworkType> networks = new List<FluidNetworkType>();
 		public bool valve;
+		public float outdoor_heat_exchange_w_per_m_k;
 
 		public CompProperties_FluidNode()
 		{
@@ -55,21 +56,33 @@ namespace RealRim.WaterAndPumps
 				yield return gizmo;
 			}
 
-			if (!supportsNetwork(FluidNetworkType.Heating))
+			if (supportsNetwork(FluidNetworkType.Heating))
 			{
-				yield break;
+				yield return new Command_Action
+				{
+					defaultLabel = "RealRim_HeatingOverview".Translate(),
+					defaultDesc = "RealRim_HeatingOverviewDesc".Translate(),
+					icon = RealRimTextures.heating_overview,
+					action = delegate
+					{
+						Find.WindowStack.Add(new Dialog_HeatingNetworkReport(parent));
+					},
+				};
 			}
 
-			yield return new Command_Action
+			if (supportsNetwork(FluidNetworkType.HotWater))
 			{
-				defaultLabel = "RealRim_HeatingOverview".Translate(),
-				defaultDesc = "RealRim_HeatingOverviewDesc".Translate(),
-				icon = RealRimTextures.heating_overview,
-				action = delegate
+				yield return new Command_Action
 				{
-					Find.WindowStack.Add(new Dialog_HeatingNetworkReport(parent));
-				},
-			};
+					defaultLabel = "RealRim_HotWaterOverview".Translate(),
+					defaultDesc = "RealRim_HotWaterOverviewDesc".Translate(),
+					icon = RealRimTextures.hot_water_overview,
+					action = delegate
+					{
+						Find.WindowStack.Add(new Dialog_HotWaterNetworkReport(parent));
+					},
+				};
+			}
 		}
 
 		public override string CompInspectStringExtra()

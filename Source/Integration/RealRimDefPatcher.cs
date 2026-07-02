@@ -33,11 +33,11 @@ namespace RealRim.WaterAndPumps
 
 			if (failed_phases == 0)
 			{
-				Log.Message("[RealRim] Water & Pumps 1.1.38: replaced DBH water, heating, cooling, sprinkler and sewage definitions.");
+				Log.Message("[RealRim] Water & Pumps 1.1.39: replaced DBH water, heating, cooling, sprinkler and sewage definitions.");
 			}
 			else
 			{
-				Log.Error("[RealRim] Water & Pumps 1.1.38: definition replacement completed with "
+				Log.Error("[RealRim] Water & Pumps 1.1.39: definition replacement completed with "
 					+ failed_phases + " failed phase(s). Later phases were still applied; see the preceding errors.");
 			}
 		}
@@ -64,13 +64,33 @@ namespace RealRim.WaterAndPumps
 			setNode("airPipeHidden", FluidNetworkType.Coolant);
 			setNode("RealRim_FreshWaterPipe", FluidNetworkType.FreshWater);
 			setNode("RealRim_FreshWaterPipeHidden", FluidNetworkType.FreshWater);
-			setNode("RealRim_HotWaterPipe", FluidNetworkType.HotWater);
-			setNode("RealRim_HotWaterPipeHidden", FluidNetworkType.HotWater);
-			setNode("RealRim_HeatingPipe", FluidNetworkType.Heating);
-			setNode("RealRim_HeatingPipeHidden", FluidNetworkType.Heating);
+			setPipeNode(
+				"RealRim_HotWaterPipe",
+				RealPhysics.HOT_WATER_PIPE_HEAT_TRANSFER_W_PER_M_K,
+				FluidNetworkType.HotWater);
+			setPipeNode(
+				"RealRim_HotWaterPipeHidden",
+				RealPhysics.HOT_WATER_PIPE_HEAT_TRANSFER_W_PER_M_K,
+				FluidNetworkType.HotWater);
+			setPipeNode(
+				"RealRim_HeatingPipe",
+				RealPhysics.HEATING_PIPE_HEAT_TRANSFER_W_PER_M_K,
+				FluidNetworkType.Heating);
+			setPipeNode(
+				"RealRim_HeatingPipeHidden",
+				RealPhysics.HEATING_PIPE_HEAT_TRANSFER_W_PER_M_K,
+				FluidNetworkType.Heating);
 			setNode("RealRim_FreshWaterValve", true, FluidNetworkType.FreshWater);
-			setNode("RealRim_HotWaterValve", true, FluidNetworkType.HotWater);
-			setNode("RealRim_HeatingValve", true, FluidNetworkType.Heating);
+			setPipeNode(
+				"RealRim_HotWaterValve",
+				true,
+				RealPhysics.HOT_WATER_PIPE_HEAT_TRANSFER_W_PER_M_K,
+				FluidNetworkType.HotWater);
+			setPipeNode(
+				"RealRim_HeatingValve",
+				true,
+				RealPhysics.HEATING_PIPE_HEAT_TRANSFER_W_PER_M_K,
+				FluidNetworkType.Heating);
 			setNode("RealRim_CoolantValve", true, FluidNetworkType.Coolant);
 			setLabel("sewagePipeStuff", "waste-water pipe");
 			setLabel("sewagePipeHidden", "waste-water pipe (hidden)");
@@ -78,7 +98,6 @@ namespace RealRim.WaterAndPumps
 			setLabel("airPipe", "air-con coolant pipe");
 			setLabel("airPipeHidden", "air-con coolant pipe (hidden)");
 		}
-
 
 		private static void patchWaterSources()
 		{
@@ -807,13 +826,44 @@ namespace RealRim.WaterAndPumps
 			}
 		}
 
+		private static void setPipeNode(
+			string def_name,
+			float outdoor_heat_exchange_w_per_m_k,
+			params FluidNetworkType[] networks)
+		{
+			setPipeNode(def_name, false, outdoor_heat_exchange_w_per_m_k, networks);
+		}
+
+		private static void setPipeNode(
+			string def_name,
+			bool valve,
+			float outdoor_heat_exchange_w_per_m_k,
+			params FluidNetworkType[] networks)
+		{
+			ThingDef def = getDef(def_name);
+			if (def != null)
+			{
+				addNode(def, valve, outdoor_heat_exchange_w_per_m_k, networks);
+			}
+		}
+
 		private static void addNode(ThingDef def, bool valve, params FluidNetworkType[] networks)
+		{
+			addNode(def, valve, 0f, networks);
+		}
+
+		private static void addNode(
+			ThingDef def,
+			bool valve,
+			float outdoor_heat_exchange_w_per_m_k,
+			params FluidNetworkType[] networks)
 		{
 			removeComp<CompProperties_FluidNode>(def);
 			addComp(def, new CompProperties_FluidNode
 			{
 				networks = new List<FluidNetworkType>(networks),
 				valve = valve,
+				outdoor_heat_exchange_w_per_m_k = outdoor_heat_exchange_w_per_m_k,
 			});
 		}
 

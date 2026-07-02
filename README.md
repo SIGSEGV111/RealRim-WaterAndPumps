@@ -4,7 +4,7 @@ Physics-oriented replacement layer for **Dubs Bad Hygiene** on RimWorld 1.6.
 
 - Author: SIGSEGV11
 - Package ID: `sigsegv11.realrim.water`
-- Version: 1.1.38
+- Version: 1.1.39
 - Required: Harmony, Dubs Bad Hygiene
 
 This is a clean subsystem replacement. Save compatibility with versions 1.0.x is not intended. Existing DBH `ThingDef` identifiers are reused where practical so DBH buildings can still be loaded and constructed.
@@ -76,9 +76,13 @@ Domestic hot water and heating water now use separate storage:
 
 Both tanks operate over 5–85 °C. The domestic tank refills with 12 °C fresh water and can only receive heat through its exchanger; domestic water cannot feed heat back into the heating circuit.
 
+The connected pipework is also a distributed heat exchanger with outdoor air. One occupied pipe or valve cell is treated as one metre. Domestic hot-water pipe contributes 0.35 W/K per metre; the closed heating circuit contributes 0.70 W/K per metre because each tile represents both supply and return. Heat transfer is bidirectional, proportional to pipe length and the current network-to-outdoor temperature difference, and cannot drive stored water past the outdoor temperature or the tank's 5–85 °C limits. Hidden and visible pipes use the same insulated-pipe coefficient.
+
 Active heat sources have an individual heating-buffer target, adjustable from 30–85 °C. They stop at the selected target and restart 5 °C below it; existing saves initially retain the previous 75 °C target. Lower buffer targets reduce the temperature lift required from heat pumps and normally improve COP, but the target must still remain high enough to drive radiators, pool heating and domestic-hot-water transfer. Solar and geothermal sources are passive and continue to the tank maximum.
 
-Selecting any node on a heating network provides a **Heating overview** command. Its live report shows current production, current consumption, net storage rate, total connected pipe length, and all functional nodes grouped by room. Bedrooms and barracks use the names of bed owners where available.
+Selecting any node on a heating network provides a **Heating overview** command. Its live report shows current production, current consumption, net storage rate, average network temperature, outdoor temperature, connected pipe length, aggregate pipe conductance, signed pipe heat exchange, and all functional nodes grouped by room. Pipe losses are included in total consumption; heat gained from hotter outdoor air is included in production.
+
+Selecting any node on a domestic hot-water network provides a **Hot-water overview** command using the dedicated hot-water report icon. The live report shows stored volume, average temperature, heating-circuit input, tank standing loss, pipe heat exchange, current delivery flow and useful-heat draw, cold-water refill, net heat rate, pipe length, and connected tanks and fixtures grouped by room. Bedrooms and barracks in both reports use the names of bed owners where available.
 
 | Heat source | Nominal thermal output | Input model |
 |---|---:|---|

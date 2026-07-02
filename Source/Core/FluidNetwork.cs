@@ -10,6 +10,13 @@ namespace RealRim.WaterAndPumps
 		public readonly int network_id;
 		public readonly FluidNetworkType network_type;
 		public readonly List<CompFluidNode> nodes;
+		public readonly int pipe_length_m;
+		public readonly float pipe_heat_transfer_w_per_k;
+		public float last_pipe_heat_exchange_kw;
+		public float last_hot_water_draw_liters_per_hour;
+		public float last_hot_water_draw_heat_kw;
+		private float pending_hot_water_draw_liters;
+		private float pending_hot_water_draw_heat_kj;
 
 		public FluidNetwork(
 			int network_id,
@@ -19,6 +26,13 @@ namespace RealRim.WaterAndPumps
 			this.network_id = network_id;
 			this.network_type = network_type;
 			this.nodes = nodes;
+			int calculated_pipe_length_m;
+			float calculated_pipe_heat_transfer_w_per_k;
+			calculatePipeHeatExchanger(
+				out calculated_pipe_length_m,
+				out calculated_pipe_heat_transfer_w_per_k);
+			pipe_length_m = calculated_pipe_length_m;
+			pipe_heat_transfer_w_per_k = calculated_pipe_heat_transfer_w_per_k;
 		}
 
 		public IEnumerable<T> getComponents<T>() where T : ThingComp
@@ -187,9 +201,28 @@ namespace RealRim.WaterAndPumps
 			return tanks.Sum(tank => tank.temperature_c * tank.stored_liters) / total_liters;
 		}
 
+		public float getOutdoorTemperatureC()
+		{
+			for (int index = 0; index < nodes.Count; index++)
+			{
+				Map map = nodes[index]?.parent?.MapHeld;
+				if (map != null)
+				{
+					return map.mapTemperature.OutdoorTemp;
+				}
+			}
+
+			return RealPhysics.COLD_WATER_TEMPERATURE_C;
+		}
+
 		public float getStoredHotWater()
 		{
 			return getComponents<CompHotWaterTank>().Sum(tank => tank.stored_liters);
+		}
+
+		public float getHotWaterCapacity()
+		{
+			return getComponents<CompHotWaterTank>().Sum(tank => tank.Props.capacity_liters);
 		}
 
 		public float addThermalEnergy(float requested_kj)
@@ -220,7 +253,6 @@ namespace RealRim.WaterAndPumps
 			return requested_kj - remaining;
 		}
 
-
 		public float drawHotWater(float requested_liters)
 		{
 			float remaining = Mathf.Max(0f, requested_liters);
@@ -229,12 +261,56 @@ namespace RealRim.WaterAndPumps
 				.ToList();
 			for (int index = 0; index < tanks.Count && remaining > 0.001f; index++)
 			{
-				remaining -= tanks[index].drawHotWater(remaining);
+				CompHotWaterTank tank = tanks[index];
+				float delivered_liters = tank.drawHotWater(remaining);
+				remaining -= delivered_liters;
+				pending_hot_water_draw_liters += delivered_liters;
+				pending_hot_water_draw_heat_kj += RealPhysics.calculateWaterEnergy(
+					delivered_liters,
+					Mathf.Max(0f, tank.temperature_c - RealPhysics.COLD_WATER_TEMPERATURE_C));
 			}
 
 			return requested_liters - remaining;
 		}
 
+		public void tickOutdoorHeatExchange(float elapsed_seconds)
+		{
+			finalizeHotWaterDraw(elapsed_seconds);
+			last_pipe_heat_exchange_kw = 0f;
+			if (elapsed_seconds <= 0f
+				|| pipe_heat_transfer_w_per_k <= 0f
+				|| (network_type != FluidNetworkType.Heating
+					&& network_type != FluidNetworkType.HotWater))
+			{
+				return;
+			}
+
+			float network_temperature_c = getAverageThermalTemperature();
+			float outdoor_temperature_c = getOutdoorTemperatureC();
+			float temperature_difference_c = outdoor_temperature_c - network_temperature_c;
+			if (Mathf.Abs(temperature_difference_c) <= 0.001f)
+			{
+				return;
+			}
+
+			float requested_kj = pipe_heat_transfer_w_per_k
+				* Mathf.Abs(temperature_difference_c)
+				/ 1000f
+				* elapsed_seconds;
+			float exchanged_kj = temperature_difference_c > 0f
+				? addEnergyTowardTemperature(requested_kj, outdoor_temperature_c)
+				: drawEnergyTowardTemperature(requested_kj, outdoor_temperature_c);
+			if (exchanged_kj <= 0f)
+			{
+				return;
+			}
+
+			last_pipe_heat_exchange_kw = exchanged_kj / elapsed_seconds;
+			if (temperature_difference_c < 0f)
+			{
+				last_pipe_heat_exchange_kw = -last_pipe_heat_exchange_kw;
+			}
+		}
 
 		public float getStoredColdEnergyKj()
 		{
@@ -305,6 +381,112 @@ namespace RealRim.WaterAndPumps
 			}
 
 			return remaining_water <= 0.001f && remaining_sludge <= 0.0001f;
+		}
+
+		private void calculatePipeHeatExchanger(
+			out int length_m,
+			out float heat_transfer_w_per_k)
+		{
+			Dictionary<IntVec3, float> conductance_by_cell = new Dictionary<IntVec3, float>();
+			for (int index = 0; index < nodes.Count; index++)
+			{
+				CompFluidNode node = nodes[index];
+				float cell_conductance = node?.Props?.outdoor_heat_exchange_w_per_m_k ?? 0f;
+				if (cell_conductance <= 0f)
+				{
+					continue;
+				}
+
+				foreach (IntVec3 cell in node.parent.OccupiedRect())
+				{
+					float existing_conductance;
+					if (!conductance_by_cell.TryGetValue(cell, out existing_conductance)
+						|| existing_conductance < cell_conductance)
+					{
+						conductance_by_cell[cell] = cell_conductance;
+					}
+				}
+			}
+
+			length_m = conductance_by_cell.Count;
+			heat_transfer_w_per_k = conductance_by_cell.Values.Sum();
+		}
+
+		private void finalizeHotWaterDraw(float elapsed_seconds)
+		{
+			if (network_type != FluidNetworkType.HotWater || elapsed_seconds <= 0f)
+			{
+				return;
+			}
+
+			last_hot_water_draw_liters_per_hour = pending_hot_water_draw_liters
+				* 3600f
+				/ elapsed_seconds;
+			last_hot_water_draw_heat_kw = pending_hot_water_draw_heat_kj / elapsed_seconds;
+			pending_hot_water_draw_liters = 0f;
+			pending_hot_water_draw_heat_kj = 0f;
+		}
+
+		private float addEnergyTowardTemperature(float requested_kj, float target_temperature_c)
+		{
+			float remaining = Mathf.Max(0f, requested_kj);
+			if (network_type == FluidNetworkType.HotWater)
+			{
+				List<CompHotWaterTank> hot_tanks = getComponents<CompHotWaterTank>()
+					.OrderBy(tank => tank.temperature_c)
+					.ToList();
+				for (int index = 0; index < hot_tanks.Count && remaining > 0.001f; index++)
+				{
+					remaining -= hot_tanks[index].addEnergyTowardTemperature(
+						remaining,
+						target_temperature_c);
+				}
+			}
+			else if (network_type == FluidNetworkType.Heating)
+			{
+				List<CompThermalTank> thermal_tanks = getComponents<CompThermalTank>()
+					.OrderBy(tank => tank.temperature_c)
+					.ToList();
+				for (int index = 0; index < thermal_tanks.Count && remaining > 0.001f; index++)
+				{
+					remaining -= thermal_tanks[index].addEnergyTowardTemperature(
+						remaining,
+						target_temperature_c);
+				}
+			}
+
+			return requested_kj - remaining;
+		}
+
+		private float drawEnergyTowardTemperature(float requested_kj, float target_temperature_c)
+		{
+			float remaining = Mathf.Max(0f, requested_kj);
+			if (network_type == FluidNetworkType.HotWater)
+			{
+				List<CompHotWaterTank> hot_tanks = getComponents<CompHotWaterTank>()
+					.OrderByDescending(tank => tank.temperature_c)
+					.ToList();
+				for (int index = 0; index < hot_tanks.Count && remaining > 0.001f; index++)
+				{
+					remaining -= hot_tanks[index].drawEnergyTowardTemperature(
+						remaining,
+						target_temperature_c);
+				}
+			}
+			else if (network_type == FluidNetworkType.Heating)
+			{
+				List<CompThermalTank> thermal_tanks = getComponents<CompThermalTank>()
+					.OrderByDescending(tank => tank.temperature_c)
+					.ToList();
+				for (int index = 0; index < thermal_tanks.Count && remaining > 0.001f; index++)
+				{
+					remaining -= thermal_tanks[index].drawEnergyTowardTemperature(
+						remaining,
+						target_temperature_c);
+				}
+			}
+
+			return requested_kj - remaining;
 		}
 	}
 }

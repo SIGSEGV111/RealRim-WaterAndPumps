@@ -17,6 +17,12 @@ namespace RealRim.WaterAndPumps
 			IntVec3.West,
 		};
 
+		private static readonly FluidNetworkType[] HEAT_EXCHANGE_NETWORK_TYPES =
+		{
+			FluidNetworkType.Heating,
+			FluidNetworkType.HotWater,
+		};
+
 		private readonly List<CompFluidNode> nodes = new List<CompFluidNode>();
 		private readonly Dictionary<FluidNetworkType, Dictionary<CompFluidNode, FluidNetwork>> network_by_node =
 			new Dictionary<FluidNetworkType, Dictionary<CompFluidNode, FluidNetwork>>();
@@ -36,7 +42,9 @@ namespace RealRim.WaterAndPumps
 
 			if (Find.TickManager.TicksGame % SYSTEM_TICK_INTERVAL == 0)
 			{
-				tickSystems(SYSTEM_TICK_INTERVAL * RealPhysics.SECONDS_PER_GAME_TICK);
+				float elapsed_seconds = SYSTEM_TICK_INTERVAL * RealPhysics.SECONDS_PER_GAME_TICK;
+				tickSystems(elapsed_seconds);
+				tickNetworkHeatExchange(elapsed_seconds);
 			}
 		}
 
@@ -197,6 +205,27 @@ namespace RealRim.WaterAndPumps
 					if (tickable != null && ticked_components.Add(component))
 					{
 						tickable.tickFluidSystem(elapsed_seconds);
+					}
+				}
+			}
+		}
+
+		private void tickNetworkHeatExchange(float elapsed_seconds)
+		{
+			HashSet<FluidNetwork> ticked_networks = new HashSet<FluidNetwork>();
+			for (int type_index = 0; type_index < HEAT_EXCHANGE_NETWORK_TYPES.Length; type_index++)
+			{
+				Dictionary<CompFluidNode, FluidNetwork> lookup;
+				if (!network_by_node.TryGetValue(HEAT_EXCHANGE_NETWORK_TYPES[type_index], out lookup))
+				{
+					continue;
+				}
+
+				foreach (FluidNetwork network in lookup.Values)
+				{
+					if (ticked_networks.Add(network))
+					{
+						network.tickOutdoorHeatExchange(elapsed_seconds);
 					}
 				}
 			}

@@ -8,6 +8,8 @@ namespace RealRim.WaterAndPumps
 	{
 		public static readonly Texture2D heating_overview = ContentFinder<Texture2D>.Get(
 			"RealRim/UI/HeatingOverview");
+		public static readonly Texture2D hot_water_overview = ContentFinder<Texture2D>.Get(
+			"RealRim/UI/HotWaterOverview");
 		public static readonly Texture2D lower_target = ContentFinder<Texture2D>.Get(
 			"RealRim/UI/LowerTarget");
 		public static readonly Texture2D raise_target = ContentFinder<Texture2D>.Get(

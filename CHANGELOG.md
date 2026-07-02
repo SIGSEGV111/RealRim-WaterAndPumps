@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.39 — Pipe heat exchange and hot-water report
+
+- Heating-water and domestic hot-water pipe cells now exchange heat bidirectionally with outdoor air. Heat transfer scales linearly with connected pipe length and the live network-to-outdoor temperature difference.
+- Domestic hot-water pipe uses 0.35 W/(m·K); the closed heating supply-and-return circuit uses 0.70 W/(m·K). Visible pipes, hidden pipes and valves contribute one metre per occupied cell, with overlapping infrastructure counted once.
+- Pipe exchange draws from or adds to the actual connected storage tanks without crossing outdoor temperature or each tank's configured 5–85 °C limits.
+- The heating report now includes average network temperature, outdoor temperature, aggregate pipe conductance and signed pipe exchange; pipe loss/gain is included in its production, consumption and net totals.
+- Added a live domestic hot-water report with stored volume, temperature, heating input, standing loss, pipe exchange, hot-water delivery, cold refill, net useful-heat rate and room-grouped connected nodes.
+- Added the supplied hot-water report graphic as the new report command icon.
+- Updated release metadata and runtime labels to 1.1.39.
+
 ## 1.1.38 — Sprinkler compile fix
 
 - Fixed the DBH irrigation-grid reflection signature check by qualifying `MapMeshFlagDef` with its `RimWorld` namespace.

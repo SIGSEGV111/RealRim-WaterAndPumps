@@ -28,7 +28,7 @@
 		<thingClass>Building</thingClass>
 		<defName>RealRim_HotWaterPipe</defName>
 		<label>hot-water pipe</label>
-		<description>Pipe carrying domestic hot water from thermal storage to sinks, showers and baths.</description>
+		<description>Insulated pipe carrying domestic hot water from thermal storage to sinks, showers and baths. Each metre exchanges heat with outdoor air at 0.35 W/K.</description>
 		<designationCategory>Hygiene</designationCategory>
 		<uiIconPath>DBH/UI/Plumbing</uiIconPath>
 		<graphicData>
@@ -52,7 +52,7 @@
 		<thingClass>Building</thingClass>
 		<defName>RealRim_HeatingPipe</defName>
 		<label>heating pipe</label>
-		<description>Closed-loop heating pipe connecting heat sources, thermal tanks, radiators and pools.</description>
+		<description>Insulated closed-loop supply-and-return pipe connecting heat sources, thermal tanks, radiators and pools. Each metre exchanges heat with outdoor air at 0.70 W/K.</description>
 		<designationCategory>Temperature</designationCategory>
 		<uiIconPath>DBH/UI/Plumbing</uiIconPath>
 		<graphicData>

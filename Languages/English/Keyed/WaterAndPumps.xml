@@ -128,15 +128,6 @@ Standing heat loss: {5} kW</RealRim_HotWaterTankStatus><RealRim_WaterPumpAutomat
 	<RealRim_HeatingReportProduction>Total current production: +{0} kW</RealRim_HeatingReportProduction>
 	<RealRim_HeatingReportConsumption>Total current consumption: {0} kW</RealRim_HeatingReportConsumption>
 	<RealRim_HeatingReportNet>Net storage rate: {0} kW</RealRim_HeatingReportNet>
-	<RealRim_HeatingReportPipeLength>Total pipe length: {0} m</RealRim_HeatingReportPipeLength>
-	<RealRim_HeatingReportOutdoors>Outdoors</RealRim_HeatingReportOutdoors>
-	<RealRim_HeatingReportRoomFallback>Room</RealRim_HeatingReportRoomFallback>
-	<RealRim_HeatingReportRoomHeader>{0} ({1} m²):</RealRim_HeatingReportRoomHeader>
-	<RealRim_HeatingReportBedroomSingle>{0}'s {1}</RealRim_HeatingReportBedroomSingle>
-	<RealRim_HeatingReportBedroomPair>{0} and {1}'s {2}</RealRim_HeatingReportBedroomPair>
-	<RealRim_HeatingReportBedroomMany>{0}, {1}, … +{2} {3}</RealRim_HeatingReportBedroomMany>
-	<RealRim_HeatingReportNumberedNode>{0} #{1}</RealRim_HeatingReportNumberedNode>
-	<RealRim_HeatingReportConnected>connected</RealRim_HeatingReportConnected>
 	<RealRim_HeatingReportSourceDetails>{0} kW, target {1}, COP {2}</RealRim_HeatingReportSourceDetails>
 	<RealRim_HeatingReportPassiveSourceDetails>{0} kW</RealRim_HeatingReportPassiveSourceDetails>
 	<RealRim_HeatingReportThermalTankDetails>{0}, standing loss {1} kW</RealRim_HeatingReportThermalTankDetails>
@@ -169,4 +160,31 @@ Design flow: {3} L/min
 Current flow: {4} L/min
 Total water used: {5} L
 {6}</RealRim_FireSprinklerStatus>
+	<RealRim_NetworkReportOutdoorTemperature>Outdoor air temperature: {0}</RealRim_NetworkReportOutdoorTemperature>
+	<RealRim_NetworkReportPipeLength>Total pipe length: {0} m</RealRim_NetworkReportPipeLength>
+	<RealRim_NetworkReportPipeHeatExchange>Pipe-to-outdoor heat exchange: {0} kW ({1} W/K)</RealRim_NetworkReportPipeHeatExchange>
+	<RealRim_NetworkReportOutdoors>Outdoors</RealRim_NetworkReportOutdoors>
+	<RealRim_NetworkReportRoomFallback>Room</RealRim_NetworkReportRoomFallback>
+	<RealRim_NetworkReportRoomHeader>{0} ({1} m²):</RealRim_NetworkReportRoomHeader>
+	<RealRim_NetworkReportBedroomSingle>{0}'s {1}</RealRim_NetworkReportBedroomSingle>
+	<RealRim_NetworkReportBedroomPair>{0} and {1}'s {2}</RealRim_NetworkReportBedroomPair>
+	<RealRim_NetworkReportBedroomMany>{0}, {1}, … +{2} {3}</RealRim_NetworkReportBedroomMany>
+	<RealRim_NetworkReportNumberedNode>{0} #{1}</RealRim_NetworkReportNumberedNode>
+	<RealRim_NetworkReportConnected>connected</RealRim_NetworkReportConnected>
+	<RealRim_HeatingReportNetworkTemperature>Average heating-water temperature: {0}</RealRim_HeatingReportNetworkTemperature>
+	<RealRim_HotWaterOverview>Hot-water overview</RealRim_HotWaterOverview>
+	<RealRim_HotWaterOverviewDesc>Open a live report for this connected domestic hot-water network.</RealRim_HotWaterOverviewDesc>
+	<RealRim_HotWaterReportTitle>Report for Hot-water Network #{0}</RealRim_HotWaterReportTitle>
+	<RealRim_HotWaterReportTitleDisconnected>Hot-water network report</RealRim_HotWaterReportTitleDisconnected>
+	<RealRim_HotWaterReportDisconnected>This node is no longer connected to a domestic hot-water network.</RealRim_HotWaterReportDisconnected>
+	<RealRim_HotWaterReportStorage>Stored hot water: {0} / {1} L</RealRim_HotWaterReportStorage>
+	<RealRim_HotWaterReportTemperature>Average hot-water temperature: {0}</RealRim_HotWaterReportTemperature>
+	<RealRim_HotWaterReportHeatingInput>Heat received from heating circuit: {0} kW</RealRim_HotWaterReportHeatingInput>
+	<RealRim_HotWaterReportStandingLoss>Tank standing loss: {0} kW</RealRim_HotWaterReportStandingLoss>
+	<RealRim_HotWaterReportDraw>Hot-water delivery: {0} L/h, useful-heat draw {1} kW</RealRim_HotWaterReportDraw>
+	<RealRim_HotWaterReportNetHeatRate>Net hot-water heat rate: {0} kW</RealRim_HotWaterReportNetHeatRate>
+	<RealRim_HotWaterReportRefill>Cold-water refill: {0} L/h</RealRim_HotWaterReportRefill>
+	<RealRim_HotWaterReportTankDetails>{0} / {1} L, {2}, heat input {3} kW, refill {4} L/h, standing loss {5} kW</RealRim_HotWaterReportTankDetails>
+	<RealRim_HotWaterReportFixtureDetails>last mixed-water temperature {0}, total mixed water used {1} L</RealRim_HotWaterReportFixtureDetails>
+
 </LanguageData>

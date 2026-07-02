@@ -1,9 +1,8 @@
-# Known limitations — 1.1.20
+# Known limitations — 1.1.23
 
-1. **Kitchen-sink linkage**
-   - Active cooking work first uses RimWorld's existing `CompAffectedByFacilities` links when a kitchen sink is linked to the stove.
-   - Because the supplied DBH 1.6 XML does not itself add a facility component to `KitchenSink`, a deterministic fallback uses the nearest kitchen sink in the same room within 12 m.
-   - Cooking is not blocked when water, hot water or drain capacity is unavailable; the sink reports the resource failure and produces no waste for that work interval.
+1. **Kitchen-sink resource failures**
+   - Stove integration uses only RimWorld's existing `CompAffectedByFacilities` link. No proximity or room-based fallback is used.
+   - Cooking is not blocked when water, hot water or drain capacity is unavailable; the linked sink reports the resource failure and produces no waste for that work interval.
 
 2. **Sludge hauling**
    - At 10 kg (200 × 50 g units), hauling work is scheduled automatically and a pawn extracts one 10 kg batch.

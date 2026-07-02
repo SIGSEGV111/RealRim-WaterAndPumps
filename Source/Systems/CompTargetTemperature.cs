@@ -59,6 +59,7 @@ namespace RealRim.WaterAndPumps
 			{
 				defaultLabel = "RealRim_TargetTemperatureDown".Translate(),
 				defaultDesc = "RealRim_TargetTemperatureDownDesc".Translate(),
+				icon = RealRimTextures.lower_target,
 				action = delegate
 				{
 					target_temperature_c = Mathf.Max(Props.minimum_temperature_c, target_temperature_c - 1f);
@@ -68,6 +69,7 @@ namespace RealRim.WaterAndPumps
 			{
 				defaultLabel = "RealRim_TargetTemperatureUp".Translate(),
 				defaultDesc = "RealRim_TargetTemperatureUpDesc".Translate(),
+				icon = RealRimTextures.raise_target,
 				action = delegate
 				{
 					target_temperature_c = Mathf.Min(Props.maximum_temperature_c, target_temperature_c + 1f);

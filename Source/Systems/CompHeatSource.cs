@@ -95,7 +95,7 @@ namespace RealRim.WaterAndPumps
 			{
 				defaultLabel = "RealRim_HeatSourceConfigureTarget".Translate(),
 				defaultDesc = "RealRim_HeatSourceConfigureTargetDesc".Translate(),
-				icon = parent.def.uiIcon,
+				icon = RealRimTextures.configure_heat_source,
 				action = delegate
 				{
 					Find.WindowStack.Add(new Dialog_HeatSourceTargetTemperature(this));

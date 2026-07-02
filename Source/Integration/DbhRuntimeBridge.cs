@@ -95,7 +95,7 @@ namespace RealRim.WaterAndPumps
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.JobDriver_GoSwimming", "swimticker", nameof(swimTickerPrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "Verse.AI.Toils_Recipe+<>c__DisplayClass2_0", "<DoRecipeWork>b__2", nameof(recipeWorkTickPrefix));
 
-				Log.Message("[RealRim] Water & Pumps 1.1.20: redirected " + patched_methods
+				Log.Message("[RealRim] Water & Pumps 1.1.23: redirected " + patched_methods
 					+ " DBH runtime methods to RealRim physics.");
 			}
 			catch (Exception exception)
@@ -572,7 +572,7 @@ namespace RealRim.WaterAndPumps
 			Building_WorkTable work_table = job.targetA.Thing as Building_WorkTable
 				?? job.targetB.Thing as Building_WorkTable
 				?? job.targetC.Thing as Building_WorkTable;
-			CompFixture kitchen_sink = findKitchenSink(work_table);
+			CompFixture kitchen_sink = findFacilityLinkedKitchenSink(work_table);
 			if (kitchen_sink != null)
 			{
 				kitchen_sink.recordLinkedStoveUse(delta * RealPhysics.SECONDS_PER_GAME_TICK);
@@ -580,51 +580,25 @@ namespace RealRim.WaterAndPumps
 			return true;
 		}
 
-		private static CompFixture findKitchenSink(Building_WorkTable work_table)
+		private static CompFixture findFacilityLinkedKitchenSink(Building_WorkTable work_table)
 		{
-			if (work_table?.Map == null)
+			CompAffectedByFacilities affected = work_table?.TryGetComp<CompAffectedByFacilities>();
+			List<Thing> linked_facilities = affected?.LinkedFacilitiesListForReading;
+			if (linked_facilities == null)
 			{
 				return null;
 			}
 
-			CompAffectedByFacilities affected = work_table.TryGetComp<CompAffectedByFacilities>();
-			List<Thing> linked = affected?.LinkedFacilitiesListForReading;
-			if (linked != null)
+			for (int index = 0; index < linked_facilities.Count; index++)
 			{
-				for (int index = 0; index < linked.Count; index++)
+				CompFixture fixture = (linked_facilities[index] as ThingWithComps)?.TryGetComp<CompFixture>();
+				if (fixture != null && fixture.Props.kitchen_sink)
 				{
-					CompFixture fixture = (linked[index] as ThingWithComps)?.TryGetComp<CompFixture>();
-					if (fixture != null && fixture.Props.kind == FixtureKind.KitchenSink)
-					{
-						return fixture;
-					}
+					return fixture;
 				}
 			}
 
-			ThingDef sink_def = DefDatabase<ThingDef>.GetNamedSilentFail("KitchenSink");
-			if (sink_def == null)
-			{
-				return null;
-			}
-			Room work_room = work_table.Position.GetRoom(work_table.Map);
-			Thing nearest = null;
-			float nearest_distance = 12.01f;
-			List<Thing> sinks = work_table.Map.listerThings.ThingsOfDef(sink_def);
-			for (int index = 0; index < sinks.Count; index++)
-			{
-				Thing candidate = sinks[index];
-				if (candidate.Position.GetRoom(work_table.Map) != work_room)
-				{
-					continue;
-				}
-				float distance = candidate.Position.DistanceTo(work_table.Position);
-				if (distance < nearest_distance)
-				{
-					nearest_distance = distance;
-					nearest = candidate;
-				}
-			}
-			return (nearest as ThingWithComps)?.TryGetComp<CompFixture>();
+			return null;
 		}
 
 		private static T findClosureReference<T>(object instance, int remaining_depth) where T : class

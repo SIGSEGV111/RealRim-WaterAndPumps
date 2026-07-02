@@ -24,6 +24,7 @@ namespace RealRim.WaterAndPumps
 		public float sludge_kg;
 		public bool wants_hot_water;
 		public bool needs_drain;
+		public bool kitchen_sink;
 		public float linked_stove_water_liters_per_hour;
 		public float linked_stove_sludge_kg_per_hour;
 
@@ -66,7 +67,7 @@ namespace RealRim.WaterAndPumps
 				last_water_temperature_c.ToStringTemperature("F1"),
 				total_water_used_liters.ToString("N1"),
 				last_reason);
-			if (Props.kind == FixtureKind.KitchenSink)
+			if (Props.kitchen_sink)
 			{
 				int current_tick = Find.TickManager?.TicksGame ?? 0;
 				int stove_count = current_tick - last_stove_activity_tick <= 120 ? active_stove_count : 0;
@@ -184,7 +185,7 @@ namespace RealRim.WaterAndPumps
 
 		public bool recordLinkedStoveUse(float elapsed_seconds)
 		{
-			if (Props.kind != FixtureKind.KitchenSink || elapsed_seconds <= 0f)
+			if (!Props.kitchen_sink || elapsed_seconds <= 0f)
 			{
 				return false;
 			}

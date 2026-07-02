@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.1.23 — Command icons and kitchen-sink integration
+
+- Assigned the five external textures to the heating overview, lower target, raise target, pump-threshold and heat-source target commands.
+- Configured the kitchen sink in its own definition phase as a normal sink connected to fresh water, hot water and waste water.
+- Made the kitchen sink use the same per-use water, temperature and drain behavior as the regular basin while retaining continuous cooking-related water and waste generation.
+- Stove integration now uses only RimWorld's authoritative `CompAffectedByFacilities.LinkedFacilitiesListForReading` relationship; removed the proximity/room fallback entirely.
+- Removed the obsolete root-level source file that still contained embedded image data.
+- Updated release metadata and runtime version labels to 1.1.23.
+
+## 1.1.22 — External command textures
+
+- Moved the five custom command graphics out of C# source and into normal RimWorld texture assets under `Textures/RealRim/UI`.
+- Replaced embedded PNG decoding with standard `ContentFinder<Texture2D>` loading.
+- Added an overlay archive intended to be extracted directly over an existing 1.1.21 mod directory.
+- Updated release metadata and runtime version labels to 1.1.22.
+
+## 1.1.21 — Pool sky-radiation model and command icons
+
+- Reworked outdoor swimming-pool radiation so it always exchanges long-wave heat with the sky, both by day and by night.
+- Added a weather-aware effective sky-temperature estimate based on air temperature, humidity and cloud cover.
+- Added sky temperature and sky-radiation heat loss to the swimming-pool status text and player-facing description.
+- Replaced the generic command icons for heating overview, lower target, raise target, pump-threshold configuration and heat-source target configuration with the supplied custom graphics.
+- Updated release metadata and runtime version labels to 1.1.21.
+
 ## 1.1.20 — Heating report bedroom-label fix
 
 - Use the generic localized room-role label for bedroom and barracks headings before adding bed-owner names.

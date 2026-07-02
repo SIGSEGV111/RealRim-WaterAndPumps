@@ -64,7 +64,7 @@ namespace RealRim.WaterAndPumps
 			{
 				defaultLabel = "RealRim_HeatingOverview".Translate(),
 				defaultDesc = "RealRim_HeatingOverviewDesc".Translate(),
-				icon = parent.def.uiIcon,
+				icon = RealRimTextures.heating_overview,
 				action = delegate
 				{
 					Find.WindowStack.Add(new Dialog_HeatingNetworkReport(parent));

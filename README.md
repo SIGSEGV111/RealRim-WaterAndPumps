@@ -4,7 +4,7 @@ Physics-oriented replacement layer for **Dubs Bad Hygiene** on RimWorld 1.6.
 
 - Author: SIGSEGV11
 - Package ID: `sigsegv11.realrim.water`
-- Version: 1.1.20
+- Version: 1.1.23
 - Required: Harmony, Dubs Bad Hygiene
 
 This is a clean subsystem replacement. Save compatibility with versions 1.0.x is not intended. Existing DBH `ThingDef` identifiers are reused where practical so DBH buildings can still be loaded and constructed.
@@ -129,7 +129,7 @@ The outdoor unit charges a new 600 L phase-change coolant tank. Indoor air-condi
 
 Fixtures require fresh water. Sinks, showers and baths also use hot water and report cold-water fallback. Toilets, sinks, showers and baths require waste-water capacity. Fountains and troughs do not require a drain.
 
-A kitchen sink accounts for active stove use continuously. Each active linked stove contributes 12 L/h of mixed sink water and wastewater plus 0.075 kg/h of captured food solids. Existing facility links are used first; otherwise the nearest kitchen sink in the same room within 12 m is selected. Multiple stoves contribute independently.
+The kitchen sink behaves as a normal basin and connects to fresh water, hot water and waste water. It also accounts for active stove use continuously. Each cooking stove linked to it through RimWorld's facility system contributes 12 L/h of mixed sink water and wastewater plus 0.075 kg/h of captured food solids while cooking. Only the authoritative `CompAffectedByFacilities` link is used; unlinked sinks are never selected by proximity.
 
 Default biological water requirements:
 
@@ -188,4 +188,4 @@ To build and create a versioned ZIP:
 ./package.sh
 ```
 
-See `KNOWN-LIMITATIONS.md` for the precise kitchen-link fallback and remaining implementation constraints.
+See `KNOWN-LIMITATIONS.md` for the remaining implementation constraints.

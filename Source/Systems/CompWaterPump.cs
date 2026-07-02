@@ -89,7 +89,7 @@ namespace RealRim.WaterAndPumps
 			{
 				defaultLabel = "RealRim_WaterPumpConfigure".Translate(),
 				defaultDesc = "RealRim_WaterPumpConfigureDesc".Translate(),
-				icon = parent.def.uiIcon,
+				icon = RealRimTextures.configure_pump,
 				action = delegate
 				{
 					Find.WindowStack.Add(new Dialog_WaterPumpThresholds(this));

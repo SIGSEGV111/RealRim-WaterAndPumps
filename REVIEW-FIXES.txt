@@ -1,4 +1,4 @@
-Version 1.1.20 review notes
+Version 1.1.23 review notes
 
 - Wind-pump selection no longer invokes DBH pump UI code that depends on the removed DBH plumbing network.
 - Fluid connections are no longer rendered permanently on buildings.

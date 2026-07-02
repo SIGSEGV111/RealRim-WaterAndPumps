@@ -25,16 +25,17 @@ namespace RealRim.WaterAndPumps
 			runPatchPhase("heating", patchHeating, ref failed_phases);
 			runPatchPhase("cooling", patchCooling, ref failed_phases);
 			runPatchPhase("fixtures", patchFixtures, ref failed_phases);
+			runPatchPhase("kitchen sink", patchKitchenSink, ref failed_phases);
 			runPatchPhase("waste processing", patchWaste, ref failed_phases);
 			runPatchPhase("work definitions", patchWorkDefinitions, ref failed_phases);
 
 			if (failed_phases == 0)
 			{
-				Log.Message("[RealRim] Water & Pumps 1.1.20: replaced DBH water, heating, cooling and sewage definitions.");
+				Log.Message("[RealRim] Water & Pumps 1.1.23: replaced DBH water, heating, cooling and sewage definitions.");
 			}
 			else
 			{
-				Log.Error("[RealRim] Water & Pumps 1.1.20: definition replacement completed with "
+				Log.Error("[RealRim] Water & Pumps 1.1.23: definition replacement completed with "
 					+ failed_phases + " failed phase(s). Later phases were still applied; see the preceding errors.");
 			}
 		}
@@ -199,8 +200,6 @@ namespace RealRim.WaterAndPumps
 				FluidNetworkType.FreshWater);
 			setFixture("BasinStuff", FixtureKind.Sink, 0.04f, 35f, 0.04f, 0f, true, true,
 				FluidNetworkType.FreshWater, FluidNetworkType.HotWater, FluidNetworkType.WasteWater);
-			setFixture("KitchenSink", FixtureKind.KitchenSink, 0.15f, 38f, 0.15f, 0f, true, true,
-				FluidNetworkType.FreshWater, FluidNetworkType.HotWater, FluidNetworkType.WasteWater);
 			setFixture("ToiletStuff", FixtureKind.Toilet, 9f, 12f, 10.5f, 0.225f, false, true,
 				FluidNetworkType.FreshWater, FluidNetworkType.WasteWater);
 			setFixture("ToiletAdvStuff", FixtureKind.Toilet, 6f, 12f, 7.5f, 0.225f, false, true,
@@ -251,6 +250,36 @@ namespace RealRim.WaterAndPumps
 
 			setTrough("WaterTrough", 200f, 500f);
 			setTrough("PetWaterBowl", 12f, 60f);
+		}
+
+		private static void patchKitchenSink()
+		{
+			ThingDef def = getDef("KitchenSink");
+			if (def == null)
+			{
+				return;
+			}
+
+			removeReplacementComps(def, true);
+			addNode(
+				def,
+				false,
+				FluidNetworkType.FreshWater,
+				FluidNetworkType.HotWater,
+				FluidNetworkType.WasteWater);
+			addComp(def, new CompProperties_Fixture
+			{
+				kind = FixtureKind.Sink,
+				water_per_use_liters = 0.04f,
+				desired_temperature_c = 35f,
+				waste_water_liters = 0.04f,
+				sludge_kg = 0f,
+				wants_hot_water = true,
+				needs_drain = true,
+				kitchen_sink = true,
+				linked_stove_water_liters_per_hour = 12f,
+				linked_stove_sludge_kg_per_hour = 0.075f,
+			});
 		}
 
 		private static void addLatrineRefillComponent(ThingDef latrine)
@@ -535,8 +564,9 @@ namespace RealRim.WaterAndPumps
 				sludge_kg = sludge_kg,
 				wants_hot_water = wants_hot,
 				needs_drain = needs_drain,
-				linked_stove_water_liters_per_hour = kind == FixtureKind.KitchenSink ? 12f : 0f,
-				linked_stove_sludge_kg_per_hour = kind == FixtureKind.KitchenSink ? 0.075f : 0f,
+				kitchen_sink = false,
+				linked_stove_water_liters_per_hour = 0f,
+				linked_stove_sludge_kg_per_hour = 0f,
 			});
 		}
 

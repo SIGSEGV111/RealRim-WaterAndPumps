@@ -90,6 +90,73 @@
 	<ThingDef ParentName="RealRim_FluidValveBase"><defName>RealRim_HeatingValve</defName><label>heating valve</label><designationCategory>Temperature</designationCategory></ThingDef>
 	<ThingDef ParentName="RealRim_FluidValveBase"><defName>RealRim_CoolantValve</defName><label>coolant valve</label><designationCategory>Temperature</designationCategory></ThingDef>
 
+	<ThingDef ParentName="BuildingBase" Name="RealRim_FluidLayerConnectorBase" Abstract="True">
+		<thingClass>Building</thingClass>
+		<altitudeLayer>Building</altitudeLayer>
+		<passability>Standable</passability>
+		<minifiedDef>MinifiedThing</minifiedDef>
+		<size>(1,1)</size>
+		<rotatable>false</rotatable>
+		<graphicData>
+			<texPath>DBH/Things/Building/Valve</texPath>
+			<graphicClass>Graphic_Single</graphicClass>
+			<color>(0.75,0.75,0.75)</color>
+		</graphicData>
+		<statBases>
+			<MaxHitPoints>80</MaxHitPoints>
+			<WorkToBuild>300</WorkToBuild>
+			<Mass>1</Mass>
+		</statBases>
+		<costList><Steel>5</Steel></costList>
+		<building><isEdifice>false</isEdifice></building>
+		<placeWorkers Inherit="False"><li>RealRim.WaterAndPumps.PlaceWorker_FluidPipe</li></placeWorkers>
+	</ThingDef>
+	<ThingDef ParentName="RealRim_FluidLayerConnectorBase">
+		<defName>RealRim_FreshWaterLayerConnector</defName>
+		<label>fresh-water layer connector</label>
+		<description>Connects fresh-water pipes on any layer in adjacent tiles, linking those layers into one fresh-water network.</description>
+		<designationCategory>Hygiene</designationCategory>
+		<uiIconPath>RealRim/UI/FluidLayer</uiIconPath>
+		<researchPrerequisites><li>Plumbing</li></researchPrerequisites>
+		<comps><li Class="RealRim.WaterAndPumps.CompProperties_FluidNode"><networks><li>FreshWater</li></networks><layer_connector>true</layer_connector></li></comps>
+	</ThingDef>
+	<ThingDef ParentName="RealRim_FluidLayerConnectorBase">
+		<defName>RealRim_HotWaterLayerConnector</defName>
+		<label>hot-water layer connector</label>
+		<description>Connects hot-water pipes on any layer in adjacent tiles, linking those layers into one domestic hot-water network.</description>
+		<designationCategory>Hygiene</designationCategory>
+		<uiIconPath>RealRim/UI/FluidLayer</uiIconPath>
+		<researchPrerequisites><li>Plumbing</li></researchPrerequisites>
+		<comps><li Class="RealRim.WaterAndPumps.CompProperties_FluidNode"><networks><li>HotWater</li></networks><layer_connector>true</layer_connector></li></comps>
+	</ThingDef>
+	<ThingDef ParentName="RealRim_FluidLayerConnectorBase">
+		<defName>RealRim_HeatingLayerConnector</defName>
+		<label>heating-water layer connector</label>
+		<description>Connects heating-water pipes on any layer in adjacent tiles, linking those layers into one heating-water network.</description>
+		<designationCategory>Temperature</designationCategory>
+		<uiIconPath>RealRim/UI/FluidLayer</uiIconPath>
+		<researchPrerequisites><li>CentralHeating</li></researchPrerequisites>
+		<comps><li Class="RealRim.WaterAndPumps.CompProperties_FluidNode"><networks><li>Heating</li></networks><layer_connector>true</layer_connector><virtual_heat_buffer_liters_per_m>2</virtual_heat_buffer_liters_per_m></li></comps>
+	</ThingDef>
+	<ThingDef ParentName="RealRim_FluidLayerConnectorBase">
+		<defName>RealRim_WasteWaterLayerConnector</defName>
+		<label>waste-water layer connector</label>
+		<description>Connects waste-water pipes on any layer in adjacent tiles, linking those layers into one waste-water network.</description>
+		<designationCategory>Hygiene</designationCategory>
+		<uiIconPath>RealRim/UI/FluidLayer</uiIconPath>
+		<researchPrerequisites><li>Plumbing</li></researchPrerequisites>
+		<comps><li Class="RealRim.WaterAndPumps.CompProperties_FluidNode"><networks><li>WasteWater</li></networks><layer_connector>true</layer_connector></li></comps>
+	</ThingDef>
+	<ThingDef ParentName="RealRim_FluidLayerConnectorBase">
+		<defName>RealRim_CoolantLayerConnector</defName>
+		<label>coolant layer connector</label>
+		<description>Connects air-con coolant pipes on any layer in adjacent tiles, linking those layers into one coolant network.</description>
+		<designationCategory>Temperature</designationCategory>
+		<uiIconPath>RealRim/UI/FluidLayer</uiIconPath>
+		<researchPrerequisites><li>MultiSplitAirCon</li></researchPrerequisites>
+		<comps><li Class="RealRim.WaterAndPumps.CompProperties_FluidNode"><networks><li>Coolant</li></networks><layer_connector>true</layer_connector></li></comps>
+	</ThingDef>
+
 	<ThingDef ParentName="RealRim_FluidValveBase">
 		<defName>RealRim_SmartMixingValve</defName>
 		<label>smart mixing valve</label>

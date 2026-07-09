@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+	<JobDef>
+		<defName>RealRim_ChangeFluidLayer</defName>
+		<driverClass>RealRim.WaterAndPumps.JobDriver_ChangeFluidLayer</driverClass>
+		<reportString>changing fluid-network layer.</reportString>
+		<casualInterruptible>false</casualInterruptible>
+	</JobDef>
+
+	<WorkGiverDef>
+		<defName>RealRim_ChangeFluidLayer</defName>
+		<label>change fluid-network layer</label>
+		<giverClass>RealRim.WaterAndPumps.WorkGiver_ChangeFluidLayer</giverClass>
+		<workType>Construction</workType>
+		<priorityInType>95</priorityInType>
+		<verb>change fluid-network layer on</verb>
+		<gerund>changing fluid-network layer on</gerund>
+		<requiredCapacities>
+			<li>Manipulation</li>
+		</requiredCapacities>
+	</WorkGiverDef>
+</Defs>

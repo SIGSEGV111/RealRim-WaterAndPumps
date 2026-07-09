@@ -30,14 +30,19 @@ namespace RealRim.WaterAndPumps
 				return "RealRim_FloorHeatingAlreadyHere".Translate();
 			}
 
+			FluidNetworkLayer selected_layer = FluidNetworkLayerSettings.getSelectedLayer(FluidNetworkType.Heating);
 			List<Thing> things = location.GetThingList(map);
 			for (int index = 0; index < things.Count; index++)
 			{
 				ThingWithComps thing_with_comps = things[index] as ThingWithComps;
 				CompFluidNode node = thing_with_comps?.TryGetComp<CompFluidNode>();
-				if (node != null && node.supportsNetwork(FluidNetworkType.Heating))
+				if (node != null
+					&& node.supportsNetwork(FluidNetworkType.Heating)
+					&& node.getLayer(FluidNetworkType.Heating) == selected_layer)
 				{
-					return "RealRim_DuplicateFluidPipe".Translate(FluidUtility.getNetworkLabel(FluidNetworkType.Heating));
+					return "RealRim_DuplicateFluidPipe".Translate(
+						FluidUtility.getNetworkLabel(FluidNetworkType.Heating),
+						FluidNetworkLayerUtility.getLayerLabel(selected_layer));
 				}
 			}
 

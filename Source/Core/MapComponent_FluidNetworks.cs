@@ -31,6 +31,7 @@ namespace RealRim.WaterAndPumps
 			new Dictionary<string, float>();
 		private List<string> saved_heating_buffer_keys = new List<string>();
 		private List<float> saved_heating_buffer_temperatures_c = new List<float>();
+		private List<FluidLayerConstructionPlan> construction_plans = new List<FluidLayerConstructionPlan>();
 		private bool networks_dirty = true;
 
 		public MapComponent_FluidNetworks(Map map) : base(map)
@@ -40,6 +41,7 @@ namespace RealRim.WaterAndPumps
 		public override void MapComponentTick()
 		{
 			base.MapComponentTick();
+			captureConstructionPlans();
 			if (networks_dirty)
 			{
 				rebuildNetworks();
@@ -75,8 +77,17 @@ namespace RealRim.WaterAndPumps
 				"virtual_heating_buffer_temperatures_c",
 				LookMode.Value);
 
+			Scribe_Collections.Look(
+				ref construction_plans,
+				"fluid_layer_construction_plans",
+				LookMode.Deep);
+
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
+				if (construction_plans == null)
+				{
+					construction_plans = new List<FluidLayerConstructionPlan>();
+				}
 				heating_buffer_temperature_by_key.Clear();
 				if (saved_heating_buffer_keys == null)
 				{
@@ -144,14 +155,75 @@ namespace RealRim.WaterAndPumps
 
 		public List<CompFluidNode> getAllActiveNodes(FluidNetworkType network_type)
 		{
+			return getAllActiveNodes(network_type, FluidNetworkLayer.None);
+		}
+
+		public List<CompFluidNode> getAllActiveNodes(
+			FluidNetworkType network_type,
+			FluidNetworkLayer layer)
+		{
 			if (networks_dirty)
 			{
 				rebuildNetworks();
 			}
 
 			return nodes
-				.Where(node => node.supportsNetwork(network_type) && node.isConnectionActive())
+				.Where(node => node.supportsNetwork(network_type)
+					&& node.isConnectionActive()
+					&& (layer == FluidNetworkLayer.None
+						|| node.isLayerConnector(network_type)
+						|| node.getLayer(network_type) == layer))
 				.ToList();
+		}
+
+		public FluidLayerConstructionPlan consumeConstructionPlan(CompFluidNode node)
+		{
+			if (node == null || construction_plans == null)
+			{
+				return null;
+			}
+
+			for (int index = 0; index < construction_plans.Count; index++)
+			{
+				FluidLayerConstructionPlan plan = construction_plans[index];
+				if (plan != null && plan.matches(node))
+				{
+					construction_plans.RemoveAt(index);
+					return plan;
+				}
+			}
+
+			return null;
+		}
+
+		public FluidNetworkLayer getConstructionPlanLayer(
+			Thing construction,
+			FluidNetworkType network_type)
+		{
+			if (construction == null)
+			{
+				return FluidNetworkLayer.None;
+			}
+
+			ThingDef build_def = construction.def?.entityDefToBuild as ThingDef;
+			if (construction_plans != null)
+			{
+				for (int index = 0; index < construction_plans.Count; index++)
+				{
+					FluidLayerConstructionPlan plan = construction_plans[index];
+					if (plan != null
+						&& (plan.matchesConstruction(construction)
+							|| plan.matchesConstructionBuild(construction, build_def)))
+					{
+						return plan.getLayer(network_type);
+					}
+				}
+			}
+
+			CompProperties_FluidNode properties = FluidNetworkVisuals.getNodeProperties(build_def);
+			return properties?.networks != null && properties.networks.Contains(network_type)
+				? FluidNetworkLayerSettings.getSelectedLayer(network_type)
+				: FluidNetworkLayer.None;
 		}
 
 		private void rebuildNetworks()
@@ -214,7 +286,8 @@ namespace RealRim.WaterAndPumps
 									continue;
 								}
 
-								if (unvisited.Remove(neighbor))
+								if (current.canConnectTo(neighbor, network_type, CONNECTION_OFFSETS[offset_index])
+									&& unvisited.Remove(neighbor))
 								{
 									queue.Enqueue(neighbor);
 								}
@@ -345,6 +418,68 @@ namespace RealRim.WaterAndPumps
 			}
 
 			return overlap;
+		}
+
+		private void captureConstructionPlans()
+		{
+			if (construction_plans == null)
+			{
+				construction_plans = new List<FluidLayerConstructionPlan>();
+			}
+
+			List<Thing> things = map.listerThings.AllThings;
+			for (int index = 0; index < things.Count; index++)
+			{
+				Thing construction = things[index];
+				ThingDef build_def = construction?.def?.entityDefToBuild as ThingDef;
+				if (build_def == null || FluidNetworkVisuals.getNodeProperties(build_def) == null)
+				{
+					continue;
+				}
+
+				FluidLayerConstructionPlan existing_plan = getConstructionPlan(construction, build_def);
+				if (existing_plan != null)
+				{
+					existing_plan.updateConstructionThing(construction);
+					continue;
+				}
+
+				construction_plans.Add(FluidLayerConstructionPlan.create(construction, build_def));
+			}
+
+			pruneConstructionPlans(things);
+		}
+
+		private FluidLayerConstructionPlan getConstructionPlan(Thing construction, ThingDef build_def)
+		{
+			for (int index = 0; index < construction_plans.Count; index++)
+			{
+				FluidLayerConstructionPlan plan = construction_plans[index];
+				if (plan != null
+					&& (plan.matchesConstruction(construction)
+						|| plan.matchesConstructionBuild(construction, build_def)))
+				{
+					return plan;
+				}
+			}
+			return null;
+		}
+
+		private void pruneConstructionPlans(List<Thing> things)
+		{
+			HashSet<int> construction_ids = new HashSet<int>();
+			for (int index = 0; index < things.Count; index++)
+			{
+				Thing construction = things[index];
+				if (construction?.def?.entityDefToBuild != null)
+				{
+					construction_ids.Add(construction.thingIDNumber);
+				}
+			}
+
+			construction_plans.RemoveAll(plan => plan == null
+				|| (plan.construction_thing_id != 0
+					&& !construction_ids.Contains(plan.construction_thing_id)));
 		}
 
 		private void cacheCurrentHeatingBufferStates()

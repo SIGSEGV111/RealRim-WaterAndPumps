@@ -93,7 +93,7 @@ Statuseinträge: Beckenwasser zeigt das aktuelle Volumen und den Füllstand. Was
 	<RealRim_ReasonAmbientOutOfRange>Ambient temperature is outside the operating range.</RealRim_ReasonAmbientOutOfRange>
 	<RealRim_ReasonNoSoilInfiltration>Septic drainage requires natural soil and cannot operate on a gravship.</RealRim_ReasonNoSoilInfiltration>
 	<RealRim_ReasonNoHotWater>No sufficiently hot water is connected; cold water was used.</RealRim_ReasonNoHotWater>
-	<RealRim_DuplicateFluidPipe>A {0} pipe already occupies this tile.</RealRim_DuplicateFluidPipe>
+	<RealRim_DuplicateFluidPipe>Ein {0}-Rohr belegt bereits {1} auf diesem Feld.</RealRim_DuplicateFluidPipe>
 	<RealRim_ReasonNoCoolantHeatCapacity>The coolant tank cannot absorb more extracted heat.</RealRim_ReasonNoCoolantHeatCapacity>
 	<RealRim_KitchenSinkStatus>Linked stoves: {0}
 Active linked stoves: {1}
@@ -226,23 +226,35 @@ Komfortbonus für Möbel: {6}
 {7}</RealRim_FloorHeatingStatus>
 	<RealRim_FloorHeatingModeIndoor>Innenraum-Wärmetauscher</RealRim_FloorHeatingModeIndoor>
 	<RealRim_FloorHeatingModeOutdoor>Außen-Schneeschmelzschleife</RealRim_FloorHeatingModeOutdoor>
+	<RealRim_FloorHeatingComfortAppliedStat>Fußbodenheizung: {0} ({1})</RealRim_FloorHeatingComfortAppliedStat>
+	<RealRim_FloorHeatingComfortInactiveStat>Fußbodenheizung: +0.00 ({0})</RealRim_FloorHeatingComfortInactiveStat>
+	<RealRim_FloorHeatingComfortReasonActive>aktiv, überträgt {0} kW von {1} Heizwasser auf {2} Raumluft</RealRim_FloorHeatingComfortReasonActive>
+	<RealRim_FloorHeatingComfortReasonMissingCoverage>nicht angewendet: Das Möbelstück steht nicht vollständig auf Innenraum-Fußbodenheizung</RealRim_FloorHeatingComfortReasonMissingCoverage>
+	<RealRim_FloorHeatingComfortReasonNoBaseComfort>nicht angewendet: Das Möbelstück hat keinen positiven Grundkomfort</RealRim_FloorHeatingComfortReasonNoBaseComfort>
+	<RealRim_FloorHeatingComfortReasonNoCurrentHeat>nicht angewendet: Die Fußbodenheizung ist angeschlossen, überträgt aber aktuell keine Wärme</RealRim_FloorHeatingComfortReasonNoCurrentHeat>
+	<RealRim_FloorHeatingComfortReasonNotFurniture>nicht angewendet: Dies ist kein geeignetes Komfortmöbel</RealRim_FloorHeatingComfortReasonNotFurniture>
+	<RealRim_FloorHeatingComfortReasonNotSpawned>nicht angewendet: Das Möbelstück ist nicht auf der Karte platziert</RealRim_FloorHeatingComfortReasonNotSpawned>
+	<RealRim_FloorHeatingComfortReasonOutdoor>nicht angewendet: Außen-Schneeschmelz-Fußbodenheizung verbessert keinen Möbelkomfort</RealRim_FloorHeatingComfortReasonOutdoor>
 	<RealRim_ReasonNoHeatDelta>Das Heizwasser ist nicht wärmer als das Zielmedium.</RealRim_ReasonNoHeatDelta>
 	<RealRim_ReasonNoWinterPrecipitation>Inaktiv: Außenluft mindestens 1 °C oder kein Regen/Schnee.</RealRim_ReasonNoWinterPrecipitation>
 	<RealRim_ReasonNoValveTarget>Keine Zieltemperaturregelung für das Ventil.</RealRim_ReasonNoValveTarget>
 	<RealRim_ReasonValveNeedsTwoNetworks>Benötigt zwei getrennte angrenzende Heizwassernetze.</RealRim_ReasonValveNeedsTwoNetworks>
+	<RealRim_ReasonValveNeedsSelectedLayerNetworks>Benötigt getrennte angrenzende Heizwassernetze auf Quelle {0} und Empfänger {1}.</RealRim_ReasonValveNeedsSelectedLayerNetworks>
 	<RealRim_ReasonNoReceivingStorage>Kein angeschlossener empfangender Wärmespeicher.</RealRim_ReasonNoReceivingStorage>
 	<RealRim_ReasonNoValveRoom>Inaktiv: Das Ventil befindet sich nicht in einem überwachbaren geschlossenen Raum.</RealRim_ReasonNoValveRoom>
 	<RealRim_ReasonRoomTargetReached>Inaktiv: Zieltemperatur des überwachten Raums erreicht.</RealRim_ReasonRoomTargetReached>
 	<RealRim_ReasonWaterTargetReached>Inaktiv: Zieltemperatur des empfangenden Heizwassers erreicht.</RealRim_ReasonWaterTargetReached>
 	<RealRim_SmartMixingValveStatus>Intelligentes Mischventil:
 Regelmodus: {0}
-Zieltemperatur des empfangenden Heizwassers: {1}
-Zieltemperatur des überwachten Raums: {2}
-Überwachter Raum: {3}
-Quellnetz: {4} ({5})
-Empfangendes Netz: {6} ({7})
-Aktuelle Übertragung: {8} kW
-{9}</RealRim_SmartMixingValveStatus>
+Quellebene: {1}
+Empfängerebene: {2}
+Zieltemperatur des empfangenden Heizwassers: {3}
+Zieltemperatur des überwachten Raums: {4}
+Überwachter Raum: {5}
+Quellnetz: {6} ({7})
+Empfangendes Netz: {8} ({9})
+Aktuelle Übertragung: {10} kW
+{11}</RealRim_SmartMixingValveStatus>
 	<RealRim_SmartMixingValveModeWater>Heizwassertemperatur</RealRim_SmartMixingValveModeWater>
 	<RealRim_SmartMixingValveModeRoom>Raumtemperatur</RealRim_SmartMixingValveModeRoom>
 	<RealRim_SmartMixingValveModeLabel>Regelung: {0}</RealRim_SmartMixingValveModeLabel>
@@ -253,10 +265,30 @@ Aktuelle Übertragung: {8} kW
 	<RealRim_SmartMixingValveRoomTargetDown>Raumziel senken</RealRim_SmartMixingValveRoomTargetDown>
 	<RealRim_SmartMixingValveRoomTargetUp>Raumziel erhöhen</RealRim_SmartMixingValveRoomTargetUp>
 	<RealRim_SmartMixingValveRoomTargetDesc>Aktuelle Zieltemperatur des überwachten Raums: {0}</RealRim_SmartMixingValveRoomTargetDesc>
+	<RealRim_SmartMixingValveSourceLayerLabel>Quellebene: {0}</RealRim_SmartMixingValveSourceLayerLabel>
+	<RealRim_SmartMixingValveReceivingLayerLabel>Empfängerebene: {0}</RealRim_SmartMixingValveReceivingLayerLabel>
+	<RealRim_SmartMixingValveLayerDesc>Wählt aus, welche Heizwasser-Rohrebene diese Seite des intelligenten Mischventils liest. Die Quellebene liefert Wärme; die Empfängerebene nimmt Wärme auf.</RealRim_SmartMixingValveLayerDesc>
+	<RealRim_SmartMixingValveSourceLayerMenuEntry>{0} als Quellebene verwenden</RealRim_SmartMixingValveSourceLayerMenuEntry>
+	<RealRim_SmartMixingValveReceivingLayerMenuEntry>{0} als Empfängerebene verwenden</RealRim_SmartMixingValveReceivingLayerMenuEntry>
 	<RealRim_FloorHeatingRequiresConstructedFloor>Fußbodenheizung muss auf gebautem Bodenbelag oder geglättetem Stein installiert werden.</RealRim_FloorHeatingRequiresConstructedFloor>
 	<RealRim_FloorHeatingAlreadyHere>Auf diesem Feld ist bereits eine Fußbodenheizung installiert.</RealRim_FloorHeatingAlreadyHere>
 	<RealRim_ReasonNoIndoorRoom>Kein geschlossener Raum zum Heizen.</RealRim_ReasonNoIndoorRoom>
 	<RealRim_FloorHeatingReportSingleDetails>{0} Raum, {1} Heizwasser, {2} m² Tauscher, Wärmeentnahme {3} kW</RealRim_FloorHeatingReportSingleDetails>
 	<RealRim_FloorHeatingReportGroupDetails>{0} Felder, {1} m² Tauscher, mittlerer Raum {2}, mittleres Heizwasser {3}, Wärmeentnahme {4} kW</RealRim_FloorHeatingReportGroupDetails>
+
+	<RealRim_FluidLayerNumber>Ebene {0}</RealRim_FluidLayerNumber>
+	<RealRim_SelectFluidLayerLabel>{0}: {1}</RealRim_SelectFluidLayerLabel>
+	<RealRim_SelectFluidLayerDesc>Legt die Bauebene für neu platzierte {0}-Rohre und Gebäude fest. Neue Fluidnetzknoten verbinden sich nur mit angrenzenden oder gleichfeldrigen Knoten desselben Fluidtyps auf derselben Ebene. Aktuelle Einstellung: {1}.</RealRim_SelectFluidLayerDesc>
+	<RealRim_SelectFluidLayerMenuEntry>{0} {1}</RealRim_SelectFluidLayerMenuEntry>
+	<RealRim_CurrentSelectionSuffix>(aktuell)</RealRim_CurrentSelectionSuffix>
+	<RealRim_NodeFluidLayerLabel>{0}: {1}</RealRim_NodeFluidLayerLabel>
+	<RealRim_NodeFluidLayerPendingLabel>{0}: {1} → {2}</RealRim_NodeFluidLayerPendingLabel>
+	<RealRim_NodeFluidLayerDesc>Dieser Knoten gehört zur {0}-Netzebene {1}. Eine Ebenenänderung erstellt einen kurzen Bauauftrag; das Netz wird erst nach Abschluss der Arbeit neu verbunden.</RealRim_NodeFluidLayerDesc>
+	<RealRim_NodeFluidLayerMenuEntry>{0} auf {1} verschieben</RealRim_NodeFluidLayerMenuEntry>
+	<RealRim_FluidNetworkLayerLine>{0}-{1}-Netz #{2}: {3} verbundene Knoten</RealRim_FluidNetworkLayerLine>
+	<RealRim_FluidNetworkLayerDisconnectedLine>{0}-{1}: nicht verbunden</RealRim_FluidNetworkLayerDisconnectedLine>
+	<RealRim_FluidNetworkLayerConnectorLine>{0}-Ebenenverbinder, Netz #{1}: {2} verbundene Knoten</RealRim_FluidNetworkLayerConnectorLine>
+	<RealRim_FluidNetworkLayerConnectorDisconnectedLine>{0}-Ebenenverbinder: nicht verbunden</RealRim_FluidNetworkLayerConnectorDisconnectedLine>
+	<RealRim_FluidLayerPendingLine>{0}-Ebenenwechsel vorgemerkt: {1}</RealRim_FluidLayerPendingLine>
 
 </LanguageData>

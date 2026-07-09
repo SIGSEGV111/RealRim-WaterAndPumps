@@ -108,8 +108,9 @@ namespace RealRim.WaterAndPumps
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "Verse.AI.Toils_Recipe+<>c__DisplayClass2_0", "<DoRecipeWork>b__2", nameof(recipeWorkTickPrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "RimWorld.StatWorker", "GetValue", nameof(floorHeatingComfortPrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "RimWorld.StatWorker", "GetValue", nameof(floorHeatingComfortPostfix), true);
+				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "RimWorld.StatWorker", "GetExplanationUnfinalized", nameof(floorHeatingComfortExplanationPostfix), true);
 
-				Log.Message("[RealRim] Water & Pumps 1.1.54: redirected " + patched_methods
+				Log.Message("[RealRim] Water & Pumps 1.1.63: redirected " + patched_methods
 					+ " DBH runtime methods to RealRim physics.");
 			}
 			catch (Exception exception)
@@ -176,12 +177,7 @@ namespace RealRim.WaterAndPumps
 					return;
 				}
 
-				Thing thing = __args[0] as Thing;
-				if (thing == null && __args[0] is StatRequest)
-				{
-					thing = ((StatRequest)__args[0]).Thing;
-				}
-
+				Thing thing = getThingFromStatArg(__args[0]);
 				float bonus = FloorHeatingUtility.getComfortBonusFor(thing, __result);
 				if (bonus > 0f)
 				{
@@ -200,6 +196,55 @@ namespace RealRim.WaterAndPumps
 					floor_heating_comfort_depth--;
 				}
 			}
+		}
+
+		private static void floorHeatingComfortExplanationPostfix(
+			object __instance,
+			object[] __args,
+			ref string __result)
+		{
+			try
+			{
+				if (!isComfortStatWorker(__instance) || __args == null || __args.Length == 0)
+				{
+					return;
+				}
+
+				Thing thing = getThingFromStatArg(__args[0]);
+				if (thing == null || !thing.Spawned)
+				{
+					return;
+				}
+
+				FloorHeatingComfortStatus status = FloorHeatingUtility.getComfortStatusFor(thing, 0f, false);
+				string line = FloorHeatingComfortFormatting.buildStatExplanationLine(status);
+				if (line.NullOrEmpty())
+				{
+					return;
+				}
+
+				__result = (__result ?? string.Empty).TrimEndNewlines();
+				if (!__result.NullOrEmpty())
+				{
+					__result += "\n";
+				}
+				__result += line;
+			}
+			catch (Exception exception)
+			{
+				Log.WarningOnce("[RealRim] Water & Pumps: floor-heating comfort explanation failed: "
+					+ exception.Message, 11927463);
+			}
+		}
+
+		private static Thing getThingFromStatArg(object arg)
+		{
+			Thing thing = arg as Thing;
+			if (thing == null && arg is StatRequest)
+			{
+				thing = ((StatRequest)arg).Thing;
+			}
+			return thing;
 		}
 
 		private static bool isComfortStatWorker(object stat_worker)

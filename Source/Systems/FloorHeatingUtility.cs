@@ -62,28 +62,70 @@ namespace RealRim.WaterAndPumps
 
 		public static bool shouldApplyComfortBonus(Thing thing, float current_comfort)
 		{
-			ThingWithComps thing_with_comps = thing as ThingWithComps;
-			if (thing_with_comps == null
-				|| current_comfort <= 0f
-				|| thing.def == null
-				|| thing.def.defName == FLOOR_HEATING_DEF_NAME
-				|| thing.def.category != ThingCategory.Building
-				|| thing_with_comps.TryGetComp<CompFacility>() != null)
-			{
-				return false;
-			}
-			return hasFullFloorHeatingCoverage(thing);
+			return getComfortStatusFor(thing, current_comfort, true).applies;
 		}
 
 		public static float getComfortBonusFor(Thing thing, float current_comfort)
 		{
-			if (!shouldApplyComfortBonus(thing, current_comfort))
+			FloorHeatingComfortStatus status = getComfortStatusFor(thing, current_comfort, true);
+			return status.applies ? status.bonus : 0f;
+		}
+
+		public static FloorHeatingComfortStatus getComfortStatusFor(
+			Thing thing,
+			float current_comfort,
+			bool require_positive_comfort)
+		{
+			FloorHeatingComfortStatus status = new FloorHeatingComfortStatus();
+			ThingWithComps thing_with_comps = thing as ThingWithComps;
+			if (thing_with_comps == null || thing.def == null || thing.def.category != ThingCategory.Building)
 			{
-				return 0f;
+				status.reason = "RealRim_FloorHeatingComfortReasonNotFurniture".Translate().ToString();
+				return status;
 			}
 
-			CompFloorHeating floor_heating = getFirstFloorHeatingUnder(thing);
-			return floor_heating == null ? 0f : floor_heating.Props.comfort_bonus;
+			if (!thing.Spawned || thing.Map == null)
+			{
+				status.reason = "RealRim_FloorHeatingComfortReasonNotSpawned".Translate().ToString();
+				return status;
+			}
+
+			if (require_positive_comfort && current_comfort <= 0f)
+			{
+				status.reason = "RealRim_FloorHeatingComfortReasonNoBaseComfort".Translate().ToString();
+				return status;
+			}
+
+			if (thing.def.defName == FLOOR_HEATING_DEF_NAME || thing_with_comps.TryGetComp<CompFacility>() != null)
+			{
+				status.reason = "RealRim_FloorHeatingComfortReasonNotFurniture".Translate().ToString();
+				return status;
+			}
+
+			List<CompFloorHeating> floor_heatings = getFloorHeatingCoverageUnder(thing);
+			if (floor_heatings == null || floor_heatings.Count == 0)
+			{
+				status.reason = "RealRim_FloorHeatingComfortReasonMissingCoverage".Translate().ToString();
+				return status;
+			}
+
+			for (int index = 0; index < floor_heatings.Count; index++)
+			{
+				CompFloorHeating floor_heating = floor_heatings[index];
+				status.floor_heating = status.floor_heating ?? floor_heating;
+				if (!isFloorHeatingComfortActive(floor_heating, out status.reason))
+				{
+					return status;
+				}
+			}
+
+			status.applies = true;
+			status.bonus = status.floor_heating == null ? 0f : status.floor_heating.Props.comfort_bonus;
+			status.reason = "RealRim_FloorHeatingComfortReasonActive".Translate(
+				status.floor_heating.last_transfer_kw.ToString("N3"),
+				status.floor_heating.last_medium_temperature_c.ToStringTemperature("F1"),
+				status.floor_heating.last_room_temperature_c.ToStringTemperature("F1")).ToString();
+			return status;
 		}
 
 		public static void tickFloorHeating(CompFloorHeating floor_heating, float elapsed_seconds)
@@ -153,6 +195,81 @@ namespace RealRim.WaterAndPumps
 				}
 			}
 			return null;
+		}
+
+		private static List<CompFloorHeating> getFloorHeatingCoverageUnder(Thing thing)
+		{
+			List<CompFloorHeating> floor_heatings = new List<CompFloorHeating>();
+			if (thing == null || !thing.Spawned || thing.Map == null)
+			{
+				return floor_heatings;
+			}
+
+			foreach (IntVec3 cell in thing.OccupiedRect())
+			{
+				CompFloorHeating floor_heating = getFloorHeatingAt(cell, thing.Map);
+				if (floor_heating == null)
+				{
+					floor_heatings.Clear();
+					return floor_heatings;
+				}
+				floor_heatings.Add(floor_heating);
+			}
+			return floor_heatings;
+		}
+
+		private static CompFloorHeating getFloorHeatingAt(IntVec3 cell, Map map)
+		{
+			if (map == null || !cell.InBounds(map))
+			{
+				return null;
+			}
+
+			List<Thing> things = cell.GetThingList(map);
+			for (int index = 0; index < things.Count; index++)
+			{
+				ThingWithComps thing_with_comps = things[index] as ThingWithComps;
+				CompFloorHeating floor_heating = thing_with_comps?.TryGetComp<CompFloorHeating>();
+				if (floor_heating != null)
+				{
+					return floor_heating;
+				}
+			}
+			return null;
+		}
+
+		private static bool isFloorHeatingComfortActive(CompFloorHeating floor_heating, out string reason)
+		{
+			reason = string.Empty;
+			if (floor_heating == null || floor_heating.parent == null || !floor_heating.parent.Spawned)
+			{
+				reason = "RealRim_FloorHeatingComfortReasonNotSpawned".Translate().ToString();
+				return false;
+			}
+
+			Room room = floor_heating.parent.GetRoom();
+			if (room == null || room.PsychologicallyOutdoors)
+			{
+				reason = "RealRim_FloorHeatingComfortReasonOutdoor".Translate().ToString();
+				return false;
+			}
+
+			FluidNetwork network = FluidUtility.getNetwork(floor_heating.parent, FluidNetworkType.Heating);
+			if (network == null)
+			{
+				reason = "RealRim_ReasonNoHeatingNetwork".Translate().ToString();
+				return false;
+			}
+
+			if (floor_heating.last_transfer_kw <= 0.0001f)
+			{
+				reason = floor_heating.last_reason.NullOrEmpty()
+					? "RealRim_FloorHeatingComfortReasonNoCurrentHeat".Translate().ToString()
+					: floor_heating.last_reason;
+				return false;
+			}
+
+			return true;
 		}
 
 		private static CachedFloorHeatingGroup getGroup(
@@ -428,6 +545,32 @@ namespace RealRim.WaterAndPumps
 			public int last_rebuild_tick = -1;
 			public int last_processed_tick = -1;
 			public int last_seen_tick = -1;
+		}
+	}
+
+	public sealed class FloorHeatingComfortStatus
+	{
+		public bool applies;
+		public float bonus;
+		public string reason = string.Empty;
+		public CompFloorHeating floor_heating;
+	}
+
+	internal static class FloorHeatingComfortFormatting
+	{
+		public static string buildStatExplanationLine(FloorHeatingComfortStatus status)
+		{
+			if (status == null)
+			{
+				return string.Empty;
+			}
+			if (status.applies)
+			{
+				return "RealRim_FloorHeatingComfortAppliedStat".Translate(
+					status.bonus.ToString("+0.00;-0.00;0.00"),
+					status.reason).ToString();
+			}
+			return "RealRim_FloorHeatingComfortInactiveStat".Translate(status.reason).ToString();
 		}
 	}
 }

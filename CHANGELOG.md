@@ -1,5 +1,66 @@
 # Changelog
 
+## 1.1.63 — Fix fluid layer-change job loop
+- Fixed layer-change jobs failing immediately because the job driver checked `FailOnCannotTouch` before the pawn had walked to the hidden pipe.
+- Moved the touch checks onto the work toil after `GotoThing`, matching the pattern used by other RealRim manual work jobs.
+- Removed the stale temporary claim state from the previous masking workaround.
+- Updated release metadata and runtime labels to 1.1.63.
+
+## 1.1.62 — Restore fluid layer-change work
+
+- Removed the temporary layer-change job claim gate from work discovery, manual forced work and job creation.
+- Kept the hidden-pipe reach fix from 1.1.59, so layer changes still use adjacent touch access instead of same-cell touch.
+- Clear stale layer-change claims when a layer change is requested.
+- Updated release metadata and runtime labels to 1.1.62.
+
+## 1.1.61 — Explain floor-heating comfort
+
+- Added floor-heating comfort bonus lines to the furniture Comfort stat explanation.
+- The explanation now reports whether the bonus is active or why it is not applied.
+- Updated release metadata and runtime labels to 1.1.61.
+
+## 1.1.60 — Fluid layer and smart valve build fixes
+
+- Fixed the layer-change job driver for RimWorld's non-virtual JobDriver.Cleanup implementation.
+- Fixed smart mixing valve layer routing so the selected source network is not captured as an out parameter inside a lambda.
+- Updated release metadata and runtime labels to 1.1.60.
+
+## 1.1.59 — Fluid layer change job stability
+
+- Prevented repeated same-tick layer-change job assignment when a layer-change target cannot immediately start or keep its job.
+- Layer-change jobs now claim their target temporarily before job creation and release the claim after success.
+- Layer-change jobs now use closest-touch pathing, which is safer for hidden pipes under walls or other structures.
+- Updated release metadata and runtime labels to 1.1.59.
+
+## 1.1.58 — Fluid layer connectors and smart mixing valve layer support
+
+- Added buildable layer connectors for fresh water, hot water, heating water, waste water and coolant networks.
+- Layer connectors join adjacent same-fluid nodes across any pipe layer without collapsing same-tile parallel pipes.
+- Smart mixing valves now store selectable source and receiving heating-water layers and only draw from/charge adjacent networks on those selected layers.
+- Layer connectors are shown in the selected layer overlay and in node inspection text.
+- Updated release metadata and runtime labels to 1.1.58.
+
+## 1.1.57 — Fluid layer selector graphic
+
+- Added a dedicated layer-stack texture for fluid layer selection gizmos.
+- Updated the architect-menu layer selectors and selected-node layer gizmos to use the new texture.
+- Changing a selected node layer from the node gizmo now queues the layer-change construction job on every selected compatible node, not only the first selected node.
+- Updated release metadata and runtime labels to 1.1.57.
+
+## 1.1.56 — Layer overlay refresh fix
+
+- Fixed fluid-network grid overlays becoming empty after layer filtering when the selected designator or selected node changed.
+- Overlay section layers now rebuild their mesh when the displayed fluid layer changes, so existing layer-1 networks are shown again when selected.
+- Updated release metadata and runtime labels to 1.1.56.
+
+## 1.1.55 — Fluid network construction layers
+
+- Added five construction layers per fluid-network type for fresh water, hot water, heating water, waste water and coolant.
+- Added architect-menu layer selectors that control the layer assigned to newly placed fluid-network pipes and buildings.
+- Nodes now connect only to same-type nodes on the same layer, allowing separate pipes on the same tile or adjacent tiles.
+- Added node gizmos to queue layer changes; a pawn performs a short no-resource construction job before the layer is changed and networks are rebuilt.
+- Added layer-aware placement validation, overlays and inspection text.
+
 ## 1.1.54 — Smart mixing valve room-temperature control
 
 - Added selectable smart mixing valve control modes for receiving-water temperature or monitored-room temperature.

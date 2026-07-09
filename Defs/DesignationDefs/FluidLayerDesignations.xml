@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+	<DesignationDef>
+		<defName>RealRim_ChangeFluidLayer</defName>
+		<label>change fluid-network layer</label>
+		<targetType>Thing</targetType>
+		<texturePath>DBH/UI/Plumbing</texturePath>
+	</DesignationDef>
+</Defs>

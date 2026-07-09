@@ -199,9 +199,14 @@ namespace RealRim.WaterAndPumps
 
 		public static bool shouldDrawOverlay(Map map, FluidNetworkType network_type)
 		{
+			return getDisplayedOverlayLayer(map, network_type) != FluidNetworkLayer.None;
+		}
+
+		public static FluidNetworkLayer getDisplayedOverlayLayer(Map map, FluidNetworkType network_type)
+		{
 			if (map == null || Find.CurrentMap != map)
 			{
-				return false;
+				return FluidNetworkLayer.None;
 			}
 
 			Designator_Build designator = Find.DesignatorManager?.SelectedDesignator as Designator_Build;
@@ -209,13 +214,13 @@ namespace RealRim.WaterAndPumps
 			CompProperties_FluidNode placing_node = getNodeProperties(placing_def);
 			if (placing_node?.networks != null && placing_node.networks.Contains(network_type))
 			{
-				return true;
+				return FluidNetworkLayerSettings.getSelectedLayer(network_type);
 			}
 
 			List<object> selected_objects = Find.Selector?.SelectedObjectsListForReading;
 			if (selected_objects == null)
 			{
-				return false;
+				return FluidNetworkLayer.None;
 			}
 
 			for (int index = 0; index < selected_objects.Count; index++)
@@ -229,11 +234,13 @@ namespace RealRim.WaterAndPumps
 				CompFluidNode node = thing.TryGetComp<CompFluidNode>();
 				if (node != null && node.supportsNetwork(network_type))
 				{
-					return true;
+					return node.isLayerConnector(network_type)
+						? FluidNetworkLayerSettings.getSelectedLayer(network_type)
+						: node.getLayer(network_type);
 				}
 			}
 
-			return false;
+			return FluidNetworkLayer.None;
 		}
 
 		public static void markOverlayDirty(Thing thing)
@@ -301,6 +308,7 @@ namespace RealRim.WaterAndPumps
 	public abstract class SectionLayer_FluidOverlay : SectionLayer
 	{
 		private readonly FluidNetworkType network_type;
+		private FluidNetworkLayer cached_displayed_layer = FluidNetworkLayer.None;
 
 		protected SectionLayer_FluidOverlay(
 			Section section,
@@ -312,7 +320,14 @@ namespace RealRim.WaterAndPumps
 
 		public override void DrawLayer()
 		{
-			if (FluidNetworkVisuals.shouldDrawOverlay(Map, network_type))
+			FluidNetworkLayer displayed_layer = FluidNetworkVisuals.getDisplayedOverlayLayer(Map, network_type);
+			if (cached_displayed_layer != displayed_layer)
+			{
+				cached_displayed_layer = displayed_layer;
+				Regenerate();
+			}
+
+			if (displayed_layer != FluidNetworkLayer.None)
 			{
 				base.DrawLayer();
 			}
@@ -323,7 +338,11 @@ namespace RealRim.WaterAndPumps
 			ClearSubMeshes(MeshParts.All);
 
 			MapComponent_FluidNetworks manager = Map.GetComponent<MapComponent_FluidNetworks>();
-			List<CompFluidNode> nodes = manager?.getAllActiveNodes(network_type);
+			FluidNetworkLayer displayed_layer = FluidNetworkVisuals.getDisplayedOverlayLayer(Map, network_type);
+			cached_displayed_layer = displayed_layer;
+			List<CompFluidNode> nodes = displayed_layer == FluidNetworkLayer.None
+				? new List<CompFluidNode>()
+				: manager?.getAllActiveNodes(network_type, displayed_layer);
 			HashSet<IntVec3> linked_cells = FluidNetworkVisuals.collectActiveCells(nodes);
 			if (linked_cells.Count > 0)
 			{

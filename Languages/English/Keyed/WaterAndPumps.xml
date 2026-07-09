@@ -93,7 +93,7 @@ Status entries: Pool water is the current volume and fill percentage. Water temp
 	<RealRim_ReasonAmbientOutOfRange>Ambient temperature is outside the operating range.</RealRim_ReasonAmbientOutOfRange>
 	<RealRim_ReasonNoSoilInfiltration>Septic drainage requires natural soil and cannot operate on a gravship.</RealRim_ReasonNoSoilInfiltration>
 	<RealRim_ReasonNoHotWater>No sufficiently hot water is connected; cold water was used.</RealRim_ReasonNoHotWater>
-	<RealRim_DuplicateFluidPipe>A {0} pipe already occupies this tile.</RealRim_DuplicateFluidPipe>
+	<RealRim_DuplicateFluidPipe>A {0} pipe already occupies {1} on this tile.</RealRim_DuplicateFluidPipe>
 	<RealRim_ReasonNoCoolantHeatCapacity>The coolant tank cannot absorb more extracted heat.</RealRim_ReasonNoCoolantHeatCapacity>
 	<RealRim_KitchenSinkStatus>Linked stoves: {0}
 Active linked stoves: {1}
@@ -226,23 +226,35 @@ Furniture comfort bonus: {6}
 {7}</RealRim_FloorHeatingStatus>
 	<RealRim_FloorHeatingModeIndoor>indoor heat exchanger</RealRim_FloorHeatingModeIndoor>
 	<RealRim_FloorHeatingModeOutdoor>outdoor snow-melt loop</RealRim_FloorHeatingModeOutdoor>
+	<RealRim_FloorHeatingComfortAppliedStat>Floor heating: {0} ({1})</RealRim_FloorHeatingComfortAppliedStat>
+	<RealRim_FloorHeatingComfortInactiveStat>Floor heating: +0.00 ({0})</RealRim_FloorHeatingComfortInactiveStat>
+	<RealRim_FloorHeatingComfortReasonActive>active, transferring {0} kW from {1} heating water into {2} room air</RealRim_FloorHeatingComfortReasonActive>
+	<RealRim_FloorHeatingComfortReasonMissingCoverage>not applied: the furniture is not fully above indoor floor heating</RealRim_FloorHeatingComfortReasonMissingCoverage>
+	<RealRim_FloorHeatingComfortReasonNoBaseComfort>not applied: the furniture has no positive base comfort</RealRim_FloorHeatingComfortReasonNoBaseComfort>
+	<RealRim_FloorHeatingComfortReasonNoCurrentHeat>not applied: the floor heating is connected but is not currently transferring heat</RealRim_FloorHeatingComfortReasonNoCurrentHeat>
+	<RealRim_FloorHeatingComfortReasonNotFurniture>not applied: this is not eligible comfort furniture</RealRim_FloorHeatingComfortReasonNotFurniture>
+	<RealRim_FloorHeatingComfortReasonNotSpawned>not applied: the furniture is not placed on a map</RealRim_FloorHeatingComfortReasonNotSpawned>
+	<RealRim_FloorHeatingComfortReasonOutdoor>not applied: outdoor snow-melt floor heating does not improve furniture comfort</RealRim_FloorHeatingComfortReasonOutdoor>
 	<RealRim_ReasonNoHeatDelta>Heating water is not warmer than the target medium.</RealRim_ReasonNoHeatDelta>
 	<RealRim_ReasonNoWinterPrecipitation>Inactive: outdoor temperature is at least 1 °C or no rain/snow is falling.</RealRim_ReasonNoWinterPrecipitation>
 	<RealRim_ReasonNoValveTarget>No valve target controller.</RealRim_ReasonNoValveTarget>
 	<RealRim_ReasonValveNeedsTwoNetworks>Needs two separate adjacent heating-water networks.</RealRim_ReasonValveNeedsTwoNetworks>
+	<RealRim_ReasonValveNeedsSelectedLayerNetworks>Needs separate adjacent heating-water networks on source {0} and receiving {1}.</RealRim_ReasonValveNeedsSelectedLayerNetworks>
 	<RealRim_ReasonNoReceivingStorage>No connected receiving thermal storage.</RealRim_ReasonNoReceivingStorage>
 	<RealRim_ReasonNoValveRoom>Inactive: the valve is not in an enclosed room that can be monitored.</RealRim_ReasonNoValveRoom>
 	<RealRim_ReasonRoomTargetReached>Inactive: monitored room target reached.</RealRim_ReasonRoomTargetReached>
 	<RealRim_ReasonWaterTargetReached>Inactive: receiving-water target reached.</RealRim_ReasonWaterTargetReached>
 	<RealRim_SmartMixingValveStatus>Smart mixing valve:
 Control mode: {0}
-Target receiving water: {1}
-Target monitored room: {2}
-Monitored room: {3}
-Source network: {4} ({5})
-Receiving network: {6} ({7})
-Current transfer: {8} kW
-{9}</RealRim_SmartMixingValveStatus>
+Source layer: {1}
+Receiving layer: {2}
+Target receiving water: {3}
+Target monitored room: {4}
+Monitored room: {5}
+Source network: {6} ({7})
+Receiving network: {8} ({9})
+Current transfer: {10} kW
+{11}</RealRim_SmartMixingValveStatus>
 	<RealRim_SmartMixingValveModeWater>water temperature</RealRim_SmartMixingValveModeWater>
 	<RealRim_SmartMixingValveModeRoom>room temperature</RealRim_SmartMixingValveModeRoom>
 	<RealRim_SmartMixingValveModeLabel>Control: {0}</RealRim_SmartMixingValveModeLabel>
@@ -253,10 +265,30 @@ Current transfer: {8} kW
 	<RealRim_SmartMixingValveRoomTargetDown>Lower room target</RealRim_SmartMixingValveRoomTargetDown>
 	<RealRim_SmartMixingValveRoomTargetUp>Raise room target</RealRim_SmartMixingValveRoomTargetUp>
 	<RealRim_SmartMixingValveRoomTargetDesc>Current monitored-room target: {0}</RealRim_SmartMixingValveRoomTargetDesc>
+	<RealRim_SmartMixingValveSourceLayerLabel>Source layer: {0}</RealRim_SmartMixingValveSourceLayerLabel>
+	<RealRim_SmartMixingValveReceivingLayerLabel>Receiving layer: {0}</RealRim_SmartMixingValveReceivingLayerLabel>
+	<RealRim_SmartMixingValveLayerDesc>Select which heating-water pipe layer this side of the smart mixing valve reads. The source layer supplies heat; the receiving layer accepts heat.</RealRim_SmartMixingValveLayerDesc>
+	<RealRim_SmartMixingValveSourceLayerMenuEntry>Use {0} as source layer</RealRim_SmartMixingValveSourceLayerMenuEntry>
+	<RealRim_SmartMixingValveReceivingLayerMenuEntry>Use {0} as receiving layer</RealRim_SmartMixingValveReceivingLayerMenuEntry>
 	<RealRim_FloorHeatingRequiresConstructedFloor>Floor heating must be installed on constructed flooring or smoothed stone.</RealRim_FloorHeatingRequiresConstructedFloor>
 	<RealRim_FloorHeatingAlreadyHere>Floor heating is already installed on this tile.</RealRim_FloorHeatingAlreadyHere>
 	<RealRim_ReasonNoIndoorRoom>No enclosed room to heat.</RealRim_ReasonNoIndoorRoom>
 	<RealRim_FloorHeatingReportSingleDetails>{0} room, {1} heating water, {2} m² exchanger, heat draw {3} kW</RealRim_FloorHeatingReportSingleDetails>
 	<RealRim_FloorHeatingReportGroupDetails>{0} tiles, {1} m² exchanger, average room {2}, average heating water {3}, heat draw {4} kW</RealRim_FloorHeatingReportGroupDetails>
+
+	<RealRim_FluidLayerNumber>layer {0}</RealRim_FluidLayerNumber>
+	<RealRim_SelectFluidLayerLabel>{0}: {1}</RealRim_SelectFluidLayerLabel>
+	<RealRim_SelectFluidLayerDesc>Select the construction layer used by newly placed {0} pipes and buildings. New fluid-network nodes connect only to adjacent or same-tile nodes of the same fluid type on the same layer. Current setting: {1}.</RealRim_SelectFluidLayerDesc>
+	<RealRim_SelectFluidLayerMenuEntry>{0} {1}</RealRim_SelectFluidLayerMenuEntry>
+	<RealRim_CurrentSelectionSuffix>(current)</RealRim_CurrentSelectionSuffix>
+	<RealRim_NodeFluidLayerLabel>{0}: {1}</RealRim_NodeFluidLayerLabel>
+	<RealRim_NodeFluidLayerPendingLabel>{0}: {1} → {2}</RealRim_NodeFluidLayerPendingLabel>
+	<RealRim_NodeFluidLayerDesc>This node belongs to the {0} network layer {1}. Changing the layer schedules a short construction job; the network is rebuilt after a pawn finishes the work.</RealRim_NodeFluidLayerDesc>
+	<RealRim_NodeFluidLayerMenuEntry>Move {0} to {1}</RealRim_NodeFluidLayerMenuEntry>
+	<RealRim_FluidNetworkLayerLine>{0} {1} network #{2}: {3} connected nodes</RealRim_FluidNetworkLayerLine>
+	<RealRim_FluidNetworkLayerDisconnectedLine>{0} {1}: not connected</RealRim_FluidNetworkLayerDisconnectedLine>
+	<RealRim_FluidNetworkLayerConnectorLine>{0} layer connector, network #{1}: {2} connected nodes</RealRim_FluidNetworkLayerConnectorLine>
+	<RealRim_FluidNetworkLayerConnectorDisconnectedLine>{0} layer connector: not connected</RealRim_FluidNetworkLayerConnectorDisconnectedLine>
+	<RealRim_FluidLayerPendingLine>{0} layer change queued: {1}</RealRim_FluidLayerPendingLine>
 
 </LanguageData>

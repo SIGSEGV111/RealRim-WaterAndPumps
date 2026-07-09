@@ -41,6 +41,8 @@ namespace RealRim.WaterAndPumps
 		};
 
 		public SmartMixingValveControlMode control_mode = SmartMixingValveControlMode.WaterTemperature;
+		public FluidNetworkLayer source_layer = FluidNetworkLayer.Layer1;
+		public FluidNetworkLayer receiving_layer = FluidNetworkLayer.Layer1;
 		public float target_water_temperature_c;
 		public float target_room_temperature_c;
 		public float last_transfer_kw;
@@ -66,6 +68,8 @@ namespace RealRim.WaterAndPumps
 			base.PostSpawnSetup(respawning_after_load);
 			if (!respawning_after_load)
 			{
+				source_layer = FluidNetworkLayerSettings.getSelectedLayer(FluidNetworkType.Heating);
+				receiving_layer = source_layer;
 				target_water_temperature_c = Props.default_water_temperature_c;
 				target_room_temperature_c = Props.default_room_temperature_c;
 			}
@@ -75,11 +79,14 @@ namespace RealRim.WaterAndPumps
 		{
 			base.PostExposeData();
 			Scribe_Values.Look(ref control_mode, "control_mode", SmartMixingValveControlMode.WaterTemperature);
+			Scribe_Values.Look(ref source_layer, "source_layer", FluidNetworkLayer.Layer1);
+			Scribe_Values.Look(ref receiving_layer, "receiving_layer", FluidNetworkLayer.Layer1);
 			Scribe_Values.Look(ref target_water_temperature_c, "target_water_temperature_c", Props.default_water_temperature_c);
 			Scribe_Values.Look(ref target_room_temperature_c, "target_room_temperature_c", Props.default_room_temperature_c);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
 				clampTargets();
+				clampLayers();
 			}
 		}
 
@@ -97,6 +104,9 @@ namespace RealRim.WaterAndPumps
 				icon = RealRimTextures.configure_heat_source,
 				action = toggleControlMode,
 			};
+
+			yield return createLayerGizmo(true);
+			yield return createLayerGizmo(false);
 
 			if (control_mode == SmartMixingValveControlMode.RoomTemperature)
 			{
@@ -159,6 +169,8 @@ namespace RealRim.WaterAndPumps
 			updateLastRoomTemperature();
 			return "RealRim_SmartMixingValveStatus".Translate(
 				getControlModeLabel(),
+				FluidNetworkLayerUtility.getLayerLabel(source_layer),
+				FluidNetworkLayerUtility.getLayerLabel(receiving_layer),
 				getWaterTargetText(),
 				getRoomTargetText(),
 				getRoomTemperatureText(),
@@ -190,16 +202,23 @@ namespace RealRim.WaterAndPumps
 				return;
 			}
 
-			List<FluidNetwork> networks = getAdjacentHeatingNetworks();
-			if (networks.Count < 2)
-			{
-				last_reason = "RealRim_ReasonValveNeedsTwoNetworks".Translate();
-				return;
-			}
-
+			List<FluidNetwork> source_networks = getAdjacentHeatingNetworks(source_layer);
+			List<FluidNetwork> receiving_networks = getAdjacentHeatingNetworks(receiving_layer);
 			FluidNetwork source_network;
 			FluidNetwork receiving_network;
-			selectNetworks(networks, control_mode, target_water_temperature_c, out source_network, out receiving_network);
+			if (!trySelectNetworks(
+				source_networks,
+				receiving_networks,
+				control_mode,
+				target_water_temperature_c,
+				out source_network,
+				out receiving_network))
+			{
+				last_reason = "RealRim_ReasonValveNeedsSelectedLayerNetworks".Translate(
+					FluidNetworkLayerUtility.getLayerLabel(source_layer),
+					FluidNetworkLayerUtility.getLayerLabel(receiving_layer));
+				return;
+			}
 			last_source_network_id = source_network.network_id;
 			last_receiving_network_id = receiving_network.network_id;
 			last_source_temperature_c = source_network.getAverageThermalTemperature();
@@ -261,7 +280,7 @@ namespace RealRim.WaterAndPumps
 			}
 		}
 
-		private List<FluidNetwork> getAdjacentHeatingNetworks()
+		private List<FluidNetwork> getAdjacentHeatingNetworks(FluidNetworkLayer layer)
 		{
 			List<FluidNetwork> result = new List<FluidNetwork>();
 			Map map = parent.MapHeld;
@@ -288,7 +307,9 @@ namespace RealRim.WaterAndPumps
 					if (node == null
 						|| node == own_node
 						|| node.Props.transfer_only
-						|| !node.supportsNetwork(FluidNetworkType.Heating))
+						|| !node.supportsNetwork(FluidNetworkType.Heating)
+						|| (!node.isLayerConnector(FluidNetworkType.Heating)
+							&& node.getLayer(FluidNetworkType.Heating) != layer))
 					{
 						continue;
 					}
@@ -303,30 +324,100 @@ namespace RealRim.WaterAndPumps
 			return result;
 		}
 
-		private static void selectNetworks(
-			List<FluidNetwork> networks,
+		private static bool trySelectNetworks(
+			List<FluidNetwork> source_networks,
+			List<FluidNetwork> receiving_networks,
 			SmartMixingValveControlMode control_mode,
 			float target_water_temperature_c,
 			out FluidNetwork source_network,
 			out FluidNetwork receiving_network)
 		{
-			FluidNetwork selected_source_network = networks
+			source_network = null;
+			receiving_network = null;
+			if (source_networks.NullOrEmpty() || receiving_networks.NullOrEmpty())
+			{
+				return false;
+			}
+
+			FluidNetwork selected_source_network = source_networks
 				.OrderByDescending(network => network.getAverageThermalTemperature())
-				.First();
+				.FirstOrDefault();
+			if (selected_source_network == null)
+			{
+				return false;
+			}
 			source_network = selected_source_network;
-			IEnumerable<FluidNetwork> candidates = networks.Where(network => network != selected_source_network);
+
+			IEnumerable<FluidNetwork> candidates = receiving_networks.Where(network => network != selected_source_network);
 			if (control_mode == SmartMixingValveControlMode.WaterTemperature)
 			{
 				receiving_network = candidates
 					.OrderBy(network => network.getAverageThermalTemperature() >= target_water_temperature_c)
 					.ThenBy(network => network.getAverageThermalTemperature())
-					.First();
-				return;
+					.FirstOrDefault();
+				return receiving_network != null;
 			}
 
 			receiving_network = candidates
 				.OrderBy(network => network.getAverageThermalTemperature())
-				.First();
+				.FirstOrDefault();
+			return receiving_network != null;
+		}
+
+		private Command_Action createLayerGizmo(bool source)
+		{
+			FluidNetworkLayer layer = source ? source_layer : receiving_layer;
+			return new Command_Action
+			{
+				defaultLabel = (source
+					? "RealRim_SmartMixingValveSourceLayerLabel"
+					: "RealRim_SmartMixingValveReceivingLayerLabel").Translate(
+					FluidNetworkLayerUtility.getLayerLabel(layer)),
+				defaultDesc = "RealRim_SmartMixingValveLayerDesc".Translate(),
+				icon = RealRimTextures.fluid_layer,
+				action = delegate
+				{
+					openLayerMenu(source);
+				},
+			};
+		}
+
+		private void openLayerMenu(bool source)
+		{
+			List<FloatMenuOption> options = new List<FloatMenuOption>();
+			for (int index = 0; index < FluidNetworkLayerUtility.LAYERS.Length; index++)
+			{
+				FluidNetworkLayer layer = FluidNetworkLayerUtility.LAYERS[index];
+				options.Add(new FloatMenuOption(
+					getLayerMenuLabel(source, layer),
+					delegate
+					{
+						if (source)
+						{
+							source_layer = layer;
+						}
+						else
+						{
+							receiving_layer = layer;
+						}
+						clampLayers();
+					}));
+			}
+			Find.WindowStack.Add(new FloatMenu(options));
+		}
+
+		private string getLayerMenuLabel(bool source, FluidNetworkLayer layer)
+		{
+			FluidNetworkLayer current_layer = source ? source_layer : receiving_layer;
+			string label = (source
+				? "RealRim_SmartMixingValveSourceLayerMenuEntry"
+				: "RealRim_SmartMixingValveReceivingLayerMenuEntry").Translate(
+				FluidNetworkLayerUtility.getLayerLabel(layer));
+			if (current_layer == layer)
+			{
+				label += " " + "RealRim_CurrentSelectionSuffix".Translate();
+			}
+			return label;
 		}
 
 		private void toggleControlMode()
@@ -352,6 +443,12 @@ namespace RealRim.WaterAndPumps
 				target_room_temperature_c,
 				Props.minimum_room_temperature_c,
 				Props.maximum_room_temperature_c);
+		}
+
+		private void clampLayers()
+		{
+			source_layer = FluidNetworkLayerUtility.clampLayer(source_layer);
+			receiving_layer = FluidNetworkLayerUtility.clampLayer(receiving_layer);
 		}
 
 		private void resetLastTickValues()

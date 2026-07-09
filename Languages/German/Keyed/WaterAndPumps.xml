@@ -291,4 +291,22 @@ Aktuelle Übertragung: {10} kW
 	<RealRim_FluidNetworkLayerConnectorDisconnectedLine>{0}-Ebenenverbinder: nicht verbunden</RealRim_FluidNetworkLayerConnectorDisconnectedLine>
 	<RealRim_FluidLayerPendingLine>{0}-Ebenenwechsel vorgemerkt: {1}</RealRim_FluidLayerPendingLine>
 
+	<RealRim_RainwaterCollectorStatus>Regenwassersammler:
+Zugeordnete konstruierte Dachfläche: {0} Felder
+Regenintensität: {1}
+Mögliche Sammlung: {2} L/h
+Von Tanks aufgenommen: {3} L/h
+Überlauf/abgewiesen: {4} L/h
+{5}</RealRim_RainwaterCollectorStatus>
+	<RealRim_RainwaterCollectorRequiresWall>Muss über einem vorhandenen Wandfeld gebaut werden.</RealRim_RainwaterCollectorRequiresWall>
+	<RealRim_RainwaterCollectorRequiresRoof>Muss über einem vorhandenen Wandfeld unter einem konstruierten Dach gebaut werden. Natürliche Höhlen- und Bergdächer zählen nicht.</RealRim_RainwaterCollectorRequiresRoof>
+	<RealRim_ReasonNotSpawned>Inaktiv: nicht auf einer Karte platziert.</RealRim_ReasonNotSpawned>
+	<RealRim_ReasonNoRainwaterWall>Inaktiv: Der Sammler muss über einem vorhandenen Wandfeld gebaut werden.</RealRim_ReasonNoRainwaterWall>
+	<RealRim_ReasonNoRainwaterRoofAnchor>Inaktiv: Der Sammler muss über einem vorhandenen Wandfeld unter einem konstruierten Dach stehen.</RealRim_ReasonNoRainwaterRoofAnchor>
+	<RealRim_ReasonNoRainwaterRoofArea>Inaktiv: Diesem Sammler sind keine konstruierten Dachfelder zugeordnet.</RealRim_ReasonNoRainwaterRoofArea>
+	<RealRim_ReasonNoRain>Inaktiv: Es fällt kein Regen oder Schnee.</RealRim_ReasonNoRain>
+	<RealRim_ReasonNoFreshWaterNetwork>Inaktiv: Nicht mit einem Frischwassernetz verbunden.</RealRim_ReasonNoFreshWaterNetwork>
+	<RealRim_ReasonNoFreshWaterCapacity>Inaktiv: Verbundene Frischwassertanks fehlen oder sind voll.</RealRim_ReasonNoFreshWaterCapacity>
+	<RealRim_ReasonFreshWaterPartlyFull>Ein Teil des gesammelten Regenwassers läuft über, weil die verbundenen Tanks nur begrenzte freie Kapazität haben.</RealRim_ReasonFreshWaterPartlyFull>
+
 </LanguageData>

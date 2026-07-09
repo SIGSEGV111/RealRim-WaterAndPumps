@@ -82,7 +82,8 @@
 		<graphicData><texPath>DBH/Things/Building/Valve</texPath><graphicClass>Graphic_Single</graphicClass></graphicData>
 		<statBases><MaxHitPoints>80</MaxHitPoints><WorkToBuild>350</WorkToBuild><Mass>2</Mass></statBases>
 		<costList><Steel>15</Steel></costList>
-		<building><isEdifice>false</isEdifice></building>
+		<building><isEdifice>true</isEdifice></building>
+		<blockWind>true</blockWind>
 		<comps><li Class="CompProperties_Flickable"/></comps>
 	</ThingDef>
 	<ThingDef ParentName="RealRim_FluidValveBase"><defName>RealRim_FreshWaterValve</defName><label>fresh-water valve</label><designationCategory>Hygiene</designationCategory></ThingDef>
@@ -90,10 +91,61 @@
 	<ThingDef ParentName="RealRim_FluidValveBase"><defName>RealRim_HeatingValve</defName><label>heating valve</label><designationCategory>Temperature</designationCategory></ThingDef>
 	<ThingDef ParentName="RealRim_FluidValveBase"><defName>RealRim_CoolantValve</defName><label>coolant valve</label><designationCategory>Temperature</designationCategory></ThingDef>
 
+	<ThingDef ParentName="BuildingBase">
+		<defName>RealRim_RainwaterCollector</defName>
+		<label>rainwater collector</label>
+		<description>A simple roof downpipe and first-flush collection box. It collects rain falling on constructed roof tiles in a 7 × 7 area and feeds it directly into connected fresh-water tanks without a pump. It must be attached to an existing wall tile under a constructed roof. Natural cave and mountain roofs do not count, and each roof tile is assigned to the closest collector in range.</description>
+		<thingClass>Building</thingClass>
+		<designationCategory>Hygiene</designationCategory>
+		<uiIconPath>RealRim/Things/Building/RainwaterCollector</uiIconPath>
+		<altitudeLayer>Building</altitudeLayer>
+		<passability>Standable</passability>
+		<minifiedDef>MinifiedThing</minifiedDef>
+		<size>(1,1)</size>
+		<rotatable>false</rotatable>
+		<graphicData>
+			<texPath>RealRim/Things/Building/RainwaterCollector</texPath>
+			<graphicClass>Graphic_Single</graphicClass>
+			<drawSize>(0.5,0.5)</drawSize>
+		</graphicData>
+		<statBases>
+			<MaxHitPoints>90</MaxHitPoints>
+			<WorkToBuild>450</WorkToBuild>
+			<Mass>5</Mass>
+		</statBases>
+		<costList>
+			<Steel>20</Steel>
+		</costList>
+		<building>
+			<isEdifice>false</isEdifice>
+			<isInert>true</isInert>
+			<canConstructInCorner>true</canConstructInCorner>
+		</building>
+		<clearBuildingArea>false</clearBuildingArea>
+		<researchPrerequisites>
+			<li>RealRim_RainwaterCollection</li>
+		</researchPrerequisites>
+		<placeWorkers Inherit="False">
+			<li>RealRim.WaterAndPumps.PlaceWorker_RainwaterCollector</li>
+			<li>RealRim.WaterAndPumps.PlaceWorker_FluidPipe</li>
+		</placeWorkers>
+		<comps>
+			<li Class="RealRim.WaterAndPumps.CompProperties_FluidNode">
+				<networks>
+					<li>FreshWater</li>
+				</networks>
+			</li>
+			<li Class="RealRim.WaterAndPumps.CompProperties_RainwaterCollector">
+				<collection_radius>3</collection_radius>
+				<nominal_liters_per_roof_tile_per_hour>30</nominal_liters_per_roof_tile_per_hour>
+			</li>
+		</comps>
+	</ThingDef>
+
 	<ThingDef ParentName="BuildingBase" Name="RealRim_FluidLayerConnectorBase" Abstract="True">
 		<thingClass>Building</thingClass>
 		<altitudeLayer>Building</altitudeLayer>
-		<passability>Standable</passability>
+		<passability>Impassable</passability>
 		<minifiedDef>MinifiedThing</minifiedDef>
 		<size>(1,1)</size>
 		<rotatable>false</rotatable>

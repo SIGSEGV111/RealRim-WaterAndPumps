@@ -1,5 +1,43 @@
 # Changelog
 
+## 1.1.70 — Fix rainwater collector wall placement
+
+- Made the rainwater collector a non-edifice wall attachment again so it can be placed over an existing wall instead of trying to occupy the wall cell as a second wall.
+- Added explicit placement-over-wall support for valid roof-holding impassable walls.
+- Kept the custom wall and constructed-roof validation rules.
+- Updated release metadata and runtime labels to 1.1.70.
+
+## 1.1.69 — Rework rainwater collector mounting and area
+
+- Increased the rainwater collector catchment area from 5 × 5 to 7 × 7.
+- Changed the rainwater collector to be wall-mounted: it must now be placed in a wall tile under a constructed roof.
+- Scaled the in-world rainwater collector graphic down to half-tile size and kept it centered on the wall tile.
+- Added the collection-area overlay to the selected rainwater collector, not only while placing the blueprint.
+- Updated release metadata and runtime labels to 1.1.69.
+
+## 1.1.68 — Add rainwater collector graphic
+
+- Added the dedicated rainwater collector building texture.
+- Updated the rainwater collector building and architect icon to use the new graphic instead of the placeholder plumbing/valve art.
+- Updated release metadata and runtime labels to 1.1.68.
+
+## 1.1.67 — Show rainwater collection area while placing
+
+- Added placement ghost overlays for the rainwater collector's 5×5 collection area.
+- Highlighted collectable constructed roof tiles inside the placement area separately from the full catchment rectangle.
+- Shared the collector area calculation between runtime collection logic and placement preview.
+- Updated release metadata and runtime labels to 1.1.67.
+
+## 1.1.66 — Add rainwater collection
+
+- Added buildable rainwater collectors in the Hygiene architect menu.
+- Added tribal rainwater collection research with 200 base cost in the Dubs Bad Hygiene research tab.
+- Rainwater collectors require a constructed roof under or next to the collector; natural cave and mountain roofs do not count.
+- Each collector gathers rain from constructed roof tiles in a 5 × 5 area and feeds connected fresh-water tanks directly without a pump.
+- Overlapping collection areas assign each roof tile to the closest collector so roof tiles are not double-counted.
+- Added inspection status explaining assigned roof area, rain intensity, collection rate, tank acceptance and overflow/rejection.
+- Updated release metadata and runtime labels to 1.1.66.
+
 ## 1.1.65 — Color-code fluid layer gizmos
 
 - Added network-colored fluid layer selector icons for fresh water, hot water, heating water, waste water and coolant.

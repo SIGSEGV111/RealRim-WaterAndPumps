@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Defs>
 	<ResearchProjectDef>
+		<defName>RealRim_RainwaterCollection</defName>
+		<label>rainwater collection</label>
+		<description>Build simple roof collectors that are attached to walls under constructed roofs and gather rainwater from nearby roof tiles into fresh-water tanks.</description>
+		<tab>DubsBadHygiene</tab>
+		<baseCost>200</baseCost>
+		<techLevel>Neolithic</techLevel>
+		<researchViewX>1</researchViewX>
+		<researchViewY>0.5</researchViewY>
+	</ResearchProjectDef>
+
+	<ResearchProjectDef>
 		<defName>RealRim_FloorHeating</defName>
 		<label>floor heating</label>
 		<description>Embed unregulated hydronic heating loops under constructed floors. Indoor loops transfer heat according to the heating-water-to-room temperature difference, while outdoor loops consume heat below 1 °C during precipitation to keep constructed floors clear of snow.</description>

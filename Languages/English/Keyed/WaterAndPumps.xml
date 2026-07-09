@@ -291,4 +291,22 @@ Current transfer: {10} kW
 	<RealRim_FluidNetworkLayerConnectorDisconnectedLine>{0} layer connector: not connected</RealRim_FluidNetworkLayerConnectorDisconnectedLine>
 	<RealRim_FluidLayerPendingLine>{0} layer change queued: {1}</RealRim_FluidLayerPendingLine>
 
+	<RealRim_RainwaterCollectorStatus>Rainwater collector:
+Assigned constructed roof: {0} tiles
+Rain intensity: {1}
+Potential collection: {2} L/h
+Accepted by tanks: {3} L/h
+Overflow/rejected: {4} L/h
+{5}</RealRim_RainwaterCollectorStatus>
+	<RealRim_RainwaterCollectorRequiresWall>Must be built over an existing wall tile.</RealRim_RainwaterCollectorRequiresWall>
+	<RealRim_RainwaterCollectorRequiresRoof>Must be built over an existing wall tile under a constructed roof. Natural cave and mountain roofs do not count.</RealRim_RainwaterCollectorRequiresRoof>
+	<RealRim_ReasonNotSpawned>Inactive: not spawned on a map.</RealRim_ReasonNotSpawned>
+	<RealRim_ReasonNoRainwaterWall>Inactive: the collector must be built over an existing wall tile.</RealRim_ReasonNoRainwaterWall>
+	<RealRim_ReasonNoRainwaterRoofAnchor>Inactive: the collector must be built over an existing wall tile under a constructed roof.</RealRim_ReasonNoRainwaterRoofAnchor>
+	<RealRim_ReasonNoRainwaterRoofArea>Inactive: no constructed roof tiles are assigned to this collector.</RealRim_ReasonNoRainwaterRoofArea>
+	<RealRim_ReasonNoRain>Inactive: no rain or snow is falling.</RealRim_ReasonNoRain>
+	<RealRim_ReasonNoFreshWaterNetwork>Inactive: not connected to a fresh-water network.</RealRim_ReasonNoFreshWaterNetwork>
+	<RealRim_ReasonNoFreshWaterCapacity>Inactive: connected fresh-water tanks are full or missing.</RealRim_ReasonNoFreshWaterCapacity>
+	<RealRim_ReasonFreshWaterPartlyFull>Part of the collected rainwater is overflowing because connected tanks have limited free capacity.</RealRim_ReasonFreshWaterPartlyFull>
+
 </LanguageData>

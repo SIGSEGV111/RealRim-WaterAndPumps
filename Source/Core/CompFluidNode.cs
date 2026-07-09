@@ -308,7 +308,7 @@ namespace RealRim.WaterAndPumps
 				defaultDesc = "RealRim_NodeFluidLayerDesc".Translate(
 					FluidUtility.getNetworkLabel(network_type),
 					FluidNetworkLayerUtility.getLayerLabel(getLayer(network_type))),
-				icon = RealRimTextures.fluid_layer,
+				icon = RealRimTextures.getFluidLayerIcon(network_type),
 				action = delegate
 				{
 					openLayerMenu(network_type);

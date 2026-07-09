@@ -13,7 +13,7 @@ namespace RealRim.WaterAndPumps
 		protected Designator_SelectFluidLayer(FluidNetworkType network_type)
 		{
 			this.network_type = network_type;
-			icon = RealRimTextures.fluid_layer;
+			icon = RealRimTextures.getFluidLayerIcon(network_type);
 			soundSucceeded = SoundDefOf.Tick_High;
 			refreshLabels();
 		}

@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.1.65 — Color-code fluid layer gizmos
+
+- Added network-colored fluid layer selector icons for fresh water, hot water, heating water, waste water and coolant.
+- Architect-menu layer selectors, selected-node layer-change gizmos and layer-connector build icons now use the icon matching their fluid network.
+- Multi-network buildings now show visually distinct layer-change gizmos instead of several identical layer-stack icons.
+- Updated release metadata and runtime labels to 1.1.65.
+
+## 1.1.64 — Harmonize gizmo icon framing
+
+- Cropped and re-centered all RealRim UI gizmo/icon textures to reduce unused transparent space.
+- Harmonized padding across the full UI icon set so RimWorld displays them at a more consistent visual size.
+- Normalized the floor-heating architect icon to the same 512×512 centered layout used by the other UI icons.
+- Updated release metadata and runtime labels to 1.1.64.
+
 ## 1.1.63 — Fix fluid layer-change job loop
 - Fixed layer-change jobs failing immediately because the job driver checked `FailOnCannotTouch` before the pawn had walked to the hidden pipe.
 - Moved the touch checks onto the work toil after `GotoThing`, matching the pattern used by other RealRim manual work jobs.

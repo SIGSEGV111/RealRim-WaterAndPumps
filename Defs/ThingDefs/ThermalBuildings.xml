@@ -35,4 +35,50 @@
 		<description>Transfers recovered heat from the air-conditioning coolant network into the heating-water network.</description>
 		<researchPrerequisites><li>CentralHeating</li><li>MultiSplitAirCon</li></researchPrerequisites>
 	</ThingDef>
+
+	<ThingDef ParentName="RealRim_HeatingPipe">
+		<defName>RealRim_FloorHeating</defName>
+		<label>floor heating</label>
+		<description>A concealed unregulated hydronic floor-heating loop installed below constructed flooring. Indoors, each tile acts as 1 m² of radiant floor and transfers heat from the heating-water circuit according to the water-to-room temperature difference. Outdoors, it uses a stronger snow-melt conductance and only runs below 1 °C while precipitation is falling, consuming heat to keep constructed floors clear of snow. Furniture fully standing on heated indoor tiles receives a small comfort bonus.</description>
+		<thingClass>Building</thingClass>
+		<designationCategory>Temperature</designationCategory>
+		<uiIconPath>RealRim/UI/FloorHeating</uiIconPath>
+		<graphicData>
+			<texPath>DBH/Things/Building/SewagePipe_Atlas</texPath>
+			<graphicClass>Graphic_Single</graphicClass>
+			<color>(0,0,0,0)</color>
+			<shaderType>Transparent</shaderType>
+		</graphicData>
+		<costList>
+			<Steel>2</Steel>
+		</costList>
+		<statBases>
+			<MaxHitPoints>60</MaxHitPoints>
+			<WorkToBuild>600</WorkToBuild>
+			<Flammability>0</Flammability>
+			<Beauty>0</Beauty>
+			<Mass>1</Mass>
+		</statBases>
+		<constructionSkillPrerequisite>8</constructionSkillPrerequisite>
+		<researchPrerequisites>
+			<li>RealRim_FloorHeating</li>
+		</researchPrerequisites>
+		<placeWorkers Inherit="False">
+			<li>RealRim.WaterAndPumps.PlaceWorker_FloorHeating</li>
+		</placeWorkers>
+		<comps Inherit="False">
+			<li Class="RealRim.WaterAndPumps.CompProperties_FluidNode">
+				<networks>
+					<li>Heating</li>
+				</networks>
+			</li>
+			<li Class="RealRim.WaterAndPumps.CompProperties_FloorHeating">
+				<heat_exchanger_surface_m2>1.0</heat_exchanger_surface_m2>
+				<heat_transfer_w_per_m2_k>5.0</heat_transfer_w_per_m2_k>
+				<outdoor_heat_transfer_w_per_m2_k>10.0</outdoor_heat_transfer_w_per_m2_k>
+				<comfort_bonus>0.10</comfort_bonus>
+			</li>
+		</comps>
+	</ThingDef>
+
 </Defs>

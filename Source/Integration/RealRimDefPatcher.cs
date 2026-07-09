@@ -35,11 +35,11 @@ namespace RealRim.WaterAndPumps
 
 			if (failed_phases == 0)
 			{
-				Log.Message("[RealRim] Water & Pumps 1.1.45: replaced DBH water, heating, cooling, sprinkler and sewage definitions.");
+				Log.Message("[RealRim] Water & Pumps 1.1.50: replaced DBH water, heating, cooling, sprinkler and sewage definitions.");
 			}
 			else
 			{
-				Log.Error("[RealRim] Water & Pumps 1.1.45: definition replacement completed with "
+				Log.Error("[RealRim] Water & Pumps 1.1.50: definition replacement completed with "
 					+ failed_phases + " failed phase(s). Later phases were still applied; see the preceding errors.");
 			}
 		}
@@ -911,6 +911,7 @@ namespace RealRim.WaterAndPumps
 			{
 				networks = new List<FluidNetworkType>(networks),
 				valve = valve,
+				transfer_only = false,
 				outdoor_heat_exchange_w_per_m_k = outdoor_heat_exchange_w_per_m_k,
 			});
 		}

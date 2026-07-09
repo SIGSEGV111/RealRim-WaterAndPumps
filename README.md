@@ -4,7 +4,7 @@ Physics-oriented replacement layer for **Dubs Bad Hygiene** on RimWorld 1.6.
 
 - Author: SIGSEGV11
 - Package ID: `sigsegv11.realrim.water`
-- Version: 1.1.45
+- Version: 1.1.50
 - Required: Harmony, Dubs Bad Hygiene
 
 This is a clean subsystem replacement. Save compatibility with versions 1.0.x is not intended. Existing DBH `ThingDef` identifiers are reused where practical so DBH buildings can still be loaded and constructed.
@@ -99,6 +99,10 @@ Radiator output follows a ΔT-based exponent curve rather than a fixed room-temp
 - 1 m radiator: 1.5 kW at the reference temperature difference;
 - 2 m radiator: 3.0 kW;
 - towel rail: 1.2 kW.
+
+Floor heating is an unregulated hydronic heat exchanger rather than a thermostat. Indoor tiles are grouped by room and heating network, then cached and processed as one exchanger using 5 W/m²K against the current room temperature. Outdoor tiles are grouped per heating network and only activate below 1 °C while rain/snow is falling; they use 10 W/m²K against outdoor air and spend that heat on snow removal instead of warming the map. Straw matting is intentionally excluded from new floor-heating placement.
+
+The smart mixing valve is a powered 5 W thermostatic bridge for two adjacent heating-water circuits. It does not merge the circuits into one network; instead it reads adjacent heating networks, treats the hotter side as the source, and transfers up to 12 kW into the cooler receiving side until the selected receiving-water temperature is reached or the source water is no longer hot enough.
 
 ## Pools
 

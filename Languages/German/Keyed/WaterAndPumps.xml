@@ -171,6 +171,7 @@ Gesamter Wasserverbrauch: {5} L
 	<RealRim_NetworkReportBedroomMany>{0}, {1}, … +{2} {3}</RealRim_NetworkReportBedroomMany>
 	<RealRim_NetworkReportNumberedNode>{0} #{1}</RealRim_NetworkReportNumberedNode>
 	<RealRim_NetworkReportConnected>verbunden</RealRim_NetworkReportConnected>
+	<RealRim_HeatingReportMixingValveExchange>Wärmeaustausch intelligenter Mischventile: Eingang {0} kW, Ausgang {1} kW</RealRim_HeatingReportMixingValveExchange>
 	<RealRim_HeatingReportNetworkTemperature>Mittlere Heizwassertemperatur: {0}</RealRim_HeatingReportNetworkTemperature>
 	<RealRim_HotWaterOverview>Warmwasserübersicht</RealRim_HotWaterOverview>
 	<RealRim_HotWaterOverviewDesc>Öffnet einen Live-Bericht für dieses verbundene Brauchwarmwassernetz.</RealRim_HotWaterOverviewDesc>
@@ -211,4 +212,34 @@ Ausstehende Schmutzschichten: {4}</RealRim_SewageOutletStatus>
 	<RealRim_SewageDumpPortDescription>Ein betriebener Abwasser-Ausstoßport für Abwassernetze. Zeigt seine Ausstoßzelle ins Vakuum, stößt er Abwasser direkt in den Weltraum aus, erzeugt keinen Schmutz und benötigt keinen Boden-Auslassbereich. In Atmosphäre arbeitet er wie ein Bodenauslass und benötigt den vollständigen 3 × 5 Felder großen Bereich vor sich als natürlichen Boden. Er nimmt an direkter unbehandelter Einleitung sowie am Überlauf von Klärgruben und Kläranlagen teil.</RealRim_SewageDumpPortDescription>
 	<RealRim_SewageOutletInactiveNoPower>inaktiv: keine Stromversorgung</RealRim_SewageOutletInactiveNoPower>
 	<RealRim_SewageOutletInactiveSwitchedOff>inaktiv: ausgeschaltet</RealRim_SewageOutletInactiveSwitchedOff>
+
+	<RealRim_FloorHeatingLabel>Fußbodenheizung</RealRim_FloorHeatingLabel>
+	<RealRim_FloorHeatingStatus>Fußbodenheizung:
+Modus: {0}
+Raum-/Außenluft: {1}
+Heizwasser: {2}
+Zwischengespeicherte Gruppenfläche: {3} m²
+Aktuelle Übertragung: {4} kW
+In diesem Tick entfernte Schneetiefe: {5}
+Komfortbonus für Möbel: {6}
+{7}</RealRim_FloorHeatingStatus>
+	<RealRim_FloorHeatingModeIndoor>Innenraum-Wärmetauscher</RealRim_FloorHeatingModeIndoor>
+	<RealRim_FloorHeatingModeOutdoor>Außen-Schneeschmelzschleife</RealRim_FloorHeatingModeOutdoor>
+	<RealRim_ReasonNoHeatDelta>Das Heizwasser ist nicht wärmer als das Zielmedium.</RealRim_ReasonNoHeatDelta>
+	<RealRim_ReasonNoWinterPrecipitation>Inaktiv: Außenluft mindestens 1 °C oder kein Regen/Schnee.</RealRim_ReasonNoWinterPrecipitation>
+	<RealRim_ReasonNoValveTarget>Keine Zieltemperaturregelung für das Ventil.</RealRim_ReasonNoValveTarget>
+	<RealRim_ReasonValveNeedsTwoNetworks>Benötigt zwei getrennte angrenzende Heizwassernetze.</RealRim_ReasonValveNeedsTwoNetworks>
+	<RealRim_ReasonNoReceivingStorage>Kein angeschlossener empfangender Wärmespeicher.</RealRim_ReasonNoReceivingStorage>
+	<RealRim_SmartMixingValveStatus>Intelligentes Mischventil:
+Zieltemperatur des empfangenden Netzes: {0}
+Quellnetz: {1} ({2})
+Empfangendes Netz: {3} ({4})
+Aktuelle Übertragung: {5} kW
+{6}</RealRim_SmartMixingValveStatus>
+	<RealRim_FloorHeatingRequiresConstructedFloor>Fußbodenheizung muss auf gebautem Bodenbelag oder geglättetem Stein installiert werden.</RealRim_FloorHeatingRequiresConstructedFloor>
+	<RealRim_FloorHeatingAlreadyHere>Auf diesem Feld ist bereits eine Fußbodenheizung installiert.</RealRim_FloorHeatingAlreadyHere>
+	<RealRim_ReasonNoIndoorRoom>Kein geschlossener Raum zum Heizen.</RealRim_ReasonNoIndoorRoom>
+	<RealRim_FloorHeatingReportSingleDetails>{0} Raum, {1} Heizwasser, {2} m² Tauscher, Wärmeentnahme {3} kW</RealRim_FloorHeatingReportSingleDetails>
+	<RealRim_FloorHeatingReportGroupDetails>{0} Felder, {1} m² Tauscher, mittlerer Raum {2}, mittleres Heizwasser {3}, Wärmeentnahme {4} kW</RealRim_FloorHeatingReportGroupDetails>
+
 </LanguageData>

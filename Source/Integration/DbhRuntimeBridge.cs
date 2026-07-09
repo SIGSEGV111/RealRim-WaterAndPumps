@@ -27,6 +27,8 @@ namespace RealRim.WaterAndPumps
 		private const BindingFlags STATIC_FLAGS = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 		private static readonly Dictionary<string, FieldInfo> FIELD_CACHE = new Dictionary<string, FieldInfo>();
 		private static readonly Dictionary<string, MethodInfo> METHOD_CACHE = new Dictionary<string, MethodInfo>();
+		[ThreadStatic]
+		private static int floor_heating_comfort_depth;
 		private static FieldInfo vanilla_swimming_job_field;
 		private static bool vanilla_swimming_job_field_resolved;
 
@@ -104,8 +106,10 @@ namespace RealRim.WaterAndPumps
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.JobDriver_GoSwimming", "swimticker", nameof(swimTickerPostfix), true);
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.JobDriver_GoSwimming", "Finishac", nameof(poolSwimmingFinishPostfix), true);
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "Verse.AI.Toils_Recipe+<>c__DisplayClass2_0", "<DoRecipeWork>b__2", nameof(recipeWorkTickPrefix));
+				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "RimWorld.StatWorker", "GetValue", nameof(floorHeatingComfortPrefix));
+				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "RimWorld.StatWorker", "GetValue", nameof(floorHeatingComfortPostfix), true);
 
-				Log.Message("[RealRim] Water & Pumps 1.1.45: redirected " + patched_methods
+				Log.Message("[RealRim] Water & Pumps 1.1.50: redirected " + patched_methods
 					+ " DBH runtime methods to RealRim physics.");
 			}
 			catch (Exception exception)
@@ -152,6 +156,62 @@ namespace RealRim.WaterAndPumps
 		private static bool isKitchenSink(ThingWithComps thing)
 		{
 			return thing != null && RealRimDefPatcher.isKitchenSinkDefinition(thing.def);
+		}
+
+		private static void floorHeatingComfortPrefix(object __instance)
+		{
+			if (isComfortStatWorker(__instance))
+			{
+				floor_heating_comfort_depth++;
+			}
+		}
+
+		private static void floorHeatingComfortPostfix(object __instance, object[] __args, ref float __result)
+		{
+			bool is_comfort_stat = isComfortStatWorker(__instance);
+			try
+			{
+				if (!is_comfort_stat || floor_heating_comfort_depth != 1 || __args == null || __args.Length == 0)
+				{
+					return;
+				}
+
+				Thing thing = __args[0] as Thing;
+				if (thing == null && __args[0] is StatRequest)
+				{
+					thing = ((StatRequest)__args[0]).Thing;
+				}
+
+				float bonus = FloorHeatingUtility.getComfortBonusFor(thing, __result);
+				if (bonus > 0f)
+				{
+					__result += bonus;
+				}
+			}
+			catch (Exception exception)
+			{
+				Log.WarningOnce("[RealRim] Water & Pumps: floor-heating comfort bonus failed: "
+					+ exception.Message, 11927462);
+			}
+			finally
+			{
+				if (is_comfort_stat && floor_heating_comfort_depth > 0)
+				{
+					floor_heating_comfort_depth--;
+				}
+			}
+		}
+
+		private static bool isComfortStatWorker(object stat_worker)
+		{
+			if (stat_worker == null)
+			{
+				return false;
+			}
+
+			FieldInfo stat_field = getField(stat_worker.GetType(), "stat");
+			StatDef stat = stat_field == null ? null : stat_field.GetValue(stat_worker) as StatDef;
+			return stat != null && stat.defName == "Comfort";
 		}
 
 		private static bool visiblePipeGraphicPrintPrefix(

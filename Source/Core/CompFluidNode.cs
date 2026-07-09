@@ -8,6 +8,7 @@ namespace RealRim.WaterAndPumps
 	{
 		public List<FluidNetworkType> networks = new List<FluidNetworkType>();
 		public bool valve;
+		public bool transfer_only;
 		public float outdoor_heat_exchange_w_per_m_k;
 
 		public CompProperties_FluidNode()
@@ -56,7 +57,7 @@ namespace RealRim.WaterAndPumps
 				yield return gizmo;
 			}
 
-			if (supportsNetwork(FluidNetworkType.Heating))
+			if (!Props.transfer_only && supportsNetwork(FluidNetworkType.Heating))
 			{
 				yield return new Command_Action
 				{
@@ -70,7 +71,7 @@ namespace RealRim.WaterAndPumps
 				};
 			}
 
-			if (supportsNetwork(FluidNetworkType.HotWater))
+			if (!Props.transfer_only && supportsNetwork(FluidNetworkType.HotWater))
 			{
 				yield return new Command_Action
 				{
@@ -88,7 +89,7 @@ namespace RealRim.WaterAndPumps
 		public override string CompInspectStringExtra()
 		{
 			MapComponent_FluidNetworks manager = getManager();
-			if (manager == null || Props.networks.NullOrEmpty())
+			if (manager == null || Props.networks.NullOrEmpty() || Props.transfer_only)
 			{
 				return null;
 			}

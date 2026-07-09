@@ -89,4 +89,43 @@
 	<ThingDef ParentName="RealRim_FluidValveBase"><defName>RealRim_HotWaterValve</defName><label>hot-water valve</label><designationCategory>Hygiene</designationCategory></ThingDef>
 	<ThingDef ParentName="RealRim_FluidValveBase"><defName>RealRim_HeatingValve</defName><label>heating valve</label><designationCategory>Temperature</designationCategory></ThingDef>
 	<ThingDef ParentName="RealRim_FluidValveBase"><defName>RealRim_CoolantValve</defName><label>coolant valve</label><designationCategory>Temperature</designationCategory></ThingDef>
+
+	<ThingDef ParentName="RealRim_FluidValveBase">
+		<defName>RealRim_SmartMixingValve</defName>
+		<label>smart mixing valve</label>
+		<description>A powered thermostatic hydronic mixing valve for heating-water circuits. It keeps two adjacent heating circuits separate, draws heat from the hotter source side, and mixes it into the receiving side until the selected receiving-network temperature is reached or the source water is no longer hot enough.</description>
+		<designationCategory>Temperature</designationCategory>
+		<graphicData>
+			<texPath>RealRim/Things/Building/SmartMixingValve</texPath>
+			<graphicClass>Graphic_Single</graphicClass>
+		</graphicData>
+		<costList>
+			<Steel>15</Steel>
+			<ComponentIndustrial>1</ComponentIndustrial>
+		</costList>
+		<researchPrerequisites>
+			<li>RealRim_SmartMixingValve</li>
+		</researchPrerequisites>
+		<comps>
+			<li Class="CompProperties_Power">
+				<compClass>CompPowerTrader</compClass>
+				<basePowerConsumption>5</basePowerConsumption>
+			</li>
+			<li Class="RealRim.WaterAndPumps.CompProperties_FluidNode">
+				<networks>
+					<li>Heating</li>
+				</networks>
+				<valve>true</valve>
+				<transfer_only>true</transfer_only>
+			</li>
+			<li Class="RealRim.WaterAndPumps.CompProperties_TargetTemperature">
+				<default_temperature_c>35</default_temperature_c>
+				<minimum_temperature_c>5</minimum_temperature_c>
+				<maximum_temperature_c>85</maximum_temperature_c>
+			</li>
+			<li Class="RealRim.WaterAndPumps.CompProperties_SmartMixingValve">
+				<maximum_transfer_kw>12</maximum_transfer_kw>
+			</li>
+		</comps>
+	</ThingDef>
 </Defs>

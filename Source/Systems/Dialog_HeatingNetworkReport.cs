@@ -81,11 +81,14 @@ namespace RealRim.WaterAndPumps
 			List<NetworkReportRoomGroup> groups = NetworkReportUtility.collectGroups(
 				network,
 				createEntry);
+			aggregateFloorHeating(groups);
 			float pipe_exchange_kw = network.last_pipe_heat_exchange_kw;
 			float total_production_kw = groups.Sum(group => group.entries.Sum(entry => entry.production_kw))
-				+ Mathf.Max(0f, pipe_exchange_kw);
+				+ Mathf.Max(0f, pipe_exchange_kw)
+				+ Mathf.Max(0f, network.last_mixing_valve_input_kw);
 			float total_consumption_kw = groups.Sum(group => group.entries.Sum(entry => entry.consumption_kw))
-				+ Mathf.Max(0f, -pipe_exchange_kw);
+				+ Mathf.Max(0f, -pipe_exchange_kw)
+				+ Mathf.Max(0f, network.last_mixing_valve_output_kw);
 
 			StringBuilder report = new StringBuilder();
 			report.AppendLine("RealRim_HeatingReportProduction".Translate(
@@ -103,6 +106,9 @@ namespace RealRim.WaterAndPumps
 			report.AppendLine("RealRim_NetworkReportPipeHeatExchange".Translate(
 				pipe_exchange_kw.ToString("+0.00;-0.00;0.00"),
 				network.pipe_heat_transfer_w_per_k.ToString("N2")).ToString());
+			report.AppendLine("RealRim_HeatingReportMixingValveExchange".Translate(
+				network.last_mixing_valve_input_kw.ToString("+0.00;-0.00;0.00"),
+				network.last_mixing_valve_output_kw.ToString("-0.00;-0.00;0.00")).ToString());
 
 			NetworkReportUtility.appendGroups(report, groups);
 			return report.ToString().TrimEnd('\r', '\n');
@@ -157,6 +163,19 @@ namespace RealRim.WaterAndPumps
 				return entry;
 			}
 
+			CompFloorHeating floor_heating = thing.TryGetComp<CompFloorHeating>();
+			if (floor_heating != null)
+			{
+				entry.base_label = "RealRim_FloorHeatingLabel".Translate();
+				entry.consumption_kw = Mathf.Max(0f, floor_heating.last_transfer_kw);
+				entry.details = "RealRim_FloorHeatingReportSingleDetails".Translate(
+					floor_heating.last_room_temperature_c.ToStringTemperature("F1"),
+					floor_heating.last_medium_temperature_c.ToStringTemperature("F1"),
+					floor_heating.Props.heat_exchanger_surface_m2.ToString("N1"),
+					formatConsumptionKw(floor_heating.last_transfer_kw, "N3"));
+				return entry;
+			}
+
 			CompRoomHeatExchanger exchanger = thing.TryGetComp<CompRoomHeatExchanger>();
 			if (exchanger != null)
 			{
@@ -177,6 +196,48 @@ namespace RealRim.WaterAndPumps
 			}
 
 			return entry;
+		}
+
+		private static void aggregateFloorHeating(List<NetworkReportRoomGroup> groups)
+		{
+			for (int group_index = 0; group_index < groups.Count; group_index++)
+			{
+				NetworkReportRoomGroup group = groups[group_index];
+				List<NetworkReportEntry> floor_entries = group.entries
+					.Where(entry => entry.thing != null && entry.thing.TryGetComp<CompFloorHeating>() != null)
+					.ToList();
+				if (floor_entries.Count <= 1)
+				{
+					continue;
+				}
+
+				float transfer_kw = 0f;
+				float surface_m2 = 0f;
+				float room_temperature_sum = 0f;
+				float medium_temperature_sum = 0f;
+				for (int index = 0; index < floor_entries.Count; index++)
+				{
+					CompFloorHeating floor_heating = floor_entries[index].thing.TryGetComp<CompFloorHeating>();
+					transfer_kw += Mathf.Max(0f, floor_heating.last_transfer_kw);
+					surface_m2 += floor_heating.Props.heat_exchanger_surface_m2;
+					room_temperature_sum += floor_heating.last_room_temperature_c;
+					medium_temperature_sum += floor_heating.last_medium_temperature_c;
+				}
+
+				group.entries.RemoveAll(entry => floor_entries.Contains(entry));
+				group.entries.Add(new NetworkReportEntry
+				{
+					thing = floor_entries[0].thing,
+					base_label = "RealRim_FloorHeatingLabel".Translate(),
+					consumption_kw = transfer_kw,
+					details = "RealRim_FloorHeatingReportGroupDetails".Translate(
+						floor_entries.Count,
+						surface_m2.ToString("N1"),
+						(room_temperature_sum / floor_entries.Count).ToStringTemperature("F1"),
+						(medium_temperature_sum / floor_entries.Count).ToStringTemperature("F1"),
+						formatConsumptionKw(transfer_kw, "N2")),
+				});
+			}
 		}
 
 		private static string formatConsumptionKw(float consumption_kw, string format)

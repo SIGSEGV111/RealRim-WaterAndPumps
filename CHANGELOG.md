@@ -1,5 +1,43 @@
 # Changelog
 
+## 1.1.50 — Smart mixing valve graphics and research prerequisite
+
+- Switched the smart mixing valve to the dedicated RealRim mixing-valve texture.
+- Added Electricity as a prerequisite for the smart mixing valve research project.
+- Updated release metadata and runtime labels to 1.1.50.
+
+## 1.1.49 — Floor-heating build compatibility
+
+- Fixed C# 7.3 build errors in floor-heating status text selection.
+- Fixed smart mixing valve network selection by avoiding captured `out` parameters in LINQ predicates.
+- Updated release metadata and runtime labels to 1.1.49.
+
+## 1.1.48 — Physical floor heating and smart mixing valve
+
+- Reworked floor heating into an unregulated hydronic heat exchanger. Indoor transfer is now based on the heating-water-to-room temperature delta instead of a hard 21 °C room target.
+- Aggregated floor-heating tiles by room/outdoor area per heating network and cached group conductance to reduce per-tile CPU work.
+- Added outdoor floor-heating behavior: below 1 °C and only while precipitation is falling, outdoor constructed-floor loops consume heat using a 10 W/m²K snow-melt conductance and remove snow from the heated tiles.
+- Removed straw matting as a valid terrain for new floor-heating placement.
+- Added the powered smart mixing valve, its 500-point Industrial research project, and runtime logic for transferring heat from a hotter adjacent heating circuit into a cooler receiving circuit at a player-selected target temperature.
+- Updated release metadata and runtime labels to 1.1.48.
+
+## 1.1.47 — DBH floor-heating research placement
+
+- Assigned the `floor heating` research project to the Dubs Bad Hygiene research tab.
+- Moved it from the off-grid 11.0 × 7.2 coordinates to 4 × 0.5, next to the central-heating branch.
+- Updated release metadata and runtime labels to 1.1.47.
+
+## 1.1.46 — Hydronic floor heating
+
+- Added a concealed one-tile hydronic floor-heating building under the Temperature architect category.
+- Floor heating requires the new 1000-point industrial `floor heating` research, Central Heating as a prerequisite, Construction skill 8, 600 work and 2 steel per tile.
+- Placement is limited to constructed floors and smoothed stone; natural soil, natural rock, water and ice are rejected.
+- Each 1 × 1 tile is connected to the heating-water network and represents 1.0 m² of heated floor surface with a plausible 75 W rated output at a 50 °C water-to-room temperature difference.
+- Floor-heating tiles heat enclosed rooms from connected heating-water storage and are aggregated in the heating-system report by room.
+- Furniture fully standing on floor-heating tiles receives a dynamic +0.10 Comfort bonus. Facility providers are excluded so their bonus cannot stack indirectly onto affected furniture.
+- Added the supplied floor-heating architect icon.
+- Updated release metadata and runtime labels to 1.1.46.
+
 ## 1.1.45 — DBH shower and toilet job null-safety
 
 - Fixed two `NullReferenceException` errors from DBH shower and toilet fail conditions when a saved job resumes for a pawn whose Hygiene or Bladder need is absent.

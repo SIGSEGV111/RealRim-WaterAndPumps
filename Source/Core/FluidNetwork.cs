@@ -13,10 +13,14 @@ namespace RealRim.WaterAndPumps
 		public readonly int pipe_length_m;
 		public readonly float pipe_heat_transfer_w_per_k;
 		public float last_pipe_heat_exchange_kw;
+		public float last_mixing_valve_input_kw;
+		public float last_mixing_valve_output_kw;
 		public float last_hot_water_draw_liters_per_hour;
 		public float last_hot_water_draw_heat_kw;
 		private float pending_hot_water_draw_liters;
 		private float pending_hot_water_draw_heat_kj;
+		private float pending_mixing_valve_input_kj;
+		private float pending_mixing_valve_output_kj;
 
 		public FluidNetwork(
 			int network_id,
@@ -253,6 +257,66 @@ namespace RealRim.WaterAndPumps
 			return requested_kj - remaining;
 		}
 
+		public float addThermalEnergyTowardTemperature(float requested_kj, float target_temperature_c)
+		{
+			return addEnergyTowardTemperature(requested_kj, target_temperature_c);
+		}
+
+		public float drawThermalEnergyTowardTemperature(float requested_kj, float target_temperature_c)
+		{
+			return drawEnergyTowardTemperature(requested_kj, target_temperature_c);
+		}
+
+		public float getThermalEnergyNeededToReachTemperature(float target_temperature_c)
+		{
+			float needed_kj = 0f;
+			foreach (CompThermalTank tank in getComponents<CompThermalTank>())
+			{
+				if (tank.stored_liters <= 0.001f)
+				{
+					continue;
+				}
+
+				float target_c = Mathf.Min(tank.Props.maximum_temperature_c, target_temperature_c);
+				float temperature_room_c = target_c - tank.temperature_c;
+				if (temperature_room_c > 0.001f)
+				{
+					needed_kj += RealPhysics.calculateWaterEnergy(tank.stored_liters, temperature_room_c);
+				}
+			}
+			return needed_kj;
+		}
+
+		public float getThermalEnergyAvailableAboveTemperature(float target_temperature_c)
+		{
+			float available_kj = 0f;
+			foreach (CompThermalTank tank in getComponents<CompThermalTank>())
+			{
+				if (tank.stored_liters <= 0.001f)
+				{
+					continue;
+				}
+
+				float target_c = Mathf.Max(tank.Props.minimum_temperature_c, target_temperature_c);
+				float temperature_room_c = tank.temperature_c - target_c;
+				if (temperature_room_c > 0.001f)
+				{
+					available_kj += RealPhysics.calculateWaterEnergy(tank.stored_liters, temperature_room_c);
+				}
+			}
+			return available_kj;
+		}
+
+		public void recordMixingValveInput(float heat_kj)
+		{
+			pending_mixing_valve_input_kj += Mathf.Max(0f, heat_kj);
+		}
+
+		public void recordMixingValveOutput(float heat_kj)
+		{
+			pending_mixing_valve_output_kj += Mathf.Max(0f, heat_kj);
+		}
+
 		public float drawHotWater(float requested_liters)
 		{
 			float remaining = Mathf.Max(0f, requested_liters);
@@ -276,6 +340,7 @@ namespace RealRim.WaterAndPumps
 		public void tickOutdoorHeatExchange(float elapsed_seconds)
 		{
 			finalizeHotWaterDraw(elapsed_seconds);
+			finalizeMixingValveTransfer(elapsed_seconds);
 			last_pipe_heat_exchange_kw = 0f;
 			if (elapsed_seconds <= 0f
 				|| pipe_heat_transfer_w_per_k <= 0f
@@ -487,6 +552,21 @@ namespace RealRim.WaterAndPumps
 
 			length_m = conductance_by_cell.Count;
 			heat_transfer_w_per_k = conductance_by_cell.Values.Sum();
+		}
+
+		private void finalizeMixingValveTransfer(float elapsed_seconds)
+		{
+			if (elapsed_seconds <= 0f)
+			{
+				last_mixing_valve_input_kw = 0f;
+				last_mixing_valve_output_kw = 0f;
+				return;
+			}
+
+			last_mixing_valve_input_kw = pending_mixing_valve_input_kj / elapsed_seconds;
+			last_mixing_valve_output_kw = pending_mixing_valve_output_kj / elapsed_seconds;
+			pending_mixing_valve_input_kj = 0f;
+			pending_mixing_valve_output_kj = 0f;
 		}
 
 		private void finalizeHotWaterDraw(float elapsed_seconds)

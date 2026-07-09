@@ -171,6 +171,7 @@ Total water used: {5} L
 	<RealRim_NetworkReportBedroomMany>{0}, {1}, … +{2} {3}</RealRim_NetworkReportBedroomMany>
 	<RealRim_NetworkReportNumberedNode>{0} #{1}</RealRim_NetworkReportNumberedNode>
 	<RealRim_NetworkReportConnected>connected</RealRim_NetworkReportConnected>
+	<RealRim_HeatingReportMixingValveExchange>Smart mixing valve heat exchange: input {0} kW, output {1} kW</RealRim_HeatingReportMixingValveExchange>
 	<RealRim_HeatingReportNetworkTemperature>Average heating-water temperature: {0}</RealRim_HeatingReportNetworkTemperature>
 	<RealRim_HotWaterOverview>Hot-water overview</RealRim_HotWaterOverview>
 	<RealRim_HotWaterOverviewDesc>Open a live report for this connected domestic hot-water network.</RealRim_HotWaterOverviewDesc>
@@ -211,4 +212,34 @@ Pending surface-filth layers: {4}</RealRim_SewageOutletStatus>
 	<RealRim_SewageDumpPortDescription>A powered sewage expulsion port for waste-water networks. When its discharge cell faces vacuum, it ejects waste directly into space without creating filth and does not require a ground discharge area. In atmosphere, it behaves like a ground outlet and requires the complete 3 × 5 area in front of it to be natural soil. It participates in direct untreated discharge and septic/treatment overflow routing.</RealRim_SewageDumpPortDescription>
 	<RealRim_SewageOutletInactiveNoPower>inactive: no power</RealRim_SewageOutletInactiveNoPower>
 	<RealRim_SewageOutletInactiveSwitchedOff>inactive: switched off</RealRim_SewageOutletInactiveSwitchedOff>
+
+	<RealRim_FloorHeatingLabel>floor heating</RealRim_FloorHeatingLabel>
+	<RealRim_FloorHeatingStatus>Floor heating:
+Mode: {0}
+Room/outdoor air: {1}
+Heating water: {2}
+Cached group surface: {3} m²
+Current transfer: {4} kW
+Snow depth removed this tick: {5}
+Furniture comfort bonus: {6}
+{7}</RealRim_FloorHeatingStatus>
+	<RealRim_FloorHeatingModeIndoor>indoor heat exchanger</RealRim_FloorHeatingModeIndoor>
+	<RealRim_FloorHeatingModeOutdoor>outdoor snow-melt loop</RealRim_FloorHeatingModeOutdoor>
+	<RealRim_ReasonNoHeatDelta>Heating water is not warmer than the target medium.</RealRim_ReasonNoHeatDelta>
+	<RealRim_ReasonNoWinterPrecipitation>Inactive: outdoor temperature is at least 1 °C or no rain/snow is falling.</RealRim_ReasonNoWinterPrecipitation>
+	<RealRim_ReasonNoValveTarget>No valve target controller.</RealRim_ReasonNoValveTarget>
+	<RealRim_ReasonValveNeedsTwoNetworks>Needs two separate adjacent heating-water networks.</RealRim_ReasonValveNeedsTwoNetworks>
+	<RealRim_ReasonNoReceivingStorage>No connected receiving thermal storage.</RealRim_ReasonNoReceivingStorage>
+	<RealRim_SmartMixingValveStatus>Smart mixing valve:
+Target receiving temperature: {0}
+Source network: {1} ({2})
+Receiving network: {3} ({4})
+Current transfer: {5} kW
+{6}</RealRim_SmartMixingValveStatus>
+	<RealRim_FloorHeatingRequiresConstructedFloor>Floor heating must be installed on constructed flooring or smoothed stone.</RealRim_FloorHeatingRequiresConstructedFloor>
+	<RealRim_FloorHeatingAlreadyHere>Floor heating is already installed on this tile.</RealRim_FloorHeatingAlreadyHere>
+	<RealRim_ReasonNoIndoorRoom>No enclosed room to heat.</RealRim_ReasonNoIndoorRoom>
+	<RealRim_FloorHeatingReportSingleDetails>{0} room, {1} heating water, {2} m² exchanger, heat draw {3} kW</RealRim_FloorHeatingReportSingleDetails>
+	<RealRim_FloorHeatingReportGroupDetails>{0} tiles, {1} m² exchanger, average room {2}, average heating water {3}, heat draw {4} kW</RealRim_FloorHeatingReportGroupDetails>
+
 </LanguageData>

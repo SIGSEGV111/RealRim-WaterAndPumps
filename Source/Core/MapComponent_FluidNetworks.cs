@@ -133,6 +133,11 @@ namespace RealRim.WaterAndPumps
 				{
 					CompFluidNode current = queue.Dequeue();
 					connected.Add(current);
+					if (current.Props.transfer_only)
+					{
+						continue;
+					}
+
 					foreach (IntVec3 occupied_cell in current.parent.OccupiedRect())
 					{
 						for (int offset_index = 0; offset_index < CONNECTION_OFFSETS.Length; offset_index++)
@@ -146,6 +151,11 @@ namespace RealRim.WaterAndPumps
 							for (int neighbor_index = 0; neighbor_index < neighbors.Count; neighbor_index++)
 							{
 								CompFluidNode neighbor = neighbors[neighbor_index];
+								if (neighbor.Props.transfer_only)
+								{
+									continue;
+								}
+
 								if (unvisited.Remove(neighbor))
 								{
 									queue.Enqueue(neighbor);

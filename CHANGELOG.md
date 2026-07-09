@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.71 — Raise rainwater collector draw layer
+
+- Moved the wall-mounted rainwater collector to the `BuildingOnTop` altitude layer so its graphic renders above the underlying wall.
+- Added DBH `Plumbing` as a prerequisite for rainwater collection research.
+- Updated release metadata and runtime labels to 1.1.71.
+
 ## 1.1.70 — Fix rainwater collector wall placement
 
 - Made the rainwater collector a non-edifice wall attachment again so it can be placed over an existing wall instead of trying to occupy the wall cell as a second wall.

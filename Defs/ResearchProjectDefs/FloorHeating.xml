@@ -7,6 +7,9 @@
 		<tab>DubsBadHygiene</tab>
 		<baseCost>200</baseCost>
 		<techLevel>Neolithic</techLevel>
+		<prerequisites>
+			<li>Plumbing</li>
+		</prerequisites>
 		<researchViewX>1</researchViewX>
 		<researchViewY>0.5</researchViewY>
 	</ResearchProjectDef>

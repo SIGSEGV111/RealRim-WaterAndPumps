@@ -74,7 +74,7 @@
 
 	<ThingDef ParentName="BuildingBase" Name="RealRim_FluidValveBase" Abstract="True">
 		<thingClass>Building</thingClass>
-		<altitudeLayer>Building</altitudeLayer>
+		<altitudeLayer>BuildingOnTop</altitudeLayer>
 		<passability>Standable</passability>
 		<minifiedDef>MinifiedThing</minifiedDef>
 		<size>(1,1)</size>
@@ -98,7 +98,7 @@
 		<thingClass>Building</thingClass>
 		<designationCategory>Hygiene</designationCategory>
 		<uiIconPath>RealRim/Things/Building/RainwaterCollector</uiIconPath>
-		<altitudeLayer>Building</altitudeLayer>
+		<altitudeLayer>BuildingOnTop</altitudeLayer>
 		<passability>Standable</passability>
 		<minifiedDef>MinifiedThing</minifiedDef>
 		<size>(1,1)</size>

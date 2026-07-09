@@ -10,8 +10,14 @@ namespace RealRim.WaterAndPumps
 		public readonly int network_id;
 		public readonly FluidNetworkType network_type;
 		public readonly List<CompFluidNode> nodes;
+		public readonly List<ThingWithComps> things;
+		public readonly List<ThingComp> components;
+		public readonly List<IHeatingNetworkReportProvider> heating_report_providers;
+		public readonly string state_key;
 		public readonly int pipe_length_m;
 		public readonly float pipe_heat_transfer_w_per_k;
+		public readonly float virtual_heating_buffer_capacity_liters;
+		public float virtual_heating_buffer_temperature_c;
 		public float last_pipe_heat_exchange_kw;
 		public float last_mixing_valve_input_kw;
 		public float last_mixing_valve_output_kw;
@@ -25,18 +31,31 @@ namespace RealRim.WaterAndPumps
 		public FluidNetwork(
 			int network_id,
 			FluidNetworkType network_type,
-			List<CompFluidNode> nodes)
+			List<CompFluidNode> nodes,
+			string state_key,
+			float virtual_heating_buffer_temperature_c)
 		{
 			this.network_id = network_id;
 			this.network_type = network_type;
 			this.nodes = nodes;
+			things = collectThings(nodes);
+			components = collectComponents(things);
+			heating_report_providers = components.OfType<IHeatingNetworkReportProvider>().ToList();
+			this.state_key = state_key;
 			int calculated_pipe_length_m;
 			float calculated_pipe_heat_transfer_w_per_k;
-			calculatePipeHeatExchanger(
+			float calculated_virtual_heating_buffer_capacity_liters;
+			calculatePipeProperties(
 				out calculated_pipe_length_m,
-				out calculated_pipe_heat_transfer_w_per_k);
+				out calculated_pipe_heat_transfer_w_per_k,
+				out calculated_virtual_heating_buffer_capacity_liters);
 			pipe_length_m = calculated_pipe_length_m;
 			pipe_heat_transfer_w_per_k = calculated_pipe_heat_transfer_w_per_k;
+			virtual_heating_buffer_capacity_liters = calculated_virtual_heating_buffer_capacity_liters;
+			this.virtual_heating_buffer_temperature_c = Mathf.Clamp(
+				virtual_heating_buffer_temperature_c,
+				RealPhysics.HEATING_BUFFER_MINIMUM_TEMPERATURE_C,
+				RealPhysics.HEATING_BUFFER_MAXIMUM_TEMPERATURE_C);
 		}
 
 		public IEnumerable<T> getComponents<T>() where T : ThingComp
@@ -49,6 +68,43 @@ namespace RealRim.WaterAndPumps
 					yield return component;
 				}
 			}
+		}
+
+		private static List<ThingWithComps> collectThings(List<CompFluidNode> nodes)
+		{
+			List<ThingWithComps> result = new List<ThingWithComps>();
+			for (int index = 0; index < nodes.Count; index++)
+			{
+				ThingWithComps thing = nodes[index]?.parent;
+				if (thing != null && !result.Contains(thing))
+				{
+					result.Add(thing);
+				}
+			}
+			return result;
+		}
+
+		private static List<ThingComp> collectComponents(List<ThingWithComps> things)
+		{
+			List<ThingComp> result = new List<ThingComp>();
+			for (int thing_index = 0; thing_index < things.Count; thing_index++)
+			{
+				ThingWithComps thing = things[thing_index];
+				if (thing?.AllComps == null)
+				{
+					continue;
+				}
+
+				for (int comp_index = 0; comp_index < thing.AllComps.Count; comp_index++)
+				{
+					ThingComp component = thing.AllComps[comp_index];
+					if (component != null && !result.Contains(component))
+					{
+						result.Add(component);
+					}
+				}
+			}
+			return result;
 		}
 
 		public int getLongestRouteMeters(Thing origin)
@@ -181,7 +237,12 @@ namespace RealRim.WaterAndPumps
 
 		public float getThermalCapacityEnergyKj()
 		{
-			return getComponents<CompThermalTank>().Sum(tank => tank.getUsableCapacityKj());
+			float capacity_kj = getComponents<CompThermalTank>().Sum(tank => tank.getUsableCapacityKj());
+			if (network_type == FluidNetworkType.Heating)
+			{
+				capacity_kj += getVirtualHeatingBufferUsableCapacityKj();
+			}
+			return capacity_kj;
 		}
 
 		public float getAverageThermalTemperature()
@@ -197,12 +258,47 @@ namespace RealRim.WaterAndPumps
 
 			List<CompThermalTank> tanks = getComponents<CompThermalTank>().ToList();
 			float total_liters = tanks.Sum(tank => tank.stored_liters);
+			float weighted_temperature = tanks.Sum(tank => tank.temperature_c * tank.stored_liters);
+			if (network_type == FluidNetworkType.Heating && virtual_heating_buffer_capacity_liters > 0.001f)
+			{
+				total_liters += virtual_heating_buffer_capacity_liters;
+				weighted_temperature += virtual_heating_buffer_temperature_c
+					* virtual_heating_buffer_capacity_liters;
+			}
 			if (total_liters <= 0.0001f)
 			{
 				return RealPhysics.COLD_WATER_TEMPERATURE_C;
 			}
 
-			return tanks.Sum(tank => tank.temperature_c * tank.stored_liters) / total_liters;
+			return weighted_temperature / total_liters;
+		}
+
+		public float getVirtualHeatingBufferUsableEnergyKj()
+		{
+			if (network_type != FluidNetworkType.Heating || virtual_heating_buffer_capacity_liters <= 0.001f)
+			{
+				return 0f;
+			}
+
+			return RealPhysics.calculateWaterEnergy(
+				virtual_heating_buffer_capacity_liters,
+				Mathf.Max(
+					0f,
+					virtual_heating_buffer_temperature_c
+						- RealPhysics.HEATING_BUFFER_MINIMUM_TEMPERATURE_C));
+		}
+
+		public float getVirtualHeatingBufferUsableCapacityKj()
+		{
+			if (network_type != FluidNetworkType.Heating || virtual_heating_buffer_capacity_liters <= 0.001f)
+			{
+				return 0f;
+			}
+
+			return RealPhysics.calculateWaterEnergy(
+				virtual_heating_buffer_capacity_liters,
+				RealPhysics.HEATING_BUFFER_MAXIMUM_TEMPERATURE_C
+					- RealPhysics.HEATING_BUFFER_MINIMUM_TEMPERATURE_C);
 		}
 
 		public float getOutdoorTemperatureC()
@@ -231,6 +327,13 @@ namespace RealRim.WaterAndPumps
 
 		public float addThermalEnergy(float requested_kj)
 		{
+			if (network_type == FluidNetworkType.Heating)
+			{
+				return addEnergyTowardTemperature(
+					requested_kj,
+					RealPhysics.HEATING_BUFFER_MAXIMUM_TEMPERATURE_C);
+			}
+
 			float remaining = Mathf.Max(0f, requested_kj);
 			List<CompThermalTank> tanks = getComponents<CompThermalTank>()
 				.OrderBy(tank => tank.temperature_c)
@@ -245,6 +348,13 @@ namespace RealRim.WaterAndPumps
 
 		public float drawThermalEnergy(float requested_kj)
 		{
+			if (network_type == FluidNetworkType.Heating)
+			{
+				return drawEnergyTowardTemperature(
+					requested_kj,
+					RealPhysics.HEATING_BUFFER_MINIMUM_TEMPERATURE_C);
+			}
+
 			float remaining = Mathf.Max(0f, requested_kj);
 			List<CompThermalTank> tanks = getComponents<CompThermalTank>()
 				.OrderByDescending(tank => tank.temperature_c)
@@ -270,6 +380,20 @@ namespace RealRim.WaterAndPumps
 		public float getThermalEnergyNeededToReachTemperature(float target_temperature_c)
 		{
 			float needed_kj = 0f;
+			if (network_type == FluidNetworkType.Heating && virtual_heating_buffer_capacity_liters > 0.001f)
+			{
+				float target_c = Mathf.Min(
+					RealPhysics.HEATING_BUFFER_MAXIMUM_TEMPERATURE_C,
+					target_temperature_c);
+				float temperature_room_c = target_c - virtual_heating_buffer_temperature_c;
+				if (temperature_room_c > 0.001f)
+				{
+					needed_kj += RealPhysics.calculateWaterEnergy(
+						virtual_heating_buffer_capacity_liters,
+						temperature_room_c);
+				}
+			}
+
 			foreach (CompThermalTank tank in getComponents<CompThermalTank>())
 			{
 				if (tank.stored_liters <= 0.001f)
@@ -290,6 +414,20 @@ namespace RealRim.WaterAndPumps
 		public float getThermalEnergyAvailableAboveTemperature(float target_temperature_c)
 		{
 			float available_kj = 0f;
+			if (network_type == FluidNetworkType.Heating && virtual_heating_buffer_capacity_liters > 0.001f)
+			{
+				float target_c = Mathf.Max(
+					RealPhysics.HEATING_BUFFER_MINIMUM_TEMPERATURE_C,
+					target_temperature_c);
+				float temperature_room_c = virtual_heating_buffer_temperature_c - target_c;
+				if (temperature_room_c > 0.001f)
+				{
+					available_kj += RealPhysics.calculateWaterEnergy(
+						virtual_heating_buffer_capacity_liters,
+						temperature_room_c);
+				}
+			}
+
 			foreach (CompThermalTank tank in getComponents<CompThermalTank>())
 			{
 				if (tank.stored_liters <= 0.001f)
@@ -525,33 +663,56 @@ namespace RealRim.WaterAndPumps
 			}
 		}
 
-		private void calculatePipeHeatExchanger(
+		private void calculatePipeProperties(
 			out int length_m,
-			out float heat_transfer_w_per_k)
+			out float heat_transfer_w_per_k,
+			out float virtual_heating_buffer_capacity_liters)
 		{
 			Dictionary<IntVec3, float> conductance_by_cell = new Dictionary<IntVec3, float>();
+			Dictionary<IntVec3, float> buffer_liters_by_cell = new Dictionary<IntVec3, float>();
 			for (int index = 0; index < nodes.Count; index++)
 			{
 				CompFluidNode node = nodes[index];
 				float cell_conductance = node?.Props?.outdoor_heat_exchange_w_per_m_k ?? 0f;
-				if (cell_conductance <= 0f)
+				float cell_buffer_liters = node?.Props?.virtual_heat_buffer_liters_per_m ?? 0f;
+				if (cell_conductance <= 0f && cell_buffer_liters <= 0f)
 				{
 					continue;
 				}
 
 				foreach (IntVec3 cell in node.parent.OccupiedRect())
 				{
-					float existing_conductance;
-					if (!conductance_by_cell.TryGetValue(cell, out existing_conductance)
-						|| existing_conductance < cell_conductance)
+					if (cell_conductance > 0f)
 					{
-						conductance_by_cell[cell] = cell_conductance;
+						float existing_conductance;
+						if (!conductance_by_cell.TryGetValue(cell, out existing_conductance)
+							|| existing_conductance < cell_conductance)
+						{
+							conductance_by_cell[cell] = cell_conductance;
+						}
+					}
+
+					if (network_type == FluidNetworkType.Heating && cell_buffer_liters > 0f)
+					{
+						float existing_buffer_liters;
+						if (!buffer_liters_by_cell.TryGetValue(cell, out existing_buffer_liters)
+							|| existing_buffer_liters < cell_buffer_liters)
+						{
+							buffer_liters_by_cell[cell] = cell_buffer_liters;
+						}
 					}
 				}
 			}
 
-			length_m = conductance_by_cell.Count;
+			HashSet<IntVec3> pipe_cells = new HashSet<IntVec3>(conductance_by_cell.Keys);
+			foreach (IntVec3 cell in buffer_liters_by_cell.Keys)
+			{
+				pipe_cells.Add(cell);
+			}
+
+			length_m = pipe_cells.Count;
 			heat_transfer_w_per_k = conductance_by_cell.Values.Sum();
+			virtual_heating_buffer_capacity_liters = buffer_liters_by_cell.Values.Sum();
 		}
 
 		private void finalizeMixingValveTransfer(float elapsed_seconds)
@@ -604,11 +765,27 @@ namespace RealRim.WaterAndPumps
 				List<CompThermalTank> thermal_tanks = getComponents<CompThermalTank>()
 					.OrderBy(tank => tank.temperature_c)
 					.ToList();
-				for (int index = 0; index < thermal_tanks.Count && remaining > 0.001f; index++)
+				int index = 0;
+				bool virtual_buffer_processed = virtual_heating_buffer_capacity_liters <= 0.001f;
+				while (remaining > 0.001f && (index < thermal_tanks.Count || !virtual_buffer_processed))
 				{
-					remaining -= thermal_tanks[index].addEnergyTowardTemperature(
-						remaining,
-						target_temperature_c);
+					bool use_virtual_buffer = !virtual_buffer_processed
+						&& (index >= thermal_tanks.Count
+							|| virtual_heating_buffer_temperature_c <= thermal_tanks[index].temperature_c);
+					if (use_virtual_buffer)
+					{
+						remaining -= addVirtualHeatingBufferEnergyTowardTemperature(
+							remaining,
+							target_temperature_c);
+						virtual_buffer_processed = true;
+					}
+					else
+					{
+						remaining -= thermal_tanks[index].addEnergyTowardTemperature(
+							remaining,
+							target_temperature_c);
+						index++;
+					}
 				}
 			}
 
@@ -635,15 +812,87 @@ namespace RealRim.WaterAndPumps
 				List<CompThermalTank> thermal_tanks = getComponents<CompThermalTank>()
 					.OrderByDescending(tank => tank.temperature_c)
 					.ToList();
-				for (int index = 0; index < thermal_tanks.Count && remaining > 0.001f; index++)
+				int index = 0;
+				bool virtual_buffer_processed = virtual_heating_buffer_capacity_liters <= 0.001f;
+				while (remaining > 0.001f && (index < thermal_tanks.Count || !virtual_buffer_processed))
 				{
-					remaining -= thermal_tanks[index].drawEnergyTowardTemperature(
-						remaining,
-						target_temperature_c);
+					bool use_virtual_buffer = !virtual_buffer_processed
+						&& (index >= thermal_tanks.Count
+							|| virtual_heating_buffer_temperature_c >= thermal_tanks[index].temperature_c);
+					if (use_virtual_buffer)
+					{
+						remaining -= drawVirtualHeatingBufferEnergyTowardTemperature(
+							remaining,
+							target_temperature_c);
+						virtual_buffer_processed = true;
+					}
+					else
+					{
+						remaining -= thermal_tanks[index].drawEnergyTowardTemperature(
+							remaining,
+							target_temperature_c);
+						index++;
+					}
 				}
 			}
 
 			return requested_kj - remaining;
+		}
+
+		private float addVirtualHeatingBufferEnergyTowardTemperature(
+			float requested_kj,
+			float target_temperature_c)
+		{
+			if (network_type != FluidNetworkType.Heating || virtual_heating_buffer_capacity_liters <= 0.001f)
+			{
+				return 0f;
+			}
+
+			float target_c = Mathf.Min(
+				RealPhysics.HEATING_BUFFER_MAXIMUM_TEMPERATURE_C,
+				target_temperature_c);
+			float temperature_room_c = target_c - virtual_heating_buffer_temperature_c;
+			if (temperature_room_c <= 0.001f)
+			{
+				return 0f;
+			}
+
+			float room_kj = RealPhysics.calculateWaterEnergy(
+				virtual_heating_buffer_capacity_liters,
+				temperature_room_c);
+			float accepted_kj = Mathf.Min(Mathf.Max(0f, requested_kj), room_kj);
+			virtual_heating_buffer_temperature_c += RealPhysics.calculateWaterTemperatureChange(
+				accepted_kj,
+				virtual_heating_buffer_capacity_liters);
+			return accepted_kj;
+		}
+
+		private float drawVirtualHeatingBufferEnergyTowardTemperature(
+			float requested_kj,
+			float target_temperature_c)
+		{
+			if (network_type != FluidNetworkType.Heating || virtual_heating_buffer_capacity_liters <= 0.001f)
+			{
+				return 0f;
+			}
+
+			float target_c = Mathf.Max(
+				RealPhysics.HEATING_BUFFER_MINIMUM_TEMPERATURE_C,
+				target_temperature_c);
+			float temperature_room_c = virtual_heating_buffer_temperature_c - target_c;
+			if (temperature_room_c <= 0.001f)
+			{
+				return 0f;
+			}
+
+			float available_kj = RealPhysics.calculateWaterEnergy(
+				virtual_heating_buffer_capacity_liters,
+				temperature_room_c);
+			float delivered_kj = Mathf.Min(Mathf.Max(0f, requested_kj), available_kj);
+			virtual_heating_buffer_temperature_c -= RealPhysics.calculateWaterTemperatureChange(
+				delivered_kj,
+				virtual_heating_buffer_capacity_liters);
+			return delivered_kj;
 		}
 	}
 }

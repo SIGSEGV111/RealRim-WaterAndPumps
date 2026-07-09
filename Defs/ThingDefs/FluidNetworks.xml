@@ -52,7 +52,7 @@
 		<thingClass>Building</thingClass>
 		<defName>RealRim_HeatingPipe</defName>
 		<label>heating pipe</label>
-		<description>Insulated closed-loop supply-and-return pipe connecting heat sources, thermal tanks, radiators and pools. Each metre exchanges heat with outdoor air at 0.70 W/K.</description>
+		<description>Insulated closed-loop supply-and-return pipe connecting heat sources, thermal tanks, radiators and pools. Each metre exchanges heat with outdoor air at 0.70 W/K and contributes 2 L of virtual heating-water buffer volume.</description>
 		<designationCategory>Temperature</designationCategory>
 		<uiIconPath>DBH/UI/Plumbing</uiIconPath>
 		<graphicData>
@@ -93,7 +93,7 @@
 	<ThingDef ParentName="RealRim_FluidValveBase">
 		<defName>RealRim_SmartMixingValve</defName>
 		<label>smart mixing valve</label>
-		<description>A powered thermostatic hydronic mixing valve for heating-water circuits. It keeps two adjacent heating circuits separate, draws heat from the hotter source side, and mixes it into the receiving side until the selected receiving-network temperature is reached or the source water is no longer hot enough.</description>
+		<description>A powered thermostatic hydronic mixing valve for heating-water circuits. It keeps two adjacent heating circuits separate and draws heat from the hotter source side into the receiving side. It can either regulate the receiving circuit by target water temperature or monitor its own room and open only while that room is below the selected room temperature.</description>
 		<designationCategory>Temperature</designationCategory>
 		<graphicData>
 			<texPath>RealRim/Things/Building/SmartMixingValve</texPath>
@@ -118,13 +118,14 @@
 				<valve>true</valve>
 				<transfer_only>true</transfer_only>
 			</li>
-			<li Class="RealRim.WaterAndPumps.CompProperties_TargetTemperature">
-				<default_temperature_c>35</default_temperature_c>
-				<minimum_temperature_c>5</minimum_temperature_c>
-				<maximum_temperature_c>85</maximum_temperature_c>
-			</li>
 			<li Class="RealRim.WaterAndPumps.CompProperties_SmartMixingValve">
 				<maximum_transfer_kw>12</maximum_transfer_kw>
+				<default_water_temperature_c>35</default_water_temperature_c>
+				<minimum_water_temperature_c>5</minimum_water_temperature_c>
+				<maximum_water_temperature_c>85</maximum_water_temperature_c>
+				<default_room_temperature_c>21</default_room_temperature_c>
+				<minimum_room_temperature_c>5</minimum_room_temperature_c>
+				<maximum_room_temperature_c>35</maximum_room_temperature_c>
 			</li>
 		</comps>
 	</ThingDef>

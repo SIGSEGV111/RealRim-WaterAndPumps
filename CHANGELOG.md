@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.1.54 — Smart mixing valve room-temperature control
+
+- Added selectable smart mixing valve control modes for receiving-water temperature or monitored-room temperature.
+- Smart mixing valves now store separate water and room targets, expose mode-specific target gizmos, and save the selected control mode.
+- Room-temperature mode opens the valve only while the room containing the valve is below the selected target temperature; otherwise it closes.
+- Updated smart mixing valve status text and release metadata to 1.1.54.
+
+## 1.1.53 — Heating report provider interface
+
+- Replaced the ad-hoc external heating report cache with network-owned component lists.
+- Every fluid network now exposes connected things, connected thing comps and heating report providers through its central `FluidNetwork` data structure.
+- Added `IFluidNetworkComponent`, `IHeatingNetworkReportProvider` and `HeatingNetworkReport` as the direct integration API for heat producers.
+- The heating overview now queries provider interfaces instead of special-casing external report records.
+- Removed `FluidUtility.recordHeatingNetworkReport`; external producers now supply report data through their component interface.
+- Updated release metadata and runtime labels to 1.1.53.
+
+## 1.1.52 — External heating producer API
+
+- Added a public heating-network API for optional mods to inject heat and publish per-building report details without depending on Water & Pumps at compile time.
+- Heating network reports can now show external heat producers, their accepted network output and custom integration details.
+- Heating energy added through the public API now charges the virtual pipe buffer as well as physical heating buffer tanks.
+- Updated release metadata and runtime labels to 1.1.52.
+
+## 1.1.51 — Virtual heating pipe buffer
+
+- Added a virtual heat buffer to every heating network based on heat-bearing pipe length.
+- Heating pipes, heating valves and floor-heating loops now contribute 2 L of virtual heating-water volume per metre/tile.
+- Heating networks can now accept, store and deliver heat without a dedicated heating-water buffer tank when enough pipe volume exists.
+- The heating network report now shows virtual pipe-buffer volume and temperature.
+- Virtual pipe-buffer temperatures are saved with the map and preserved across network rebuilds by matching overlapping pipe networks.
+- Updated release metadata and runtime labels to 1.1.51.
+
 ## 1.1.50 — Smart mixing valve graphics and research prerequisite
 
 - Switched the smart mixing valve to the dedicated RealRim mixing-valve texture.

@@ -10,6 +10,7 @@ namespace RealRim.WaterAndPumps
 		public bool valve;
 		public bool transfer_only;
 		public float outdoor_heat_exchange_w_per_m_k;
+		public float virtual_heat_buffer_liters_per_m;
 
 		public CompProperties_FluidNode()
 		{

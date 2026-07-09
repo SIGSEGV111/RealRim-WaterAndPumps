@@ -1,4 +1,4 @@
-# Known limitations — 1.1.50
+# Known limitations — 1.1.54
 
 1. **Kitchen-sink resource failures**
    - Stove integration uses only RimWorld's existing `CompAffectedByFacilities` link. No proximity or room-based fallback is used.
@@ -13,12 +13,9 @@
    - The system models concentration and ingestion dose; it does not yet model pathogen decay over time, boiling, chlorination, or cross-contamination from sewage leaks.
 
 
-4. **Heating-pipe thermal storage**
-   - Heating pipes do not currently add thermal mass. Implementing this correctly requires persistent network-level water volume and energy state, including deterministic handling when networks split or merge. That is not a small, zero-cost change, so it was deliberately deferred.
-
-5. **DBH irrigation-grid bridge**
+4. **DBH irrigation-grid bridge**
    - The sprinkler runtime and all water accounting are owned by this mod, but the crop-fertility bonus still uses DBH's `IrrigationGrid` so it remains compatible with DBH's plant-growth patches and overlay.
    - If a future DBH release changes that private grid field or its `AddAtCapped` method, irrigation stops safely, consumes no water, and reports that the grid is unavailable.
 
-6. **Compilation in the generation environment**
+5. **Compilation in the generation environment**
    - The source is syntax-, XML- and metadata-validated, but this environment has no .NET SDK and cannot produce or test the DLL.

@@ -109,7 +109,7 @@ namespace RealRim.WaterAndPumps
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "RimWorld.StatWorker", "GetValue", nameof(floorHeatingComfortPrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "RimWorld.StatWorker", "GetValue", nameof(floorHeatingComfortPostfix), true);
 
-				Log.Message("[RealRim] Water & Pumps 1.1.50: redirected " + patched_methods
+				Log.Message("[RealRim] Water & Pumps 1.1.54: redirected " + patched_methods
 					+ " DBH runtime methods to RealRim physics.");
 			}
 			catch (Exception exception)

@@ -78,9 +78,10 @@ namespace RealRim.WaterAndPumps
 				return "RealRim_HeatingReportDisconnected".Translate().ToString();
 			}
 
-			List<NetworkReportRoomGroup> groups = NetworkReportUtility.collectGroups(
-				network,
-				createEntry);
+			List<NetworkReportRoomGroup> groups = NetworkReportUtility.collectGroupsFromEntries(
+				network.heating_report_providers
+					.Select(provider => createEntry(network, provider))
+					.Where(entry => entry != null));
 			aggregateFloorHeating(groups);
 			float pipe_exchange_kw = network.last_pipe_heat_exchange_kw;
 			float total_production_kw = groups.Sum(group => group.entries.Sum(entry => entry.production_kw))
@@ -103,6 +104,9 @@ namespace RealRim.WaterAndPumps
 				network.getOutdoorTemperatureC().ToStringTemperature("F1")).ToString());
 			report.AppendLine("RealRim_NetworkReportPipeLength".Translate(
 				network.pipe_length_m).ToString());
+			report.AppendLine("RealRim_HeatingReportPipeBuffer".Translate(
+				network.virtual_heating_buffer_capacity_liters.ToString("N0"),
+				network.virtual_heating_buffer_temperature_c.ToStringTemperature("F1")).ToString());
 			report.AppendLine("RealRim_NetworkReportPipeHeatExchange".Translate(
 				pipe_exchange_kw.ToString("+0.00;-0.00;0.00"),
 				network.pipe_heat_transfer_w_per_k.ToString("N2")).ToString());
@@ -114,88 +118,32 @@ namespace RealRim.WaterAndPumps
 			return report.ToString().TrimEnd('\r', '\n');
 		}
 
-		private static NetworkReportEntry createEntry(ThingWithComps thing)
+		private static NetworkReportEntry createEntry(
+			FluidNetwork network,
+			IHeatingNetworkReportProvider provider)
 		{
-			NetworkReportEntry entry = new NetworkReportEntry
+			HeatingNetworkReport report;
+			if (provider == null || !provider.tryGetHeatingNetworkReport(network, out report) || report == null)
+			{
+				return null;
+			}
+
+			ThingWithComps thing = provider.ParentThing;
+			if (thing == null)
+			{
+				return null;
+			}
+
+			return new NetworkReportEntry
 			{
 				thing = thing,
-				base_label = thing.LabelCap.ToString(),
-				details = "RealRim_NetworkReportConnected".Translate(),
+				base_label = report.label.NullOrEmpty()
+					? thing.LabelCap.ToString()
+					: report.label,
+				details = report.details,
+				production_kw = Mathf.Max(0f, report.production_kw),
+				consumption_kw = Mathf.Max(0f, report.consumption_kw),
 			};
-
-			CompHeatSource source = thing.TryGetComp<CompHeatSource>();
-			if (source != null)
-			{
-				entry.production_kw = Mathf.Max(0f, source.last_thermal_kw);
-				if (source.hasAdjustableTarget())
-				{
-					entry.details = "RealRim_HeatingReportSourceDetails".Translate(
-						source.last_thermal_kw.ToString("+0.0;-0.0;0.0"),
-						source.target_buffer_temperature_c.ToStringTemperature("F1"),
-						source.last_cop.ToString("N2"));
-				}
-				else
-				{
-					entry.details = "RealRim_HeatingReportPassiveSourceDetails".Translate(
-						source.last_thermal_kw.ToString("+0.0;-0.0;0.0"));
-				}
-				return entry;
-			}
-
-			CompThermalTank thermal_tank = thing.TryGetComp<CompThermalTank>();
-			if (thermal_tank != null)
-			{
-				entry.consumption_kw = Mathf.Max(0f, thermal_tank.last_heat_loss_kw);
-				entry.details = "RealRim_HeatingReportThermalTankDetails".Translate(
-					thermal_tank.temperature_c.ToStringTemperature("F1"),
-					formatConsumptionKw(thermal_tank.last_heat_loss_kw, "N2"));
-				return entry;
-			}
-
-			CompHotWaterTank hot_water_tank = thing.TryGetComp<CompHotWaterTank>();
-			if (hot_water_tank != null)
-			{
-				entry.consumption_kw = Mathf.Max(0f, hot_water_tank.last_transfer_kw);
-				entry.details = "RealRim_HeatingReportHotWaterTankDetails".Translate(
-					hot_water_tank.temperature_c.ToStringTemperature("F1"),
-					formatConsumptionKw(hot_water_tank.last_transfer_kw, "N1"),
-					formatConsumptionKw(hot_water_tank.last_heat_loss_kw, "N2"));
-				return entry;
-			}
-
-			CompFloorHeating floor_heating = thing.TryGetComp<CompFloorHeating>();
-			if (floor_heating != null)
-			{
-				entry.base_label = "RealRim_FloorHeatingLabel".Translate();
-				entry.consumption_kw = Mathf.Max(0f, floor_heating.last_transfer_kw);
-				entry.details = "RealRim_FloorHeatingReportSingleDetails".Translate(
-					floor_heating.last_room_temperature_c.ToStringTemperature("F1"),
-					floor_heating.last_medium_temperature_c.ToStringTemperature("F1"),
-					floor_heating.Props.heat_exchanger_surface_m2.ToString("N1"),
-					formatConsumptionKw(floor_heating.last_transfer_kw, "N3"));
-				return entry;
-			}
-
-			CompRoomHeatExchanger exchanger = thing.TryGetComp<CompRoomHeatExchanger>();
-			if (exchanger != null)
-			{
-				entry.consumption_kw = Mathf.Max(0f, exchanger.last_transfer_kw);
-				entry.details = "RealRim_HeatingReportConsumerDetails".Translate(
-					formatConsumptionKw(exchanger.last_transfer_kw, "N2"));
-				return entry;
-			}
-
-			CompPoolPhysics pool = thing.TryGetComp<CompPoolPhysics>();
-			if (pool != null)
-			{
-				entry.consumption_kw = Mathf.Max(0f, pool.last_heating_kw);
-				entry.details = "RealRim_HeatingReportPoolDetails".Translate(
-					pool.temperature_c.ToStringTemperature("F1"),
-					formatConsumptionKw(pool.last_heating_kw, "N1"));
-				return entry;
-			}
-
-			return entry;
 		}
 
 		private static void aggregateFloorHeating(List<NetworkReportRoomGroup> groups)
@@ -228,23 +176,18 @@ namespace RealRim.WaterAndPumps
 				group.entries.Add(new NetworkReportEntry
 				{
 					thing = floor_entries[0].thing,
-					base_label = "RealRim_FloorHeatingLabel".Translate(),
+					base_label = "RealRim_FloorHeatingLabel".Translate().ToString(),
 					consumption_kw = transfer_kw,
 					details = "RealRim_FloorHeatingReportGroupDetails".Translate(
 						floor_entries.Count,
 						surface_m2.ToString("N1"),
 						(room_temperature_sum / floor_entries.Count).ToStringTemperature("F1"),
 						(medium_temperature_sum / floor_entries.Count).ToStringTemperature("F1"),
-						formatConsumptionKw(transfer_kw, "N2")),
+						HeatingNetworkReportFormatting.formatConsumptionKw(transfer_kw, "N2")).ToString(),
 				});
 			}
 		}
 
-		private static string formatConsumptionKw(float consumption_kw, string format)
-		{
-			float magnitude_kw = Mathf.Max(0f, consumption_kw);
-			float signed_kw = magnitude_kw <= 0.0005f ? 0f : -magnitude_kw;
-			return signed_kw.ToString(format);
-		}
+
 	}
 }

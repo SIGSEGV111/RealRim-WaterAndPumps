@@ -20,6 +20,12 @@ namespace RealRim.WaterAndPumps
 			return node?.getManager()?.getNetwork(node, network_type);
 		}
 
+		public static float addHeatingEnergy(Thing source, float requested_kj)
+		{
+			FluidNetwork network = getNetwork(source, FluidNetworkType.Heating);
+			return network == null ? 0f : network.addThermalEnergy(requested_kj);
+		}
+
 		public static string getNetworkLabel(FluidNetworkType network_type)
 		{
 			switch (network_type)

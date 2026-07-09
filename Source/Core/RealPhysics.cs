@@ -18,6 +18,10 @@ namespace RealRim.WaterAndPumps
 		public const float RIMWORLD_HEAT_UNITS_PER_KW_SECOND = 1000f / 3025f;
 		public const float HOT_WATER_PIPE_HEAT_TRANSFER_W_PER_M_K = 0.35f;
 		public const float HEATING_PIPE_HEAT_TRANSFER_W_PER_M_K = 0.70f;
+		public const float HEATING_PIPE_BUFFER_LITERS_PER_M = 2.0f;
+		public const float HEATING_BUFFER_INITIAL_TEMPERATURE_C = 20f;
+		public const float HEATING_BUFFER_MINIMUM_TEMPERATURE_C = 5f;
+		public const float HEATING_BUFFER_MAXIMUM_TEMPERATURE_C = 85f;
 
 		public static float calculateWaterEnergy(float liters, float temperature_delta)
 		{

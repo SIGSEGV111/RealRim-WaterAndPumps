@@ -21,7 +21,7 @@ namespace RealRim.WaterAndPumps
 		}
 	}
 
-	public sealed class CompPoolPhysics : ThingComp, IFluidTickable
+	public sealed class CompPoolPhysics : ThingComp, IFluidTickable, IHeatingNetworkReportProvider
 	{
 		private const float INDOOR_CONVECTION_W_PER_M2_K = 7f;
 		private const float OUTDOOR_CONVECTION_W_PER_M2_K = 14f;
@@ -43,12 +43,43 @@ namespace RealRim.WaterAndPumps
 		public float last_rain_liters_per_day;
 		public float last_refill_liters_per_day;
 
+
+		public ThingWithComps ParentThing
+		{
+			get
+			{
+				return parent;
+			}
+		}
+
 		public CompProperties_PoolPhysics Props
 		{
 			get
 			{
 				return (CompProperties_PoolPhysics)props;
 			}
+		}
+
+		public bool tryGetHeatingNetworkReport(
+			FluidNetwork network,
+			out HeatingNetworkReport report)
+		{
+			report = null;
+			if (network == null || network.network_type != FluidNetworkType.Heating)
+			{
+				return false;
+			}
+
+			report = new HeatingNetworkReport
+			{
+				label = parent.LabelCap.ToString(),
+				production_kw = 0f,
+				consumption_kw = Mathf.Max(0f, last_heating_kw),
+				details = "RealRim_HeatingReportPoolDetails".Translate(
+					temperature_c.ToStringTemperature("F1"),
+					HeatingNetworkReportFormatting.formatConsumptionKw(last_heating_kw, "N1")).ToString(),
+			};
+			return true;
 		}
 
 		public override void PostSpawnSetup(bool respawning_after_load)

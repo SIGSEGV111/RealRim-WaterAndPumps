@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 using Verse;
 
 namespace RealRim.WaterAndPumps
@@ -26,6 +27,10 @@ namespace RealRim.WaterAndPumps
 		private readonly List<CompFluidNode> nodes = new List<CompFluidNode>();
 		private readonly Dictionary<FluidNetworkType, Dictionary<CompFluidNode, FluidNetwork>> network_by_node =
 			new Dictionary<FluidNetworkType, Dictionary<CompFluidNode, FluidNetwork>>();
+		private readonly Dictionary<string, float> heating_buffer_temperature_by_key =
+			new Dictionary<string, float>();
+		private List<string> saved_heating_buffer_keys = new List<string>();
+		private List<float> saved_heating_buffer_temperatures_c = new List<float>();
 		private bool networks_dirty = true;
 
 		public MapComponent_FluidNetworks(Map map) : base(map)
@@ -45,6 +50,58 @@ namespace RealRim.WaterAndPumps
 				float elapsed_seconds = SYSTEM_TICK_INTERVAL * RealPhysics.SECONDS_PER_GAME_TICK;
 				tickSystems(elapsed_seconds);
 				tickNetworkHeatExchange(elapsed_seconds);
+				cacheCurrentHeatingBufferStates();
+			}
+		}
+
+		public override void ExposeData()
+		{
+			base.ExposeData();
+			if (Scribe.mode == LoadSaveMode.Saving)
+			{
+				cacheCurrentHeatingBufferStates();
+				saved_heating_buffer_keys = heating_buffer_temperature_by_key.Keys.ToList();
+				saved_heating_buffer_temperatures_c = saved_heating_buffer_keys
+					.Select(key => heating_buffer_temperature_by_key[key])
+					.ToList();
+			}
+
+			Scribe_Collections.Look(
+				ref saved_heating_buffer_keys,
+				"virtual_heating_buffer_keys",
+				LookMode.Value);
+			Scribe_Collections.Look(
+				ref saved_heating_buffer_temperatures_c,
+				"virtual_heating_buffer_temperatures_c",
+				LookMode.Value);
+
+			if (Scribe.mode == LoadSaveMode.PostLoadInit)
+			{
+				heating_buffer_temperature_by_key.Clear();
+				if (saved_heating_buffer_keys == null)
+				{
+					saved_heating_buffer_keys = new List<string>();
+				}
+				if (saved_heating_buffer_temperatures_c == null)
+				{
+					saved_heating_buffer_temperatures_c = new List<float>();
+				}
+
+				int count = Mathf.Min(saved_heating_buffer_keys.Count, saved_heating_buffer_temperatures_c.Count);
+				for (int index = 0; index < count; index++)
+				{
+					string key = saved_heating_buffer_keys[index];
+					if (key.NullOrEmpty())
+					{
+						continue;
+					}
+
+					heating_buffer_temperature_by_key[key] = Mathf.Clamp(
+						saved_heating_buffer_temperatures_c[index],
+						RealPhysics.HEATING_BUFFER_MINIMUM_TEMPERATURE_C,
+						RealPhysics.HEATING_BUFFER_MAXIMUM_TEMPERATURE_C);
+				}
+				networks_dirty = true;
 			}
 		}
 
@@ -99,6 +156,7 @@ namespace RealRim.WaterAndPumps
 
 		private void rebuildNetworks()
 		{
+			cacheCurrentHeatingBufferStates();
 			nodes.RemoveAll(node => node == null || node.parent == null || !node.parent.Spawned);
 			network_by_node.Clear();
 
@@ -165,7 +223,17 @@ namespace RealRim.WaterAndPumps
 					}
 				}
 
-				FluidNetwork network = new FluidNetwork(network_id++, network_type, connected);
+				string state_key = buildNetworkStateKey(network_type, connected);
+				float virtual_heating_buffer_temperature_c = getVirtualHeatingBufferTemperature(
+					network_type,
+					state_key,
+					connected);
+				FluidNetwork network = new FluidNetwork(
+					network_id++,
+					network_type,
+					connected,
+					state_key,
+					virtual_heating_buffer_temperature_c);
 				for (int index = 0; index < connected.Count; index++)
 				{
 					lookup[connected[index]] = network;
@@ -195,6 +263,120 @@ namespace RealRim.WaterAndPumps
 			}
 
 			return result;
+		}
+
+		private static string buildNetworkStateKey(
+			FluidNetworkType network_type,
+			List<CompFluidNode> connected)
+		{
+			return network_type.ToString() + ":" + string.Join(
+				",",
+				connected
+					.Where(node => node?.parent != null)
+					.Select(node => node.parent.thingIDNumber)
+					.OrderBy(thing_id => thing_id)
+					.Select(thing_id => thing_id.ToString())
+					.ToArray());
+		}
+
+		private float getVirtualHeatingBufferTemperature(
+			FluidNetworkType network_type,
+			string state_key,
+			List<CompFluidNode> connected)
+		{
+			if (network_type != FluidNetworkType.Heating || state_key.NullOrEmpty())
+			{
+				return RealPhysics.HEATING_BUFFER_INITIAL_TEMPERATURE_C;
+			}
+
+			float exact_temperature_c;
+			if (heating_buffer_temperature_by_key.TryGetValue(state_key, out exact_temperature_c))
+			{
+				return exact_temperature_c;
+			}
+
+			HashSet<int> node_ids = new HashSet<int>(connected
+				.Where(node => node?.parent != null)
+				.Select(node => node.parent.thingIDNumber));
+			float weighted_temperature_c = 0f;
+			int total_weight = 0;
+			foreach (KeyValuePair<string, float> entry in heating_buffer_temperature_by_key)
+			{
+				int overlap = countNodeIdOverlap(entry.Key, node_ids);
+				if (overlap <= 0)
+				{
+					continue;
+				}
+
+				weighted_temperature_c += entry.Value * overlap;
+				total_weight += overlap;
+			}
+
+			if (total_weight <= 0)
+			{
+				return RealPhysics.HEATING_BUFFER_INITIAL_TEMPERATURE_C;
+			}
+
+			return weighted_temperature_c / total_weight;
+		}
+
+		private static int countNodeIdOverlap(string state_key, HashSet<int> node_ids)
+		{
+			if (state_key.NullOrEmpty() || node_ids == null || node_ids.Count == 0)
+			{
+				return 0;
+			}
+
+			int separator_index = state_key.IndexOf(':');
+			if (separator_index < 0 || separator_index + 1 >= state_key.Length)
+			{
+				return 0;
+			}
+
+			int overlap = 0;
+			string[] parts = state_key.Substring(separator_index + 1).Split(',');
+			for (int index = 0; index < parts.Length; index++)
+			{
+				int thing_id;
+				if (int.TryParse(parts[index], out thing_id) && node_ids.Contains(thing_id))
+				{
+					overlap++;
+				}
+			}
+
+			return overlap;
+		}
+
+		private void cacheCurrentHeatingBufferStates()
+		{
+			Dictionary<CompFluidNode, FluidNetwork> lookup;
+			if (!network_by_node.TryGetValue(FluidNetworkType.Heating, out lookup))
+			{
+				return;
+			}
+
+			HashSet<FluidNetwork> recorded_networks = new HashSet<FluidNetwork>();
+			HashSet<string> active_keys = new HashSet<string>();
+			foreach (FluidNetwork network in lookup.Values)
+			{
+				if (network == null
+					|| network.state_key.NullOrEmpty()
+					|| !recorded_networks.Add(network))
+				{
+					continue;
+				}
+
+				active_keys.Add(network.state_key);
+				heating_buffer_temperature_by_key[network.state_key] = network.virtual_heating_buffer_temperature_c;
+			}
+
+			List<string> stale_keys = heating_buffer_temperature_by_key.Keys
+				.Where(key => !active_keys.Contains(key))
+				.ToList();
+			for (int index = 0; index < stale_keys.Count; index++)
+			{
+				heating_buffer_temperature_by_key.Remove(stale_keys[index]);
+			}
 		}
 
 		private void tickSystems(float elapsed_seconds)

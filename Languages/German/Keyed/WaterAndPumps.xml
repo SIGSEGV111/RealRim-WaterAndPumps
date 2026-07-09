@@ -162,6 +162,7 @@ Gesamter Wasserverbrauch: {5} L
 {6}</RealRim_FireSprinklerStatus>
 	<RealRim_NetworkReportOutdoorTemperature>Außenlufttemperatur: {0}</RealRim_NetworkReportOutdoorTemperature>
 	<RealRim_NetworkReportPipeLength>Gesamte Rohrlänge: {0} m</RealRim_NetworkReportPipeLength>
+	<RealRim_HeatingReportPipeBuffer>Virtueller Rohrpuffer: {0} L bei {1}</RealRim_HeatingReportPipeBuffer>
 	<RealRim_NetworkReportPipeHeatExchange>Wärmeaustausch Rohre–Außenluft: {0} kW ({1} W/K)</RealRim_NetworkReportPipeHeatExchange>
 	<RealRim_NetworkReportOutdoors>Außenbereich</RealRim_NetworkReportOutdoors>
 	<RealRim_NetworkReportRoomFallback>Raum</RealRim_NetworkReportRoomFallback>
@@ -230,12 +231,28 @@ Komfortbonus für Möbel: {6}
 	<RealRim_ReasonNoValveTarget>Keine Zieltemperaturregelung für das Ventil.</RealRim_ReasonNoValveTarget>
 	<RealRim_ReasonValveNeedsTwoNetworks>Benötigt zwei getrennte angrenzende Heizwassernetze.</RealRim_ReasonValveNeedsTwoNetworks>
 	<RealRim_ReasonNoReceivingStorage>Kein angeschlossener empfangender Wärmespeicher.</RealRim_ReasonNoReceivingStorage>
+	<RealRim_ReasonNoValveRoom>Inaktiv: Das Ventil befindet sich nicht in einem überwachbaren geschlossenen Raum.</RealRim_ReasonNoValveRoom>
+	<RealRim_ReasonRoomTargetReached>Inaktiv: Zieltemperatur des überwachten Raums erreicht.</RealRim_ReasonRoomTargetReached>
+	<RealRim_ReasonWaterTargetReached>Inaktiv: Zieltemperatur des empfangenden Heizwassers erreicht.</RealRim_ReasonWaterTargetReached>
 	<RealRim_SmartMixingValveStatus>Intelligentes Mischventil:
-Zieltemperatur des empfangenden Netzes: {0}
-Quellnetz: {1} ({2})
-Empfangendes Netz: {3} ({4})
-Aktuelle Übertragung: {5} kW
-{6}</RealRim_SmartMixingValveStatus>
+Regelmodus: {0}
+Zieltemperatur des empfangenden Heizwassers: {1}
+Zieltemperatur des überwachten Raums: {2}
+Überwachter Raum: {3}
+Quellnetz: {4} ({5})
+Empfangendes Netz: {6} ({7})
+Aktuelle Übertragung: {8} kW
+{9}</RealRim_SmartMixingValveStatus>
+	<RealRim_SmartMixingValveModeWater>Heizwassertemperatur</RealRim_SmartMixingValveModeWater>
+	<RealRim_SmartMixingValveModeRoom>Raumtemperatur</RealRim_SmartMixingValveModeRoom>
+	<RealRim_SmartMixingValveModeLabel>Regelung: {0}</RealRim_SmartMixingValveModeLabel>
+	<RealRim_SmartMixingValveModeDesc>Legt fest, ob dieses Ventil die Temperatur des empfangenden Heizwassers regelt oder anhand der Temperatur des Raums öffnet, in dem das Ventil steht.</RealRim_SmartMixingValveModeDesc>
+	<RealRim_SmartMixingValveWaterTargetDown>Wasserziel senken</RealRim_SmartMixingValveWaterTargetDown>
+	<RealRim_SmartMixingValveWaterTargetUp>Wasserziel erhöhen</RealRim_SmartMixingValveWaterTargetUp>
+	<RealRim_SmartMixingValveWaterTargetDesc>Aktuelle Zieltemperatur des empfangenden Heizwassers: {0}</RealRim_SmartMixingValveWaterTargetDesc>
+	<RealRim_SmartMixingValveRoomTargetDown>Raumziel senken</RealRim_SmartMixingValveRoomTargetDown>
+	<RealRim_SmartMixingValveRoomTargetUp>Raumziel erhöhen</RealRim_SmartMixingValveRoomTargetUp>
+	<RealRim_SmartMixingValveRoomTargetDesc>Aktuelle Zieltemperatur des überwachten Raums: {0}</RealRim_SmartMixingValveRoomTargetDesc>
 	<RealRim_FloorHeatingRequiresConstructedFloor>Fußbodenheizung muss auf gebautem Bodenbelag oder geglättetem Stein installiert werden.</RealRim_FloorHeatingRequiresConstructedFloor>
 	<RealRim_FloorHeatingAlreadyHere>Auf diesem Feld ist bereits eine Fußbodenheizung installiert.</RealRim_FloorHeatingAlreadyHere>
 	<RealRim_ReasonNoIndoorRoom>Kein geschlossener Raum zum Heizen.</RealRim_ReasonNoIndoorRoom>

@@ -35,11 +35,11 @@ namespace RealRim.WaterAndPumps
 
 			if (failed_phases == 0)
 			{
-				Log.Message("[RealRim] Water & Pumps 1.1.50: replaced DBH water, heating, cooling, sprinkler and sewage definitions.");
+				Log.Message("[RealRim] Water & Pumps 1.1.54: replaced DBH water, heating, cooling, sprinkler and sewage definitions.");
 			}
 			else
 			{
-				Log.Error("[RealRim] Water & Pumps 1.1.50: definition replacement completed with "
+				Log.Error("[RealRim] Water & Pumps 1.1.54: definition replacement completed with "
 					+ failed_phases + " failed phase(s). Later phases were still applied; see the preceding errors.");
 			}
 		}
@@ -891,7 +891,17 @@ namespace RealRim.WaterAndPumps
 			ThingDef def = getDef(def_name);
 			if (def != null)
 			{
-				addNode(def, valve, outdoor_heat_exchange_w_per_m_k, networks);
+				float virtual_heat_buffer_liters_per_m = Array.IndexOf(
+					networks,
+					FluidNetworkType.Heating) >= 0
+					? RealPhysics.HEATING_PIPE_BUFFER_LITERS_PER_M
+					: 0f;
+				addNode(
+					def,
+					valve,
+					outdoor_heat_exchange_w_per_m_k,
+					virtual_heat_buffer_liters_per_m,
+					networks);
 			}
 		}
 
@@ -906,6 +916,21 @@ namespace RealRim.WaterAndPumps
 			float outdoor_heat_exchange_w_per_m_k,
 			params FluidNetworkType[] networks)
 		{
+			addNode(
+				def,
+				valve,
+				outdoor_heat_exchange_w_per_m_k,
+				0f,
+				networks);
+		}
+
+		private static void addNode(
+			ThingDef def,
+			bool valve,
+			float outdoor_heat_exchange_w_per_m_k,
+			float virtual_heat_buffer_liters_per_m,
+			params FluidNetworkType[] networks)
+		{
 			removeComp<CompProperties_FluidNode>(def);
 			addComp(def, new CompProperties_FluidNode
 			{
@@ -913,6 +938,7 @@ namespace RealRim.WaterAndPumps
 				valve = valve,
 				transfer_only = false,
 				outdoor_heat_exchange_w_per_m_k = outdoor_heat_exchange_w_per_m_k,
+				virtual_heat_buffer_liters_per_m = virtual_heat_buffer_liters_per_m,
 			});
 		}
 

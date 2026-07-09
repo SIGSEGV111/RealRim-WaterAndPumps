@@ -6,9 +6,21 @@ using Verse;
 
 namespace RealRim.WaterAndPumps
 {
+	public enum SmartMixingValveControlMode
+	{
+		WaterTemperature,
+		RoomTemperature,
+	}
+
 	public sealed class CompProperties_SmartMixingValve : CompProperties
 	{
 		public float maximum_transfer_kw = 12f;
+		public float default_water_temperature_c = 35f;
+		public float minimum_water_temperature_c = 5f;
+		public float maximum_water_temperature_c = 85f;
+		public float default_room_temperature_c = 21f;
+		public float minimum_room_temperature_c = 5f;
+		public float maximum_room_temperature_c = 35f;
 
 		public CompProperties_SmartMixingValve()
 		{
@@ -18,6 +30,8 @@ namespace RealRim.WaterAndPumps
 
 	public sealed class CompSmartMixingValve : ThingComp, IFluidTickable
 	{
+		private const float TEMPERATURE_DEADBAND_C = 0.10f;
+
 		private static readonly IntVec3[] CONNECTION_OFFSETS =
 		{
 			IntVec3.North,
@@ -26,12 +40,18 @@ namespace RealRim.WaterAndPumps
 			IntVec3.West,
 		};
 
+		public SmartMixingValveControlMode control_mode = SmartMixingValveControlMode.WaterTemperature;
+		public float target_water_temperature_c;
+		public float target_room_temperature_c;
 		public float last_transfer_kw;
 		public float last_source_temperature_c;
 		public float last_receiving_temperature_c;
+		public float last_room_temperature_c;
 		public int last_source_network_id;
 		public int last_receiving_network_id;
 		public string last_reason = string.Empty;
+
+		private bool last_room_temperature_valid;
 
 		public CompProperties_SmartMixingValve Props
 		{
@@ -41,14 +61,107 @@ namespace RealRim.WaterAndPumps
 			}
 		}
 
+		public override void PostSpawnSetup(bool respawning_after_load)
+		{
+			base.PostSpawnSetup(respawning_after_load);
+			if (!respawning_after_load)
+			{
+				target_water_temperature_c = Props.default_water_temperature_c;
+				target_room_temperature_c = Props.default_room_temperature_c;
+			}
+		}
+
+		public override void PostExposeData()
+		{
+			base.PostExposeData();
+			Scribe_Values.Look(ref control_mode, "control_mode", SmartMixingValveControlMode.WaterTemperature);
+			Scribe_Values.Look(ref target_water_temperature_c, "target_water_temperature_c", Props.default_water_temperature_c);
+			Scribe_Values.Look(ref target_room_temperature_c, "target_room_temperature_c", Props.default_room_temperature_c);
+			if (Scribe.mode == LoadSaveMode.PostLoadInit)
+			{
+				clampTargets();
+			}
+		}
+
+		public override IEnumerable<Gizmo> CompGetGizmosExtra()
+		{
+			foreach (Gizmo gizmo in base.CompGetGizmosExtra())
+			{
+				yield return gizmo;
+			}
+
+			yield return new Command_Action
+			{
+				defaultLabel = "RealRim_SmartMixingValveModeLabel".Translate(getControlModeLabel()),
+				defaultDesc = "RealRim_SmartMixingValveModeDesc".Translate(),
+				icon = RealRimTextures.configure_heat_source,
+				action = toggleControlMode,
+			};
+
+			if (control_mode == SmartMixingValveControlMode.RoomTemperature)
+			{
+				yield return new Command_Action
+				{
+					defaultLabel = "RealRim_SmartMixingValveRoomTargetDown".Translate(),
+					defaultDesc = "RealRim_SmartMixingValveRoomTargetDesc".Translate(
+						target_room_temperature_c.ToStringTemperature("F1")),
+					icon = RealRimTextures.lower_target,
+					action = delegate
+					{
+						target_room_temperature_c -= 1f;
+						clampTargets();
+					},
+				};
+				yield return new Command_Action
+				{
+					defaultLabel = "RealRim_SmartMixingValveRoomTargetUp".Translate(),
+					defaultDesc = "RealRim_SmartMixingValveRoomTargetDesc".Translate(
+						target_room_temperature_c.ToStringTemperature("F1")),
+					icon = RealRimTextures.raise_target,
+					action = delegate
+					{
+						target_room_temperature_c += 1f;
+						clampTargets();
+					},
+				};
+			}
+			else
+			{
+				yield return new Command_Action
+				{
+					defaultLabel = "RealRim_SmartMixingValveWaterTargetDown".Translate(),
+					defaultDesc = "RealRim_SmartMixingValveWaterTargetDesc".Translate(
+						target_water_temperature_c.ToStringTemperature("F1")),
+					icon = RealRimTextures.lower_target,
+					action = delegate
+					{
+						target_water_temperature_c -= 1f;
+						clampTargets();
+					},
+				};
+				yield return new Command_Action
+				{
+					defaultLabel = "RealRim_SmartMixingValveWaterTargetUp".Translate(),
+					defaultDesc = "RealRim_SmartMixingValveWaterTargetDesc".Translate(
+						target_water_temperature_c.ToStringTemperature("F1")),
+					icon = RealRimTextures.raise_target,
+					action = delegate
+					{
+						target_water_temperature_c += 1f;
+						clampTargets();
+					},
+				};
+			}
+		}
+
 		public override string CompInspectStringExtra()
 		{
-			CompTargetTemperature target = parent.TryGetComp<CompTargetTemperature>();
-			string target_temperature = target == null
-				? "-"
-				: target.target_temperature_c.ToStringTemperature("F1");
+			updateLastRoomTemperature();
 			return "RealRim_SmartMixingValveStatus".Translate(
-				target_temperature,
+				getControlModeLabel(),
+				getWaterTargetText(),
+				getRoomTargetText(),
+				getRoomTemperatureText(),
 				last_source_network_id <= 0 ? "-" : last_source_network_id.ToString(),
 				last_source_temperature_c.ToStringTemperature("F1"),
 				last_receiving_network_id <= 0 ? "-" : last_receiving_network_id.ToString(),
@@ -59,12 +172,7 @@ namespace RealRim.WaterAndPumps
 
 		public void tickFluidSystem(float elapsed_seconds)
 		{
-			last_transfer_kw = 0f;
-			last_source_temperature_c = 0f;
-			last_receiving_temperature_c = 0f;
-			last_source_network_id = 0;
-			last_receiving_network_id = 0;
-			last_reason = string.Empty;
+			resetLastTickValues();
 
 			if (elapsed_seconds <= 0f)
 			{
@@ -77,10 +185,8 @@ namespace RealRim.WaterAndPumps
 				return;
 			}
 
-			CompTargetTemperature target = parent.TryGetComp<CompTargetTemperature>();
-			if (target == null)
+			if (control_mode == SmartMixingValveControlMode.RoomTemperature && !isRoomDemandingHeat())
 			{
-				last_reason = "RealRim_ReasonNoValveTarget".Translate();
 				return;
 			}
 
@@ -93,7 +199,7 @@ namespace RealRim.WaterAndPumps
 
 			FluidNetwork source_network;
 			FluidNetwork receiving_network;
-			selectNetworks(networks, target.target_temperature_c, out source_network, out receiving_network);
+			selectNetworks(networks, control_mode, target_water_temperature_c, out source_network, out receiving_network);
 			last_source_network_id = source_network.network_id;
 			last_receiving_network_id = receiving_network.network_id;
 			last_source_temperature_c = source_network.getAverageThermalTemperature();
@@ -110,19 +216,20 @@ namespace RealRim.WaterAndPumps
 				return;
 			}
 
-			if (last_receiving_temperature_c >= target.target_temperature_c - 0.10f)
+			if (control_mode == SmartMixingValveControlMode.WaterTemperature
+				&& last_receiving_temperature_c >= target_water_temperature_c - TEMPERATURE_DEADBAND_C)
 			{
-				last_reason = "RealRim_ReasonTargetReached".Translate();
+				last_reason = "RealRim_ReasonWaterTargetReached".Translate();
 				return;
 			}
-			if (last_source_temperature_c <= last_receiving_temperature_c + 0.10f)
+			if (last_source_temperature_c <= last_receiving_temperature_c + TEMPERATURE_DEADBAND_C)
 			{
 				last_reason = "RealRim_ReasonSourceTooCold".Translate(
 					last_source_temperature_c.ToStringTemperature("F1"));
 				return;
 			}
 
-			float effective_target_c = Mathf.Min(target.target_temperature_c, last_source_temperature_c);
+			float effective_target_c = getEffectiveReceivingTargetTemperature();
 			float receiver_room_kj = receiving_network.getThermalEnergyNeededToReachTemperature(effective_target_c);
 			float source_available_kj = source_network.getThermalEnergyAvailableAboveTemperature(last_receiving_temperature_c);
 			float requested_kj = Mathf.Min(
@@ -198,7 +305,8 @@ namespace RealRim.WaterAndPumps
 
 		private static void selectNetworks(
 			List<FluidNetwork> networks,
-			float target_temperature_c,
+			SmartMixingValveControlMode control_mode,
+			float target_water_temperature_c,
 			out FluidNetwork source_network,
 			out FluidNetwork receiving_network)
 		{
@@ -206,11 +314,130 @@ namespace RealRim.WaterAndPumps
 				.OrderByDescending(network => network.getAverageThermalTemperature())
 				.First();
 			source_network = selected_source_network;
-			receiving_network = networks
-				.Where(network => network != selected_source_network)
-				.OrderBy(network => network.getAverageThermalTemperature() >= target_temperature_c)
-				.ThenBy(network => network.getAverageThermalTemperature())
+			IEnumerable<FluidNetwork> candidates = networks.Where(network => network != selected_source_network);
+			if (control_mode == SmartMixingValveControlMode.WaterTemperature)
+			{
+				receiving_network = candidates
+					.OrderBy(network => network.getAverageThermalTemperature() >= target_water_temperature_c)
+					.ThenBy(network => network.getAverageThermalTemperature())
+					.First();
+				return;
+			}
+
+			receiving_network = candidates
+				.OrderBy(network => network.getAverageThermalTemperature())
 				.First();
+		}
+
+		private void toggleControlMode()
+		{
+			if (control_mode == SmartMixingValveControlMode.WaterTemperature)
+			{
+				control_mode = SmartMixingValveControlMode.RoomTemperature;
+			}
+			else
+			{
+				control_mode = SmartMixingValveControlMode.WaterTemperature;
+			}
+			clampTargets();
+		}
+
+		private void clampTargets()
+		{
+			target_water_temperature_c = Mathf.Clamp(
+				target_water_temperature_c,
+				Props.minimum_water_temperature_c,
+				Props.maximum_water_temperature_c);
+			target_room_temperature_c = Mathf.Clamp(
+				target_room_temperature_c,
+				Props.minimum_room_temperature_c,
+				Props.maximum_room_temperature_c);
+		}
+
+		private void resetLastTickValues()
+		{
+			last_transfer_kw = 0f;
+			last_source_temperature_c = 0f;
+			last_receiving_temperature_c = 0f;
+			last_room_temperature_c = 0f;
+			last_room_temperature_valid = false;
+			last_source_network_id = 0;
+			last_receiving_network_id = 0;
+			last_reason = string.Empty;
+		}
+
+		private bool isRoomDemandingHeat()
+		{
+			if (!updateLastRoomTemperature())
+			{
+				last_reason = "RealRim_ReasonNoValveRoom".Translate();
+				return false;
+			}
+			if (last_room_temperature_c >= target_room_temperature_c - TEMPERATURE_DEADBAND_C)
+			{
+				last_reason = "RealRim_ReasonRoomTargetReached".Translate();
+				return false;
+			}
+			return true;
+		}
+
+		private bool updateLastRoomTemperature()
+		{
+			Map map = parent.MapHeld;
+			if (map == null || parent.Position.UsesOutdoorTemperature(map))
+			{
+				last_room_temperature_valid = false;
+				return false;
+			}
+
+			last_room_temperature_c = GenTemperature.GetTemperatureForCell(parent.Position, map);
+			last_room_temperature_valid = true;
+			return true;
+		}
+
+		private float getEffectiveReceivingTargetTemperature()
+		{
+			if (control_mode == SmartMixingValveControlMode.RoomTemperature)
+			{
+				return last_source_temperature_c;
+			}
+			return Mathf.Min(target_water_temperature_c, last_source_temperature_c);
+		}
+
+		private string getControlModeLabel()
+		{
+			if (control_mode == SmartMixingValveControlMode.RoomTemperature)
+			{
+				return "RealRim_SmartMixingValveModeRoom".Translate().ToString();
+			}
+			return "RealRim_SmartMixingValveModeWater".Translate().ToString();
+		}
+
+		private string getWaterTargetText()
+		{
+			if (control_mode == SmartMixingValveControlMode.RoomTemperature)
+			{
+				return "-";
+			}
+			return target_water_temperature_c.ToStringTemperature("F1");
+		}
+
+		private string getRoomTargetText()
+		{
+			if (control_mode == SmartMixingValveControlMode.WaterTemperature)
+			{
+				return "-";
+			}
+			return target_room_temperature_c.ToStringTemperature("F1");
+		}
+
+		private string getRoomTemperatureText()
+		{
+			if (!last_room_temperature_valid)
+			{
+				return "-";
+			}
+			return last_room_temperature_c.ToStringTemperature("F1");
 		}
 	}
 }

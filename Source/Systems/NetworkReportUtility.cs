@@ -88,6 +88,59 @@ namespace RealRim.WaterAndPumps
 			return result;
 		}
 
+		public static List<NetworkReportRoomGroup> collectGroupsFromEntries(
+			IEnumerable<NetworkReportEntry> entries)
+		{
+			Dictionary<Room, NetworkReportRoomGroup> groups_by_room =
+				new Dictionary<Room, NetworkReportRoomGroup>();
+			NetworkReportRoomGroup outdoors = null;
+			foreach (NetworkReportEntry entry in entries)
+			{
+				ThingWithComps thing = entry?.thing;
+				if (thing == null || !thing.Spawned)
+				{
+					continue;
+				}
+
+				Room room = thing.GetRoom();
+				if (room == null || room.PsychologicallyOutdoors)
+				{
+					if (outdoors == null)
+					{
+						outdoors = new NetworkReportRoomGroup
+						{
+							label = "RealRim_NetworkReportOutdoors".Translate(),
+							area_m2 = 0,
+						};
+					}
+					outdoors.entries.Add(entry);
+					continue;
+				}
+
+				NetworkReportRoomGroup group;
+				if (!groups_by_room.TryGetValue(room, out group))
+				{
+					group = new NetworkReportRoomGroup
+					{
+						label = getRoomLabel(room),
+						area_m2 = room.CellCount,
+					};
+					groups_by_room[room] = group;
+				}
+				group.entries.Add(entry);
+			}
+
+			List<NetworkReportRoomGroup> result = groups_by_room.Values
+				.OrderBy(group => group.label, StringComparer.CurrentCultureIgnoreCase)
+				.ThenBy(group => group.area_m2)
+				.ToList();
+			if (outdoors != null)
+			{
+				result.Insert(0, outdoors);
+			}
+			return result;
+		}
+
 		public static void appendGroups(
 			StringBuilder report,
 			List<NetworkReportRoomGroup> groups)

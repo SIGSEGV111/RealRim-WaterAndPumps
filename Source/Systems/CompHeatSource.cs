@@ -37,7 +37,7 @@ namespace RealRim.WaterAndPumps
 		}
 	}
 
-	public sealed class CompHeatSource : ThingComp, IFluidTickable
+	public sealed class CompHeatSource : ThingComp, IFluidTickable, IHeatingNetworkReportProvider
 	{
 		public bool heating;
 		public float target_buffer_temperature_c;
@@ -46,12 +46,52 @@ namespace RealRim.WaterAndPumps
 		public float last_cop = 1f;
 		public string last_reason = string.Empty;
 
+
+		public ThingWithComps ParentThing
+		{
+			get
+			{
+				return parent;
+			}
+		}
+
 		public CompProperties_HeatSource Props
 		{
 			get
 			{
 				return (CompProperties_HeatSource)props;
 			}
+		}
+
+		public bool tryGetHeatingNetworkReport(
+			FluidNetwork network,
+			out HeatingNetworkReport report)
+		{
+			report = null;
+			if (network == null || network.network_type != FluidNetworkType.Heating)
+			{
+				return false;
+			}
+
+			report = new HeatingNetworkReport
+			{
+				label = parent.LabelCap.ToString(),
+				production_kw = Mathf.Max(0f, last_thermal_kw),
+				consumption_kw = 0f,
+			};
+			if (hasAdjustableTarget())
+			{
+				report.details = "RealRim_HeatingReportSourceDetails".Translate(
+					last_thermal_kw.ToString("+0.0;-0.0;0.0"),
+					target_buffer_temperature_c.ToStringTemperature("F1"),
+					last_cop.ToString("N2")).ToString();
+			}
+			else
+			{
+				report.details = "RealRim_HeatingReportPassiveSourceDetails".Translate(
+					last_thermal_kw.ToString("+0.0;-0.0;0.0")).ToString();
+			}
+			return true;
 		}
 
 		public override void PostSpawnSetup(bool respawning_after_load)

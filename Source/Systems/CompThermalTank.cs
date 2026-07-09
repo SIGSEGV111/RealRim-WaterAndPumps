@@ -17,11 +17,20 @@ namespace RealRim.WaterAndPumps
 		}
 	}
 
-	public sealed class CompThermalTank : ThingComp, IFluidTickable
+	public sealed class CompThermalTank : ThingComp, IFluidTickable, IHeatingNetworkReportProvider
 	{
 		public float stored_liters;
 		public float temperature_c;
 		public float last_heat_loss_kw;
+
+
+		public ThingWithComps ParentThing
+		{
+			get
+			{
+				return parent;
+			}
+		}
 
 		public CompProperties_ThermalTank Props
 		{
@@ -29,6 +38,28 @@ namespace RealRim.WaterAndPumps
 			{
 				return (CompProperties_ThermalTank)props;
 			}
+		}
+
+		public bool tryGetHeatingNetworkReport(
+			FluidNetwork network,
+			out HeatingNetworkReport report)
+		{
+			report = null;
+			if (network == null || network.network_type != FluidNetworkType.Heating)
+			{
+				return false;
+			}
+
+			report = new HeatingNetworkReport
+			{
+				label = parent.LabelCap.ToString(),
+				production_kw = 0f,
+				consumption_kw = Mathf.Max(0f, last_heat_loss_kw),
+				details = "RealRim_HeatingReportThermalTankDetails".Translate(
+					temperature_c.ToStringTemperature("F1"),
+					HeatingNetworkReportFormatting.formatConsumptionKw(last_heat_loss_kw, "N2")).ToString(),
+			};
+			return true;
 		}
 
 		public override void PostSpawnSetup(bool respawning_after_load)

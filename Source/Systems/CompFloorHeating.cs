@@ -1,4 +1,5 @@
 using RimWorld;
+using UnityEngine;
 using Verse;
 
 namespace RealRim.WaterAndPumps
@@ -18,7 +19,7 @@ namespace RealRim.WaterAndPumps
 		}
 	}
 
-	public sealed class CompFloorHeating : ThingComp, IFluidTickable
+	public sealed class CompFloorHeating : ThingComp, IFluidTickable, IHeatingNetworkReportProvider
 	{
 		public float last_transfer_kw;
 		public float last_room_temperature_c;
@@ -28,12 +29,45 @@ namespace RealRim.WaterAndPumps
 		public bool last_outdoor_mode;
 		public string last_reason = string.Empty;
 
+
+		public ThingWithComps ParentThing
+		{
+			get
+			{
+				return parent;
+			}
+		}
+
 		public CompProperties_FloorHeating Props
 		{
 			get
 			{
 				return (CompProperties_FloorHeating)props;
 			}
+		}
+
+		public bool tryGetHeatingNetworkReport(
+			FluidNetwork network,
+			out HeatingNetworkReport report)
+		{
+			report = null;
+			if (network == null || network.network_type != FluidNetworkType.Heating)
+			{
+				return false;
+			}
+
+			report = new HeatingNetworkReport
+			{
+				label = "RealRim_FloorHeatingLabel".Translate().ToString(),
+				production_kw = 0f,
+				consumption_kw = Mathf.Max(0f, last_transfer_kw),
+				details = "RealRim_FloorHeatingReportSingleDetails".Translate(
+					last_room_temperature_c.ToStringTemperature("F1"),
+					last_medium_temperature_c.ToStringTemperature("F1"),
+					Props.heat_exchanger_surface_m2.ToString("N1"),
+					HeatingNetworkReportFormatting.formatConsumptionKw(last_transfer_kw, "N3")).ToString(),
+			};
+			return true;
 		}
 
 		public override string CompInspectStringExtra()

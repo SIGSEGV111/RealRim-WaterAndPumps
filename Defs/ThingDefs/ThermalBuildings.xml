@@ -39,7 +39,7 @@
 	<ThingDef ParentName="RealRim_HeatingPipe">
 		<defName>RealRim_FloorHeating</defName>
 		<label>floor heating</label>
-		<description>A concealed unregulated hydronic floor-heating loop installed below constructed flooring. Indoors, each tile acts as 1 m² of radiant floor and transfers heat from the heating-water circuit according to the water-to-room temperature difference. Outdoors, it uses a stronger snow-melt conductance and only runs below 1 °C while precipitation is falling, consuming heat to keep constructed floors clear of snow. Furniture fully standing on heated indoor tiles receives a small comfort bonus.</description>
+		<description>A concealed unregulated hydronic floor-heating loop installed below constructed flooring. Each tile contributes 2 L of virtual heating-water buffer volume. Indoors, each tile acts as 1 m² of radiant floor and transfers heat from the heating-water circuit according to the water-to-room temperature difference. Outdoors, it uses a stronger snow-melt conductance and only runs below 1 °C while precipitation is falling, consuming heat to keep constructed floors clear of snow. Furniture fully standing on heated indoor tiles receives a small comfort bonus.</description>
 		<thingClass>Building</thingClass>
 		<designationCategory>Temperature</designationCategory>
 		<uiIconPath>RealRim/UI/FloorHeating</uiIconPath>
@@ -71,6 +71,7 @@
 				<networks>
 					<li>Heating</li>
 				</networks>
+				<virtual_heat_buffer_liters_per_m>2</virtual_heat_buffer_liters_per_m>
 			</li>
 			<li Class="RealRim.WaterAndPumps.CompProperties_FloorHeating">
 				<heat_exchanger_surface_m2>1.0</heat_exchanger_surface_m2>

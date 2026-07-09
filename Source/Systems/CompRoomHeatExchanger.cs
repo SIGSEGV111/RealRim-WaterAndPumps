@@ -22,12 +22,21 @@ namespace RealRim.WaterAndPumps
 		}
 	}
 
-	public sealed class CompRoomHeatExchanger : ThingComp, IFluidTickable
+	public sealed class CompRoomHeatExchanger : ThingComp, IFluidTickable, IHeatingNetworkReportProvider
 	{
 		public float last_transfer_kw;
 		public float last_room_temperature_c;
 		public float last_medium_temperature_c;
 		public string last_reason = string.Empty;
+
+
+		public ThingWithComps ParentThing
+		{
+			get
+			{
+				return parent;
+			}
+		}
 
 		public CompProperties_RoomHeatExchanger Props
 		{
@@ -35,6 +44,29 @@ namespace RealRim.WaterAndPumps
 			{
 				return (CompProperties_RoomHeatExchanger)props;
 			}
+		}
+
+		public bool tryGetHeatingNetworkReport(
+			FluidNetwork network,
+			out HeatingNetworkReport report)
+		{
+			report = null;
+			if (network == null
+				|| network.network_type != FluidNetworkType.Heating
+				|| Props.kind != RoomHeatExchangerKind.Radiator)
+			{
+				return false;
+			}
+
+			report = new HeatingNetworkReport
+			{
+				label = parent.LabelCap.ToString(),
+				production_kw = 0f,
+				consumption_kw = Mathf.Max(0f, last_transfer_kw),
+				details = "RealRim_HeatingReportConsumerDetails".Translate(
+					HeatingNetworkReportFormatting.formatConsumptionKw(last_transfer_kw, "N2")).ToString(),
+			};
+			return true;
 		}
 
 		public override string CompInspectStringExtra()

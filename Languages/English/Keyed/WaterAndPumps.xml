@@ -162,6 +162,7 @@ Total water used: {5} L
 {6}</RealRim_FireSprinklerStatus>
 	<RealRim_NetworkReportOutdoorTemperature>Outdoor air temperature: {0}</RealRim_NetworkReportOutdoorTemperature>
 	<RealRim_NetworkReportPipeLength>Total pipe length: {0} m</RealRim_NetworkReportPipeLength>
+	<RealRim_HeatingReportPipeBuffer>Virtual pipe buffer: {0} L at {1}</RealRim_HeatingReportPipeBuffer>
 	<RealRim_NetworkReportPipeHeatExchange>Pipe-to-outdoor heat exchange: {0} kW ({1} W/K)</RealRim_NetworkReportPipeHeatExchange>
 	<RealRim_NetworkReportOutdoors>Outdoors</RealRim_NetworkReportOutdoors>
 	<RealRim_NetworkReportRoomFallback>Room</RealRim_NetworkReportRoomFallback>
@@ -230,12 +231,28 @@ Furniture comfort bonus: {6}
 	<RealRim_ReasonNoValveTarget>No valve target controller.</RealRim_ReasonNoValveTarget>
 	<RealRim_ReasonValveNeedsTwoNetworks>Needs two separate adjacent heating-water networks.</RealRim_ReasonValveNeedsTwoNetworks>
 	<RealRim_ReasonNoReceivingStorage>No connected receiving thermal storage.</RealRim_ReasonNoReceivingStorage>
+	<RealRim_ReasonNoValveRoom>Inactive: the valve is not in an enclosed room that can be monitored.</RealRim_ReasonNoValveRoom>
+	<RealRim_ReasonRoomTargetReached>Inactive: monitored room target reached.</RealRim_ReasonRoomTargetReached>
+	<RealRim_ReasonWaterTargetReached>Inactive: receiving-water target reached.</RealRim_ReasonWaterTargetReached>
 	<RealRim_SmartMixingValveStatus>Smart mixing valve:
-Target receiving temperature: {0}
-Source network: {1} ({2})
-Receiving network: {3} ({4})
-Current transfer: {5} kW
-{6}</RealRim_SmartMixingValveStatus>
+Control mode: {0}
+Target receiving water: {1}
+Target monitored room: {2}
+Monitored room: {3}
+Source network: {4} ({5})
+Receiving network: {6} ({7})
+Current transfer: {8} kW
+{9}</RealRim_SmartMixingValveStatus>
+	<RealRim_SmartMixingValveModeWater>water temperature</RealRim_SmartMixingValveModeWater>
+	<RealRim_SmartMixingValveModeRoom>room temperature</RealRim_SmartMixingValveModeRoom>
+	<RealRim_SmartMixingValveModeLabel>Control: {0}</RealRim_SmartMixingValveModeLabel>
+	<RealRim_SmartMixingValveModeDesc>Select whether this valve regulates the receiving heating-water temperature or opens based on the temperature of the room containing the valve.</RealRim_SmartMixingValveModeDesc>
+	<RealRim_SmartMixingValveWaterTargetDown>Lower water target</RealRim_SmartMixingValveWaterTargetDown>
+	<RealRim_SmartMixingValveWaterTargetUp>Raise water target</RealRim_SmartMixingValveWaterTargetUp>
+	<RealRim_SmartMixingValveWaterTargetDesc>Current receiving-water target: {0}</RealRim_SmartMixingValveWaterTargetDesc>
+	<RealRim_SmartMixingValveRoomTargetDown>Lower room target</RealRim_SmartMixingValveRoomTargetDown>
+	<RealRim_SmartMixingValveRoomTargetUp>Raise room target</RealRim_SmartMixingValveRoomTargetUp>
+	<RealRim_SmartMixingValveRoomTargetDesc>Current monitored-room target: {0}</RealRim_SmartMixingValveRoomTargetDesc>
 	<RealRim_FloorHeatingRequiresConstructedFloor>Floor heating must be installed on constructed flooring or smoothed stone.</RealRim_FloorHeatingRequiresConstructedFloor>
 	<RealRim_FloorHeatingAlreadyHere>Floor heating is already installed on this tile.</RealRim_FloorHeatingAlreadyHere>
 	<RealRim_ReasonNoIndoorRoom>No enclosed room to heat.</RealRim_ReasonNoIndoorRoom>

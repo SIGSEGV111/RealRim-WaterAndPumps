@@ -4,7 +4,7 @@ Physics-oriented replacement layer for **Dubs Bad Hygiene** on RimWorld 1.6.
 
 - Author: SIGSEGV11
 - Package ID: `sigsegv11.realrim.water`
-- Version: 1.1.50
+- Version: 1.1.54
 - Required: Harmony, Dubs Bad Hygiene
 
 This is a clean subsystem replacement. Save compatibility with versions 1.0.x is not intended. Existing DBH `ThingDef` identifiers are reused where practical so DBH buildings can still be loaded and constructed.
@@ -71,12 +71,14 @@ A powered `WaterTreatment` on the same fresh-water network removes 99% of every 
 Domestic hot water and heating water now use separate storage:
 
 - the **domestic hot-water tank** stores 600 L, connects to fresh water, hot water and heating water, and contains a one-way internal heat exchanger;
-- the **heating-water buffer tank** stores 600 L on the closed heating circuit for boilers, heat pumps, radiators and pools.
-- both tank types lose heat to their surroundings at a whole-tank conductance of 2.5 W/K.
+- the **heating-water buffer tank** stores 600 L on the closed heating circuit for boilers, heat pumps, radiators and pools. It is optional once the pipe network itself provides enough virtual water volume.
+- both physical tank types lose heat to their surroundings at a whole-tank conductance of 2.5 W/K.
 
 Both tanks operate over 5–85 °C. The domestic tank refills with 12 °C fresh water and can only receive heat through its exchanger; domestic water cannot feed heat back into the heating circuit.
 
 The connected pipework is also a distributed heat exchanger with outdoor air. One occupied pipe or valve cell is treated as one metre. Domestic hot-water pipe contributes 0.35 W/K per metre; the closed heating circuit contributes 0.70 W/K per metre because each tile represents both supply and return. Heat transfer is bidirectional, proportional to pipe length and the current network-to-outdoor temperature difference, and cannot drive stored water past the outdoor temperature or the tank's 5–85 °C limits. Hidden and visible pipes use the same insulated-pipe coefficient.
+
+Every heating network additionally has a virtual pipe buffer based on its heat-bearing pipe length. Heating pipes, heating valves and floor-heating loops contribute 2 L of virtual heating water per metre/tile, so a closed heating circuit can accept, store and deliver heat without a dedicated physical buffer tank. The virtual buffer is mixed into the network's average heating-water temperature, participates in all heat-source/consumer/mixing-valve calculations, is saved with the map, and is preserved across network rebuilds by matching overlapping pipe networks.
 
 Active heat sources have an individual heating-buffer target, adjustable from 30–85 °C. They stop at the selected target and restart 5 °C below it; existing saves initially retain the previous 75 °C target. Lower buffer targets reduce the temperature lift required from heat pumps and normally improve COP, but the target must still remain high enough to drive radiators, pool heating and domestic-hot-water transfer. Solar and geothermal sources are passive and continue to the tank maximum.
 
@@ -189,6 +191,21 @@ When a septic or treatment tank accumulates 10 kg of sludge (200 × 50 g units),
 ## Runtime replacement
 
 Harmony prefixes disable DBH network ticks, legacy resource transfers and obsolete water/sewage alerts. Verified DBH fixture, thirst, drinking, hand-washing, recipe-work, pool and latrine callbacks are redirected to the RealRim components. The DBH sewage visual remains only on fixtures and processors that genuinely use a drain, where it acts as the waste-water compatibility layer. Non-waste tanks, pumps, heaters, coolant equipment, pools, troughs and latrines no longer retain DBH plumbing visuals. RealRim overlays and connector stubs display fresh-water, hot-water, heating-water and coolant connections independently; all resource accounting is performed by the new networks.
+
+## Heating integration API
+
+External heat producers should reference `RealRim.WaterAndPumps.dll`, add a `CompFluidNode` for the `Heating` network to their building, and implement `IHeatingNetworkReportProvider` on the producing component. Heating networks cache all connected things and thing comps in `FluidNetwork.things` and `FluidNetwork.components`; heating report providers are exposed as `FluidNetwork.heating_report_providers` and are queried directly when the heating overview is built.
+
+```csharp
+public interface IHeatingNetworkReportProvider : IFluidNetworkComponent
+{
+	bool tryGetHeatingNetworkReport(FluidNetwork network, out HeatingNetworkReport report);
+}
+
+FluidUtility.addHeatingEnergy(Thing source, float requested_kj);
+```
+
+`addHeatingEnergy` adds heat to the source building's connected heating network, including both physical heating buffer tanks and the virtual pipe buffer. `tryGetHeatingNetworkReport` should return heating-only production/consumption and status details for the connected network; unrelated resource output, electrical demand and internal production details should stay in the building inspect pane.
 
 ## Build on openSUSE Linux
 

@@ -270,6 +270,16 @@ Aktuelle Übertragung: {10} kW
 	<RealRim_SmartMixingValveLayerDesc>Wählt aus, welche Heizwasser-Rohrebene diese Seite des intelligenten Mischventils liest. Die Quellebene liefert Wärme; die Empfängerebene nimmt Wärme auf.</RealRim_SmartMixingValveLayerDesc>
 	<RealRim_SmartMixingValveSourceLayerMenuEntry>{0} als Quellebene verwenden</RealRim_SmartMixingValveSourceLayerMenuEntry>
 	<RealRim_SmartMixingValveReceivingLayerMenuEntry>{0} als Empfängerebene verwenden</RealRim_SmartMixingValveReceivingLayerMenuEntry>
+	<RealRim_LinkRoomThermostat>Raumthermostat verknüpfen</RealRim_LinkRoomThermostat>
+	<RealRim_LinkRoomThermostatDesc>Wählt ein DBH-Thermostat, dessen Raumtemperatur dieses intelligente Mischventil im Raumtemperaturmodus steuern soll. Die Verknüpfung schaltet das Ventil auf Raumtemperaturregelung.</RealRim_LinkRoomThermostatDesc>
+	<RealRim_UnlinkRoomThermostat>Thermostat trennen</RealRim_UnlinkRoomThermostat>
+	<RealRim_UnlinkRoomThermostatDesc>Trennt dieses intelligente Mischventil von {0}. Im Raumtemperaturmodus misst es danach wieder den eigenen Raum.</RealRim_UnlinkRoomThermostatDesc>
+	<RealRim_NoRoomThermostatsAvailable>Keine Raumthermostate verfügbar.</RealRim_NoRoomThermostatsAvailable>
+	<RealRim_SmartMixingValveRoomTemperatureFromThermostat>{0} von {1}</RealRim_SmartMixingValveRoomTemperatureFromThermostat>
+	<RealRim_RoomThermostatLinkStatus>Raumthermostat:
+Verknüpfte intelligente Mischventile: {0}
+Gemessener Raum: {1}</RealRim_RoomThermostatLinkStatus>
+
 	<RealRim_FloorHeatingRequiresConstructedFloor>Fußbodenheizung muss auf gebautem Bodenbelag oder geglättetem Stein installiert werden.</RealRim_FloorHeatingRequiresConstructedFloor>
 	<RealRim_FloorHeatingAlreadyHere>Auf diesem Feld ist bereits eine Fußbodenheizung installiert.</RealRim_FloorHeatingAlreadyHere>
 	<RealRim_ReasonNoIndoorRoom>Kein geschlossener Raum zum Heizen.</RealRim_ReasonNoIndoorRoom>
@@ -309,4 +319,6 @@ Von Tanks aufgenommen: {3} L/h
 	<RealRim_ReasonNoFreshWaterCapacity>Inaktiv: Verbundene Frischwassertanks fehlen oder sind voll.</RealRim_ReasonNoFreshWaterCapacity>
 	<RealRim_ReasonFreshWaterPartlyFull>Ein Teil des gesammelten Regenwassers läuft über, weil die verbundenen Tanks nur begrenzte freie Kapazität haben.</RealRim_ReasonFreshWaterPartlyFull>
 
+	<RealRim_WashingMachineNoFreshWater>Inaktiv: Verbundene Frischwassertanks sind leer.</RealRim_WashingMachineNoFreshWater>
+	<RealRim_RimefellerFreshWaterStatus>Frischwasser: {0} / {1} L verfügbar; Rimefeller-Wasserbedarf: {2} L/Tag.</RealRim_RimefellerFreshWaterStatus>
 </LanguageData>

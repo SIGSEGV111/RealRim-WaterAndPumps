@@ -1,5 +1,59 @@
 # Changelog
 
+## 1.1.78 — Preserve hidden pipe transparency
+
+- Restored zero-alpha rendering for stuffed hidden fluid pipes and floor heating.
+- Material selection and pipe replacement remain available without exposing concealed pipe graphics.
+- Updated release metadata and runtime labels to 1.1.78.
+
+## 1.1.77 — Add composite pipe plastic support
+
+- Added Rimefeller Synthamide Composite (`FiberComposite`) to the `RealRim_PipePlastic` stuff category at runtime.
+- Updated release metadata and runtime labels to 1.1.77.
+
+## 1.1.76 — Expand pressure-pipe materials and replacement
+
+- Converted fresh-water, hot-water and heating pipes from fixed steel cost to stuffed construction using one unit of metallic or pipe-plastic material.
+- Added a pipe-plastic stuff category and adds Rimefeller Synthylene to that category when Rimefeller is loaded.
+- Applies the same metallic/pipe-plastic material support to DBH air-con coolant pipes at runtime.
+- Allows pipes to be built over matching same-layer pipes to atomically replace material, visible/hidden form, or both.
+- Removes the replaced old pipe when the new pipe completes.
+- Increased hidden non-waste pipe hit points to 160 and work to 2000 while keeping material cost equal to visible pipes.
+- Updated release metadata and runtime labels to 1.1.76.
+
+## 1.1.75 — Redirect DBH washing-machine water status
+
+- Patched DBH washing-machine working checks so legacy `Nowater`/`Nosewage` failures are re-evaluated against RealRim fresh-water and waste-water networks.
+- Removed stale DBH `No water capacity`/`No sewage capacity` lines from washing-machine inspect text when the machine has a RealRim fluid node.
+- Added a clear RealRim message for empty connected fresh-water tanks.
+- Updated release metadata and runtime labels to 1.1.75.
+
+## 1.1.74 — Link thermostats to smart mixing valves
+
+- Removed RealRim heating/coolant fluid-node connections from the DBH thermostat.
+- Added a room-thermostat link target component to DBH thermostats.
+- Smart mixing valves can now link to a room thermostat from the valve gizmo menu.
+- Smart mixing valves can unlink their thermostat from the valve gizmo menu.
+- In room-temperature mode, linked valves measure the linked thermostat room instead of the valve room.
+- Selecting a thermostat or linked smart mixing valve draws a faint link overlay between them.
+- Updated release metadata and runtime labels to 1.1.74.
+
+## 1.1.73 — Add remaining DBH fluid consumer nodes
+
+- Added RealRim fluid nodes to remaining DBH buildings that still used legacy DBH plumbing directly.
+- Washing machines now connect to fresh-water and waste-water networks while keeping their DBH washing-machine behavior.
+- Hot tubs now connect to the fresh-water network while keeping their DBH hot-tub behavior.
+- Standalone DBH thermostats now expose heating and coolant network connections so they no longer remain on the old plumbing graph only.
+- Updated release metadata and runtime labels to 1.1.73.
+
+## 1.1.72 — Add Rimefeller fresh-water integration
+
+- Added a public RealRim fresh-water API for other mods to query, draw from, and add to connected fresh-water networks.
+- Added fresh-water nodes to Rimefeller crude crackers and refinery buildings when those defs are present.
+- Patched Rimefeller refinery and crude-cracker water consumers so DBH-style water demand can be satisfied from RealRim fresh-water tanks.
+- Added Rimefeller fresh-water status to affected building inspect strings.
+- Updated release metadata and runtime labels to 1.1.72.
+
 ## 1.1.71 — Raise rainwater collector draw layer
 
 - Moved the wall-mounted rainwater collector to the `BuildingOnTop` altitude layer so its graphic renders above the underlying wall.

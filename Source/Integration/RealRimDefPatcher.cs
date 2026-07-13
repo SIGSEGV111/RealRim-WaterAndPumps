@@ -30,16 +30,18 @@ namespace RealRim.WaterAndPumps
 			runPatchPhase("sprinklers", patchSprinklers, ref failed_phases);
 			runPatchPhase("swimming recreation", patchSwimmingRecreation, ref failed_phases);
 			runPatchPhase("kitchen sink", patchKitchenSink, ref failed_phases);
+			runPatchPhase("remaining DBH fluid consumers", patchRemainingDbhFluidConsumers, ref failed_phases);
 			runPatchPhase("waste processing", patchWaste, ref failed_phases);
 			runPatchPhase("work definitions", patchWorkDefinitions, ref failed_phases);
+			runPatchPhase("Rimefeller integration", patchRimefeller, ref failed_phases);
 
 			if (failed_phases == 0)
 			{
-				Log.Message("[RealRim] Water & Pumps 1.1.71: replaced DBH water, heating, cooling, sprinkler and sewage definitions.");
+				Log.Message("[RealRim] Water & Pumps 1.1.78: replaced DBH water, heating, cooling, sprinkler and sewage definitions and added supported cross-mod fluid nodes.");
 			}
 			else
 			{
-				Log.Error("[RealRim] Water & Pumps 1.1.71: definition replacement completed with "
+				Log.Error("[RealRim] Water & Pumps 1.1.78: definition replacement completed with "
 					+ failed_phases + " failed phase(s). Later phases were still applied; see the preceding errors.");
 			}
 		}
@@ -62,6 +64,14 @@ namespace RealRim.WaterAndPumps
 			setNode("sewagePipeStuff", FluidNetworkType.WasteWater);
 			setNode("sewagePipeHidden", FluidNetworkType.WasteWater);
 			setNode("plumbingValve", true, FluidNetworkType.WasteWater);
+			preparePressurizedPipeMaterial("airPipe", false);
+			preparePressurizedPipeMaterial("airPipeHidden", true);
+			preparePressurizedPipeMaterial("RealRim_FreshWaterPipe", false);
+			preparePressurizedPipeMaterial("RealRim_FreshWaterPipeHidden", true);
+			preparePressurizedPipeMaterial("RealRim_HotWaterPipe", false);
+			preparePressurizedPipeMaterial("RealRim_HotWaterPipeHidden", true);
+			preparePressurizedPipeMaterial("RealRim_HeatingPipe", false);
+			preparePressurizedPipeMaterial("RealRim_HeatingPipeHidden", true);
 			setNode("airPipe", FluidNetworkType.Coolant);
 			setNode("airPipeHidden", FluidNetworkType.Coolant);
 			setNode("RealRim_FreshWaterPipe", FluidNetworkType.FreshWater);
@@ -470,6 +480,42 @@ namespace RealRim.WaterAndPumps
 			}
 		}
 
+		private static void patchRemainingDbhFluidConsumers()
+		{
+			// Keep these DBH components/classes intact, but give them RealRim fluid nodes.
+			// Their legacy PlumbingNet calls are redirected at runtime by DbhRuntimeBridge.
+			setLegacyDbhFluidConsumer(
+				"WashingMachine",
+				FluidNetworkType.FreshWater,
+				FluidNetworkType.WasteWater);
+			setLegacyDbhFluidConsumer("HotTub", FluidNetworkType.FreshWater);
+			patchThermostatLinkTarget();
+		}
+
+		private static void patchThermostatLinkTarget()
+		{
+			ThingDef thermostat = getDef("Thermostat");
+			if (thermostat == null)
+			{
+				return;
+			}
+
+			removeComp<CompProperties_FluidNode>(thermostat);
+			removeComp<CompProperties_RoomThermostatLinkTarget>(thermostat);
+			addComp(thermostat, new CompProperties_RoomThermostatLinkTarget());
+		}
+
+		private static void setLegacyDbhFluidConsumer(string def_name, params FluidNetworkType[] networks)
+		{
+			ThingDef def = getDef(def_name);
+			if (def == null)
+			{
+				return;
+			}
+
+			addNode(def, false, networks);
+		}
+
 		private static void patchWaste()
 		{
 			ThingDef outlet = preparePassiveBuilding("SewageOutlet", true);
@@ -845,6 +891,95 @@ namespace RealRim.WaterAndPumps
 			if (property != null && property.CanWrite && property.PropertyType == typeof(float))
 			{
 				property.SetValue(instance, value, null);
+			}
+		}
+
+		private static void patchRimefeller()
+		{
+			addStuffCategoryToStuff("Synthylene", "RealRim_PipePlastic");
+			addStuffCategoryToStuff("FiberComposite", "RealRim_PipePlastic");
+			setNode("CrudeCracker", FluidNetworkType.FreshWater);
+			setNode("SynthyleneRefiner", FluidNetworkType.FreshWater);
+			setNode("NapalmRefiner", FluidNetworkType.FreshWater);
+			setNode("SynthreadRefiner", FluidNetworkType.FreshWater);
+			setNode("SynthamideRefiner", FluidNetworkType.FreshWater);
+			setNode("HyperweaveRefiner", FluidNetworkType.FreshWater);
+			setNode("NeutroamineRefiner", FluidNetworkType.FreshWater);
+			setNode("CombatExtendedFsxRefiner", FluidNetworkType.FreshWater);
+		}
+
+
+		private static void preparePressurizedPipeMaterial(string def_name, bool hidden)
+		{
+			ThingDef def = getDef(def_name);
+			if (def == null)
+			{
+				return;
+			}
+
+			StuffCategoryDef metallic = DefDatabase<StuffCategoryDef>.GetNamedSilentFail("Metallic");
+			StuffCategoryDef pipe_plastic = DefDatabase<StuffCategoryDef>.GetNamedSilentFail("RealRim_PipePlastic");
+			def.stuffCategories = new List<StuffCategoryDef>();
+			if (metallic != null)
+			{
+				def.stuffCategories.Add(metallic);
+			}
+			if (pipe_plastic != null)
+			{
+				def.stuffCategories.Add(pipe_plastic);
+			}
+			def.costStuffCount = 1;
+			def.costList = null;
+			if (hidden)
+			{
+				setStatBase(def, StatDefOf.MaxHitPoints, 160f);
+				setStatBase(def, StatDefOf.WorkToBuild, 2000f);
+			}
+		}
+
+		private static void setStatBase(ThingDef def, StatDef stat_def, float value)
+		{
+			if (def == null || stat_def == null)
+			{
+				return;
+			}
+			if (def.statBases == null)
+			{
+				def.statBases = new List<StatModifier>();
+			}
+			for (int index = 0; index < def.statBases.Count; index++)
+			{
+				if (def.statBases[index].stat == stat_def)
+				{
+					StatModifier modifier = def.statBases[index];
+					modifier.value = value;
+					def.statBases[index] = modifier;
+					return;
+				}
+			}
+			def.statBases.Add(new StatModifier
+			{
+				stat = stat_def,
+				value = value,
+			});
+		}
+
+		private static void addStuffCategoryToStuff(string thing_def_name, string category_def_name)
+		{
+			ThingDef thing_def = getDef(thing_def_name);
+			StuffCategoryDef category_def = DefDatabase<StuffCategoryDef>.GetNamedSilentFail(category_def_name);
+			if (thing_def?.stuffProps == null || category_def == null)
+			{
+				return;
+			}
+
+			if (thing_def.stuffProps.categories == null)
+			{
+				thing_def.stuffProps.categories = new List<StuffCategoryDef>();
+			}
+			if (!thing_def.stuffProps.categories.Contains(category_def))
+			{
+				thing_def.stuffProps.categories.Add(category_def);
 			}
 		}
 

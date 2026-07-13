@@ -4,7 +4,7 @@ Physics-oriented replacement layer for **Dubs Bad Hygiene** on RimWorld 1.6.
 
 - Author: SIGSEGV11
 - Package ID: `sigsegv11.realrim.water`
-- Version: 1.1.71
+- Version: 1.1.78
 - Required: Harmony, Dubs Bad Hygiene
 
 This is a clean subsystem replacement. Save compatibility with versions 1.0.x is not intended. Existing DBH `ThingDef` identifiers are reused where practical so DBH buildings can still be loaded and constructed.
@@ -22,6 +22,21 @@ The old shared plumbing model is replaced by five independent tile networks:
 | Coolant | Outdoor cooling plants, coolant tanks and indoor cooling units |
 
 The old DBH sewage pipe definitions are reused for waste water. The old air-conditioning pipe definitions are reused for coolant. New steel pipe defs provide fresh-water, hot-water and heating-water pipes and valves. Steel-only construction was an explicit replacement-def choice, not a limitation inherited from DBH. Selecting a node or placing a pipe displays the matching connected network in its own color; the new pipe sprites link only to their own pipe type.
+
+
+## Mod integration API
+
+Other mods can use `RealRim.WaterAndPumps.RealRimWaterApi` to interact with the fresh-water network attached to a `Thing`:
+
+- `IsConnectedToFreshWater(Thing thing)`
+- `GetFreshWaterStored(Thing thing)`
+- `GetFreshWaterCapacity(Thing thing)`
+- `HasFreshWater(Thing thing, float requested_liters)`
+- `DrawFreshWater(Thing thing, float requested_liters)`
+- `TryDrawFreshWater(Thing thing, float requested_liters, out float drawn_liters)`
+- `AddFreshWater(Thing thing, float requested_liters)`
+
+Rimefeller crude crackers and refineries are patched to use this API when their DBH-style water demand is active.
 
 ## Water supply
 

@@ -69,6 +69,7 @@ namespace RealRim.WaterAndPumps
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.SectionLayer_PipeOverlay", "DrawLayer", nameof(skipOriginal));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.SectionLayer_PipeOverlay", "Regenerate", nameof(skipOriginal));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "Verse.Graphic_Linked", "Print", nameof(visiblePipeGraphicPrintPrefix));
+				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "Verse.Building", "get_DrawColor", nameof(hiddenFluidBuildingDrawColorPostfix), true);
 
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.Alert_BlockedSewer", "GetReport", nameof(emptyAlertPrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.Alert_WaterTemp", "GetReport", nameof(emptyAlertPrefix));
@@ -90,6 +91,8 @@ namespace RealRim.WaterAndPumps
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.Building_FillableThing", "Working", nameof(poolWorkingPrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.Building_Pool", "GoodTemp", nameof(poolGoodTemperaturePrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.Building_Pool", "GetInspectString", nameof(poolInspectStringPrefix));
+				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.Building_WashingMachine", "Working", nameof(washingMachineWorkingPostfix), true);
+				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.Building_WashingMachine", "GetInspectString", nameof(washingMachineInspectStringPostfix), true);
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.CompWaterFillable", "CompInspectStringExtra", nameof(waterFillableInspectPrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.Building_FillableThing", "Tick", nameof(fillableThingTickPrefix));
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "DubsBadHygiene.Building_washbucket", "TickRare", nameof(washBucketTickRarePrefix));
@@ -110,7 +113,7 @@ namespace RealRim.WaterAndPumps
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "RimWorld.StatWorker", "GetValue", nameof(floorHeatingComfortPostfix), true);
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "RimWorld.StatWorker", "GetExplanationUnfinalized", nameof(floorHeatingComfortExplanationPostfix), true);
 
-				Log.Message("[RealRim] Water & Pumps 1.1.71: redirected " + patched_methods
+				Log.Message("[RealRim] Water & Pumps 1.1.78: redirected " + patched_methods
 					+ " DBH runtime methods to RealRim physics.");
 			}
 			catch (Exception exception)
@@ -265,6 +268,21 @@ namespace RealRim.WaterAndPumps
 			Thing thing)
 		{
 			return !FluidNetworkVisuals.tryPrintVisiblePipe(thing, layer, __instance);
+		}
+
+		private static void hiddenFluidBuildingDrawColorPostfix(
+			Building __instance,
+			ref Color __result)
+		{
+			ThingDef def = __instance?.def;
+			if (def?.graphicData == null
+				|| def.graphicData.color.a > 0f
+				|| FluidNetworkVisuals.getNodeProperties(def) == null)
+			{
+				return;
+			}
+
+			__result = def.graphicData.color;
 		}
 
 		private static bool skipOriginal()
@@ -450,6 +468,105 @@ namespace RealRim.WaterAndPumps
 			}
 			__result = string.Join("\n", lines).TrimEnd('\r', '\n', ' ', '\t');
 			return false;
+		}
+
+		private static void washingMachineWorkingPostfix(object __instance, ref AcceptanceReport __result)
+		{
+			ThingWithComps thing = __instance as ThingWithComps;
+			if (!isLegacyWashingMachine(thing))
+			{
+				return;
+			}
+
+			if (__result.Accepted)
+			{
+				return;
+			}
+
+			string reason = __result.Reason ?? string.Empty;
+			if (!isLegacyWaterCapacityReason(reason))
+			{
+				return;
+			}
+
+			__result = getLegacyWashingMachineWaterReport(thing);
+		}
+
+		private static void washingMachineInspectStringPostfix(object __instance, ref string __result)
+		{
+			ThingWithComps thing = __instance as ThingWithComps;
+			if (!isLegacyWashingMachine(thing))
+			{
+				return;
+			}
+
+			__result = stripLegacyWaterCapacityLines(__result);
+		}
+
+		private static bool isLegacyWashingMachine(ThingWithComps thing)
+		{
+			return thing != null
+				&& thing.def != null
+				&& thing.def.defName == "WashingMachine"
+				&& thing.TryGetComp<CompFluidNode>() != null;
+		}
+
+		private static AcceptanceReport getLegacyWashingMachineWaterReport(ThingWithComps thing)
+		{
+			FluidNetwork fresh_water_network = FluidUtility.getNetwork(thing, FluidNetworkType.FreshWater);
+			if (fresh_water_network == null)
+			{
+				return "RealRim_ReasonNoFreshWaterNetwork".Translate();
+			}
+			if (fresh_water_network.getStoredFreshWater() <= 0.001f)
+			{
+				return "RealRim_WashingMachineNoFreshWater".Translate();
+			}
+
+			FluidNetwork waste_water_network = FluidUtility.getNetwork(thing, FluidNetworkType.WasteWater);
+			if (waste_water_network == null || !waste_water_network.canAcceptWaste(1f, 0f))
+			{
+				return "RealRim_NoWasteCapacity".Translate();
+			}
+
+			return true;
+		}
+
+		private static bool isLegacyWaterCapacityReason(string reason)
+		{
+			string trimmed = (reason ?? string.Empty).Trim();
+			return trimmed == legacyTranslation("Nowater")
+				|| trimmed == legacyTranslation("Nosewage");
+		}
+
+		private static string stripLegacyWaterCapacityLines(string text)
+		{
+			if (string.IsNullOrEmpty(text))
+			{
+				return text;
+			}
+
+			string water_line = legacyTranslation("Nowater");
+			string sewage_line = legacyTranslation("Nosewage");
+			List<string> retained_lines = new List<string>();
+			string[] lines = text.Split('\n');
+			for (int index = 0; index < lines.Length; index++)
+			{
+				string line = lines[index].TrimEnd('\r');
+				string trimmed = line.Trim();
+				if (trimmed == water_line || trimmed == sewage_line)
+				{
+					continue;
+				}
+				retained_lines.Add(line);
+			}
+
+			return string.Join("\n", retained_lines).TrimEnd('\r', '\n', ' ', '\t');
+		}
+
+		private static string legacyTranslation(string key)
+		{
+			return key.Translate().ToString().Trim();
 		}
 
 		private static bool waterFillableInspectPrefix(object __instance, ref string __result)

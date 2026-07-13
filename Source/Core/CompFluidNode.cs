@@ -48,6 +48,10 @@ namespace RealRim.WaterAndPumps
 			{
 				initializeLayers();
 			}
+			if (!respawning_after_load)
+			{
+				FluidPipeReplacementUtility.removeReplacedPipes(this);
+			}
 			getManager()?.registerNode(this);
 		}
 

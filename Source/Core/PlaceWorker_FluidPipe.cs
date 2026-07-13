@@ -50,6 +50,16 @@ namespace RealRim.WaterAndPumps
 							|| existing_node.isLayerConnector(network_type)
 							|| existing_node.getLayer(network_type) == selected_layer))
 					{
+						if (!checking_bridges_layers
+							&& FluidPipeReplacementUtility.canReplacePipe(
+								checking_thing_def,
+								existing_node,
+								network_type,
+								selected_layer))
+						{
+							continue;
+						}
+
 						return duplicateReport(network_type, selected_layer);
 					}
 

@@ -52,6 +52,7 @@ namespace RealRim.WaterAndPumps
 		public int last_source_network_id;
 		public int last_receiving_network_id;
 		public string last_reason = string.Empty;
+		public Thing linked_thermostat;
 
 		private bool last_room_temperature_valid;
 
@@ -83,10 +84,21 @@ namespace RealRim.WaterAndPumps
 			Scribe_Values.Look(ref receiving_layer, "receiving_layer", FluidNetworkLayer.Layer1);
 			Scribe_Values.Look(ref target_water_temperature_c, "target_water_temperature_c", Props.default_water_temperature_c);
 			Scribe_Values.Look(ref target_room_temperature_c, "target_room_temperature_c", Props.default_room_temperature_c);
+			Scribe_References.Look(ref linked_thermostat, "linked_thermostat");
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
 				clampTargets();
 				clampLayers();
+			}
+		}
+
+		public override void PostDrawExtraSelectionOverlays()
+		{
+			base.PostDrawExtraSelectionOverlays();
+			Thing thermostat = getLinkedThermostatOrNull();
+			if (thermostat != null)
+			{
+				ThermostatLinkOverlay.drawLink(parent, thermostat);
 			}
 		}
 
@@ -107,6 +119,24 @@ namespace RealRim.WaterAndPumps
 
 			yield return createLayerGizmo(true);
 			yield return createLayerGizmo(false);
+
+			yield return new Command_Action
+			{
+				defaultLabel = "RealRim_LinkRoomThermostat".Translate(),
+				defaultDesc = "RealRim_LinkRoomThermostatDesc".Translate(),
+				icon = RealRimTextures.configure_heat_source,
+				action = openThermostatLinkMenu,
+			};
+			if (getLinkedThermostatOrNull() != null)
+			{
+				yield return new Command_Action
+				{
+					defaultLabel = "RealRim_UnlinkRoomThermostat".Translate(),
+					defaultDesc = "RealRim_UnlinkRoomThermostatDesc".Translate(getLinkedThermostatLabel()),
+					icon = RealRimTextures.configure_heat_source,
+					action = unlinkThermostat,
+				};
+			}
 
 			if (control_mode == SmartMixingValveControlMode.RoomTemperature)
 			{
@@ -406,6 +436,111 @@ namespace RealRim.WaterAndPumps
 			Find.WindowStack.Add(new FloatMenu(options));
 		}
 
+		private void openThermostatLinkMenu()
+		{
+			Map map = parent?.MapHeld;
+			if (map == null || map.listerThings?.AllThings == null)
+			{
+				return;
+			}
+
+			List<FloatMenuOption> options = new List<FloatMenuOption>();
+			List<CompRoomThermostatLinkTarget> thermostats = getRoomThermostats(map);
+			for (int index = 0; index < thermostats.Count; index++)
+			{
+				CompRoomThermostatLinkTarget thermostat = thermostats[index];
+				Thing thermostat_thing = thermostat.parent;
+				options.Add(new FloatMenuOption(
+					getThermostatMenuLabel(thermostat_thing),
+					delegate
+					{
+						linkThermostat(thermostat_thing);
+					}));
+			}
+
+			if (options.Count == 0)
+			{
+				options.Add(new FloatMenuOption(
+					"RealRim_NoRoomThermostatsAvailable".Translate().ToString(),
+					null));
+			}
+			Find.WindowStack.Add(new FloatMenu(options));
+		}
+
+		private List<CompRoomThermostatLinkTarget> getRoomThermostats(Map map)
+		{
+			List<CompRoomThermostatLinkTarget> result = new List<CompRoomThermostatLinkTarget>();
+			List<Thing> all_things = map.listerThings.AllThings;
+			for (int index = 0; index < all_things.Count; index++)
+			{
+				ThingWithComps thing = all_things[index] as ThingWithComps;
+				CompRoomThermostatLinkTarget thermostat = thing?.TryGetComp<CompRoomThermostatLinkTarget>();
+				if (thermostat != null && thermostat.parent.Spawned)
+				{
+					result.Add(thermostat);
+				}
+			}
+			result.Sort((left, right) => getDistanceSquared(left.parent.Position)
+				.CompareTo(getDistanceSquared(right.parent.Position)));
+			return result;
+		}
+
+		private int getDistanceSquared(IntVec3 cell)
+		{
+			int dx = cell.x - parent.Position.x;
+			int dz = cell.z - parent.Position.z;
+			return dx * dx + dz * dz;
+		}
+
+		private string getThermostatMenuLabel(Thing thermostat)
+		{
+			string label = thermostat.LabelCap.ToString();
+			if (linked_thermostat == thermostat)
+			{
+				label += " " + "RealRim_CurrentSelectionSuffix".Translate();
+			}
+			return label + " (" + thermostat.Position.ToString() + ")";
+		}
+
+		public void linkThermostat(Thing thermostat)
+		{
+			if (!CompRoomThermostatLinkTarget.isValidThermostat(thermostat)
+				|| thermostat.MapHeld != parent.MapHeld)
+			{
+				return;
+			}
+			linked_thermostat = thermostat;
+			control_mode = SmartMixingValveControlMode.RoomTemperature;
+			clampTargets();
+		}
+
+		public void unlinkThermostat()
+		{
+			linked_thermostat = null;
+		}
+
+		public bool isLinkedToThermostat(Thing thermostat)
+		{
+			return thermostat != null && getLinkedThermostatOrNull() == thermostat;
+		}
+
+		private Thing getLinkedThermostatOrNull()
+		{
+			if (linked_thermostat == null
+				|| !CompRoomThermostatLinkTarget.isValidThermostat(linked_thermostat)
+				|| linked_thermostat.MapHeld != parent.MapHeld)
+			{
+				return null;
+			}
+			return linked_thermostat;
+		}
+
+		private string getLinkedThermostatLabel()
+		{
+			Thing thermostat = getLinkedThermostatOrNull();
+			return thermostat == null ? "-" : thermostat.LabelCap.ToString();
+		}
+
 		private string getLayerMenuLabel(bool source, FluidNetworkLayer layer)
 		{
 			FluidNetworkLayer current_layer = source ? source_layer : receiving_layer;
@@ -480,14 +615,16 @@ namespace RealRim.WaterAndPumps
 
 		private bool updateLastRoomTemperature()
 		{
-			Map map = parent.MapHeld;
-			if (map == null || parent.Position.UsesOutdoorTemperature(map))
+			Thing thermostat = getLinkedThermostatOrNull();
+			Map map = thermostat?.MapHeld ?? parent.MapHeld;
+			IntVec3 sample_cell = thermostat?.Position ?? parent.Position;
+			if (map == null || sample_cell.UsesOutdoorTemperature(map))
 			{
 				last_room_temperature_valid = false;
 				return false;
 			}
 
-			last_room_temperature_c = GenTemperature.GetTemperatureForCell(parent.Position, map);
+			last_room_temperature_c = GenTemperature.GetTemperatureForCell(sample_cell, map);
 			last_room_temperature_valid = true;
 			return true;
 		}
@@ -534,7 +671,16 @@ namespace RealRim.WaterAndPumps
 			{
 				return "-";
 			}
-			return last_room_temperature_c.ToStringTemperature("F1");
+
+			Thing thermostat = getLinkedThermostatOrNull();
+			string temperature = last_room_temperature_c.ToStringTemperature("F1");
+			if (thermostat == null)
+			{
+				return temperature;
+			}
+			return "RealRim_SmartMixingValveRoomTemperatureFromThermostat".Translate(
+				temperature,
+				thermostat.LabelCap);
 		}
 	}
 }

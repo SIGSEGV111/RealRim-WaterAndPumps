@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using RimWorld;
 using UnityEngine;
 using Verse;
 
@@ -8,6 +9,7 @@ namespace RealRim.WaterAndPumps
 	public sealed class MapComponent_FluidNetworks : MapComponent
 	{
 		private const int SYSTEM_TICK_INTERVAL = 60;
+		private const int CONSTRUCTION_PLAN_PRUNE_INTERVAL = 600;
 
 		private static readonly IntVec3[] CONNECTION_OFFSETS =
 		{
@@ -18,10 +20,13 @@ namespace RealRim.WaterAndPumps
 			IntVec3.West,
 		};
 
-		private static readonly FluidNetworkType[] HEAT_EXCHANGE_NETWORK_TYPES =
+		private static readonly FluidNetworkType[] NETWORK_TYPES =
 		{
-			FluidNetworkType.Heating,
+			FluidNetworkType.FreshWater,
 			FluidNetworkType.HotWater,
+			FluidNetworkType.Heating,
+			FluidNetworkType.WasteWater,
+			FluidNetworkType.Coolant,
 		};
 
 		private readonly List<CompFluidNode> nodes = new List<CompFluidNode>();
@@ -29,10 +34,22 @@ namespace RealRim.WaterAndPumps
 			new Dictionary<FluidNetworkType, Dictionary<CompFluidNode, FluidNetwork>>();
 		private readonly Dictionary<string, float> heating_buffer_temperature_by_key =
 			new Dictionary<string, float>();
+		private readonly List<IFluidTickable> all_fluid_tickables = new List<IFluidTickable>();
+		private readonly List<IFluidTickable> fluid_tickables = new List<IFluidTickable>();
+		private readonly List<CompFloorHeating> floor_heatings = new List<CompFloorHeating>();
+		private readonly List<CompRainwaterCollector> rainwater_collectors =
+			new List<CompRainwaterCollector>();
+		private readonly List<FluidNetwork> heating_networks = new List<FluidNetwork>();
+		private readonly List<FluidNetwork> heat_exchange_networks = new List<FluidNetwork>();
+		private readonly HashSet<ThingComp> cached_tickable_components = new HashSet<ThingComp>();
+		private readonly HashSet<FluidNetwork> cached_networks = new HashSet<FluidNetwork>();
+		private readonly HashSet<string> active_heating_buffer_keys = new HashSet<string>();
+		private readonly List<string> stale_heating_buffer_keys = new List<string>();
 		private List<string> saved_heating_buffer_keys = new List<string>();
 		private List<float> saved_heating_buffer_temperatures_c = new List<float>();
 		private List<FluidLayerConstructionPlan> construction_plans = new List<FluidLayerConstructionPlan>();
 		private bool networks_dirty = true;
+		private bool fluid_tickable_schedule_dirty = true;
 
 		public MapComponent_FluidNetworks(Map map) : base(map)
 		{
@@ -41,13 +58,17 @@ namespace RealRim.WaterAndPumps
 		public override void MapComponentTick()
 		{
 			base.MapComponentTick();
-			captureConstructionPlans();
+			int current_tick = Find.TickManager.TicksGame;
+			if (current_tick % CONSTRUCTION_PLAN_PRUNE_INTERVAL == 0)
+			{
+				pruneConstructionPlans();
+			}
 			if (networks_dirty)
 			{
 				rebuildNetworks();
 			}
 
-			if (Find.TickManager.TicksGame % SYSTEM_TICK_INTERVAL == 0)
+			if (current_tick % SYSTEM_TICK_INTERVAL == 0)
 			{
 				float elapsed_seconds = SYSTEM_TICK_INTERVAL * RealPhysics.SECONDS_PER_GAME_TICK;
 				tickSystems(elapsed_seconds);
@@ -167,13 +188,20 @@ namespace RealRim.WaterAndPumps
 				rebuildNetworks();
 			}
 
-			return nodes
-				.Where(node => node.supportsNetwork(network_type)
+			List<CompFluidNode> result = new List<CompFluidNode>();
+			for (int index = 0; index < nodes.Count; index++)
+			{
+				CompFluidNode node = nodes[index];
+				if (node.supportsNetwork(network_type)
 					&& node.isConnectionActive()
 					&& (layer == FluidNetworkLayer.None
 						|| node.isLayerConnector(network_type)
 						|| node.getLayer(network_type) == layer))
-				.ToList();
+				{
+					result.Add(node);
+				}
+			}
+			return result;
 		}
 
 		public FluidLayerConstructionPlan consumeConstructionPlan(CompFluidNode node)
@@ -194,6 +222,35 @@ namespace RealRim.WaterAndPumps
 			}
 
 			return null;
+		}
+
+		public void recordConstructionPlan(
+			ThingDef build_def,
+			IntVec3 position,
+			Rot4 rotation)
+		{
+			if (build_def == null
+				|| !position.IsValid
+				|| FluidNetworkVisuals.getNodeProperties(build_def) == null)
+			{
+				return;
+			}
+
+			if (construction_plans == null)
+			{
+				construction_plans = new List<FluidLayerConstructionPlan>();
+			}
+
+			for (int index = construction_plans.Count - 1; index >= 0; index--)
+			{
+				FluidLayerConstructionPlan plan = construction_plans[index];
+				if (plan != null && plan.matchesConstructionBuild(build_def, position, rotation))
+				{
+					construction_plans.RemoveAt(index);
+				}
+			}
+
+			construction_plans.Add(FluidLayerConstructionPlan.create(build_def, position, rotation));
 		}
 
 		public FluidNetworkLayer getConstructionPlanLayer(
@@ -229,23 +286,36 @@ namespace RealRim.WaterAndPumps
 		private void rebuildNetworks()
 		{
 			cacheCurrentHeatingBufferStates();
-			nodes.RemoveAll(node => node == null || node.parent == null || !node.parent.Spawned);
+			for (int index = nodes.Count - 1; index >= 0; index--)
+			{
+				CompFluidNode node = nodes[index];
+				if (node == null || node.parent == null || !node.parent.Spawned)
+				{
+					nodes.RemoveAt(index);
+				}
+			}
 			network_by_node.Clear();
 
-			FluidNetworkType[] network_types = (FluidNetworkType[])System.Enum.GetValues(typeof(FluidNetworkType));
-			for (int type_index = 0; type_index < network_types.Length; type_index++)
+			for (int type_index = 0; type_index < NETWORK_TYPES.Length; type_index++)
 			{
-				rebuildNetworkType(network_types[type_index]);
+				rebuildNetworkType(NETWORK_TYPES[type_index]);
 			}
 
+			rebuildRuntimeCaches();
 			networks_dirty = false;
 		}
 
 		private void rebuildNetworkType(FluidNetworkType network_type)
 		{
-			List<CompFluidNode> candidates = nodes
-				.Where(node => node.supportsNetwork(network_type) && node.isConnectionActive())
-				.ToList();
+			List<CompFluidNode> candidates = new List<CompFluidNode>();
+			for (int index = 0; index < nodes.Count; index++)
+			{
+				CompFluidNode node = nodes[index];
+				if (node.supportsNetwork(network_type) && node.isConnectionActive())
+				{
+					candidates.Add(node);
+				}
+			}
 			Dictionary<IntVec3, List<CompFluidNode>> cell_index = buildCellIndex(candidates);
 			HashSet<CompFluidNode> unvisited = new HashSet<CompFluidNode>(candidates);
 			Dictionary<CompFluidNode, FluidNetwork> lookup = new Dictionary<CompFluidNode, FluidNetwork>();
@@ -253,7 +323,12 @@ namespace RealRim.WaterAndPumps
 
 			while (unvisited.Count > 0)
 			{
-				CompFluidNode first = unvisited.First();
+				CompFluidNode first = null;
+				foreach (CompFluidNode candidate in unvisited)
+				{
+					first = candidate;
+					break;
+				}
 				Queue<CompFluidNode> queue = new Queue<CompFluidNode>();
 				List<CompFluidNode> connected = new List<CompFluidNode>();
 				queue.Enqueue(first);
@@ -420,107 +495,95 @@ namespace RealRim.WaterAndPumps
 			return overlap;
 		}
 
-		private void captureConstructionPlans()
+		private void pruneConstructionPlans()
 		{
-			if (construction_plans == null)
-			{
-				construction_plans = new List<FluidLayerConstructionPlan>();
-			}
-
-			List<Thing> things = map.listerThings.AllThings;
-			for (int index = 0; index < things.Count; index++)
-			{
-				Thing construction = things[index];
-				ThingDef build_def = construction?.def?.entityDefToBuild as ThingDef;
-				if (build_def == null || FluidNetworkVisuals.getNodeProperties(build_def) == null)
-				{
-					continue;
-				}
-
-				FluidLayerConstructionPlan existing_plan = getConstructionPlan(construction, build_def);
-				if (existing_plan != null)
-				{
-					existing_plan.updateConstructionThing(construction);
-					continue;
-				}
-
-				construction_plans.Add(FluidLayerConstructionPlan.create(construction, build_def));
-			}
-
-			pruneConstructionPlans(things);
-		}
-
-		private FluidLayerConstructionPlan getConstructionPlan(Thing construction, ThingDef build_def)
-		{
-			for (int index = 0; index < construction_plans.Count; index++)
-			{
-				FluidLayerConstructionPlan plan = construction_plans[index];
-				if (plan != null
-					&& (plan.matchesConstruction(construction)
-						|| plan.matchesConstructionBuild(construction, build_def)))
-				{
-					return plan;
-				}
-			}
-			return null;
-		}
-
-		private void pruneConstructionPlans(List<Thing> things)
-		{
-			HashSet<int> construction_ids = new HashSet<int>();
-			for (int index = 0; index < things.Count; index++)
-			{
-				Thing construction = things[index];
-				if (construction?.def?.entityDefToBuild != null)
-				{
-					construction_ids.Add(construction.thingIDNumber);
-				}
-			}
-
-			construction_plans.RemoveAll(plan => plan == null
-				|| (plan.construction_thing_id != 0
-					&& !construction_ids.Contains(plan.construction_thing_id)));
-		}
-
-		private void cacheCurrentHeatingBufferStates()
-		{
-			Dictionary<CompFluidNode, FluidNetwork> lookup;
-			if (!network_by_node.TryGetValue(FluidNetworkType.Heating, out lookup))
+			if (construction_plans == null || construction_plans.Count == 0)
 			{
 				return;
 			}
 
-			HashSet<FluidNetwork> recorded_networks = new HashSet<FluidNetwork>();
-			HashSet<string> active_keys = new HashSet<string>();
-			foreach (FluidNetwork network in lookup.Values)
+			for (int index = construction_plans.Count - 1; index >= 0; index--)
 			{
-				if (network == null
-					|| network.state_key.NullOrEmpty()
-					|| !recorded_networks.Add(network))
+				FluidLayerConstructionPlan plan = construction_plans[index];
+				if (plan == null || !hasActiveConstruction(plan))
+				{
+					construction_plans.RemoveAt(index);
+				}
+			}
+		}
+
+		private bool hasActiveConstruction(FluidLayerConstructionPlan plan)
+		{
+			if (plan == null || !plan.position.IsValid || !plan.position.InBounds(map))
+			{
+				return false;
+			}
+
+			List<Thing> things = plan.position.GetThingList(map);
+			for (int index = 0; index < things.Count; index++)
+			{
+				Thing construction = things[index];
+				if (!(construction is Frame) && !(construction is Blueprint))
 				{
 					continue;
 				}
 
-				active_keys.Add(network.state_key);
+				ThingDef build_def = construction.def?.entityDefToBuild as ThingDef;
+				if (plan.matchesConstruction(construction)
+					|| plan.matchesConstructionBuild(construction, build_def))
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		private void cacheCurrentHeatingBufferStates()
+		{
+			if (!network_by_node.ContainsKey(FluidNetworkType.Heating))
+			{
+				return;
+			}
+
+			active_heating_buffer_keys.Clear();
+			for (int index = 0; index < heating_networks.Count; index++)
+			{
+				FluidNetwork network = heating_networks[index];
+				if (network == null || network.state_key.NullOrEmpty())
+				{
+					continue;
+				}
+
+				active_heating_buffer_keys.Add(network.state_key);
 				heating_buffer_temperature_by_key[network.state_key] = network.virtual_heating_buffer_temperature_c;
 			}
 
-			List<string> stale_keys = heating_buffer_temperature_by_key.Keys
-				.Where(key => !active_keys.Contains(key))
-				.ToList();
-			for (int index = 0; index < stale_keys.Count; index++)
+			stale_heating_buffer_keys.Clear();
+			foreach (string key in heating_buffer_temperature_by_key.Keys)
 			{
-				heating_buffer_temperature_by_key.Remove(stale_keys[index]);
+				if (!active_heating_buffer_keys.Contains(key))
+				{
+					stale_heating_buffer_keys.Add(key);
+				}
+			}
+			for (int index = 0; index < stale_heating_buffer_keys.Count; index++)
+			{
+				heating_buffer_temperature_by_key.Remove(stale_heating_buffer_keys[index]);
 			}
 		}
 
-		private void tickSystems(float elapsed_seconds)
+		private void rebuildRuntimeCaches()
 		{
-			HashSet<ThingComp> ticked_components = new HashSet<ThingComp>();
+			all_fluid_tickables.Clear();
+			fluid_tickables.Clear();
+			floor_heatings.Clear();
+			rainwater_collectors.Clear();
+			cached_tickable_components.Clear();
 			for (int node_index = 0; node_index < nodes.Count; node_index++)
 			{
 				ThingWithComps parent = nodes[node_index].parent;
-				if (parent == null || parent.AllComps == null)
+				if (parent?.AllComps == null)
 				{
 					continue;
 				}
@@ -529,32 +592,98 @@ namespace RealRim.WaterAndPumps
 				{
 					ThingComp component = parent.AllComps[comp_index];
 					IFluidTickable tickable = component as IFluidTickable;
-					if (tickable != null && ticked_components.Add(component))
+					if (tickable != null && cached_tickable_components.Add(component))
 					{
-						tickable.tickFluidSystem(elapsed_seconds);
+						all_fluid_tickables.Add(tickable);
+						CompFloorHeating floor_heating = component as CompFloorHeating;
+						if (floor_heating != null)
+						{
+							floor_heatings.Add(floor_heating);
+						}
+
+						CompRainwaterCollector rainwater_collector = component as CompRainwaterCollector;
+						if (rainwater_collector != null)
+						{
+							rainwater_collectors.Add(rainwater_collector);
+						}
 					}
+				}
+			}
+			fluid_tickable_schedule_dirty = true;
+
+			heating_networks.Clear();
+			collectUniqueNetworks(FluidNetworkType.Heating, heating_networks, true);
+
+			heat_exchange_networks.Clear();
+			cached_networks.Clear();
+			collectUniqueNetworks(FluidNetworkType.Heating, heat_exchange_networks, false);
+			collectUniqueNetworks(FluidNetworkType.HotWater, heat_exchange_networks, false);
+		}
+
+		private void collectUniqueNetworks(
+			FluidNetworkType network_type,
+			List<FluidNetwork> result,
+			bool clear_cache)
+		{
+			if (clear_cache)
+			{
+				cached_networks.Clear();
+			}
+
+			Dictionary<CompFluidNode, FluidNetwork> lookup;
+			if (!network_by_node.TryGetValue(network_type, out lookup))
+			{
+				return;
+			}
+
+			foreach (FluidNetwork network in lookup.Values)
+			{
+				if (network != null && cached_networks.Add(network))
+				{
+					result.Add(network);
+				}
+			}
+		}
+
+		private void tickSystems(float elapsed_seconds)
+		{
+			bool floor_heating_groups_rebuilt = FloorHeatingUtility.prepareFloorHeatingGroups(
+				map,
+				floor_heatings,
+				fluid_tickable_schedule_dirty);
+			if (fluid_tickable_schedule_dirty || floor_heating_groups_rebuilt)
+			{
+				rebuildFluidTickableSchedule();
+				fluid_tickable_schedule_dirty = false;
+			}
+
+			CompRainwaterCollector.prepareCollectionCache(map, rainwater_collectors);
+			for (int index = 0; index < fluid_tickables.Count; index++)
+			{
+				fluid_tickables[index].tickFluidSystem(elapsed_seconds);
+			}
+		}
+
+		private void rebuildFluidTickableSchedule()
+		{
+			fluid_tickables.Clear();
+			for (int index = 0; index < all_fluid_tickables.Count; index++)
+			{
+				IFluidTickable tickable = all_fluid_tickables[index];
+				CompFloorHeating floor_heating = tickable as CompFloorHeating;
+				if (floor_heating == null
+					|| FloorHeatingUtility.isFloorHeatingScheduled(map, floor_heating))
+				{
+					fluid_tickables.Add(tickable);
 				}
 			}
 		}
 
 		private void tickNetworkHeatExchange(float elapsed_seconds)
 		{
-			HashSet<FluidNetwork> ticked_networks = new HashSet<FluidNetwork>();
-			for (int type_index = 0; type_index < HEAT_EXCHANGE_NETWORK_TYPES.Length; type_index++)
+			for (int index = 0; index < heat_exchange_networks.Count; index++)
 			{
-				Dictionary<CompFluidNode, FluidNetwork> lookup;
-				if (!network_by_node.TryGetValue(HEAT_EXCHANGE_NETWORK_TYPES[type_index], out lookup))
-				{
-					continue;
-				}
-
-				foreach (FluidNetwork network in lookup.Values)
-				{
-					if (ticked_networks.Add(network))
-					{
-						network.tickOutdoorHeatExchange(elapsed_seconds);
-					}
-				}
+				heat_exchange_networks[index].tickOutdoorHeatExchange(elapsed_seconds);
 			}
 		}
 	}

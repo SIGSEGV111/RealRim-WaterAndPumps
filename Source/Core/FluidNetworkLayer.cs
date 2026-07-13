@@ -162,6 +162,22 @@ namespace RealRim.WaterAndPumps
 			return plan;
 		}
 
+		public static FluidLayerConstructionPlan create(
+			ThingDef build_def,
+			IntVec3 position,
+			Rot4 rotation)
+		{
+			FluidLayerConstructionPlan plan = new FluidLayerConstructionPlan
+			{
+				construction_thing_id = 0,
+				build_def_name = build_def.defName,
+				position = position,
+				rotation = rotation,
+			};
+			plan.captureSelectedLayers(build_def);
+			return plan;
+		}
+
 		public bool matches(CompFluidNode node)
 		{
 			return node?.parent != null
@@ -180,9 +196,18 @@ namespace RealRim.WaterAndPumps
 		{
 			return construction != null
 				&& build_def != null
+				&& matchesConstructionBuild(build_def, construction.Position, construction.Rotation);
+		}
+
+		public bool matchesConstructionBuild(
+			ThingDef build_def,
+			IntVec3 construction_position,
+			Rot4 construction_rotation)
+		{
+			return build_def != null
 				&& build_def.defName == build_def_name
-				&& construction.Position == position
-				&& construction.Rotation == rotation;
+				&& construction_position == position
+				&& construction_rotation == rotation;
 		}
 
 		public void updateConstructionThing(Thing construction)

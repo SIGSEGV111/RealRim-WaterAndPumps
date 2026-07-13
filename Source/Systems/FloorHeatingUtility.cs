@@ -18,6 +18,51 @@ namespace RealRim.WaterAndPumps
 
 		private static readonly Dictionary<int, CachedFloorHeatingGroup> GROUP_CACHE =
 			new Dictionary<int, CachedFloorHeatingGroup>();
+		private static readonly Dictionary<Map, PreparedFloorHeatingCache> PREPARED_CACHES_BY_MAP =
+			new Dictionary<Map, PreparedFloorHeatingCache>();
+
+		public static bool prepareFloorHeatingGroups(
+			Map map,
+			List<CompFloorHeating> floor_heatings,
+			bool force_rebuild)
+		{
+			if (map == null)
+			{
+				return false;
+			}
+
+			PreparedFloorHeatingCache cache;
+			if (!PREPARED_CACHES_BY_MAP.TryGetValue(map, out cache))
+			{
+				cache = new PreparedFloorHeatingCache();
+				PREPARED_CACHES_BY_MAP[map] = cache;
+				force_rebuild = true;
+			}
+
+			int current_tick = Find.TickManager.TicksGame;
+			int source_count = floor_heatings == null ? 0 : floor_heatings.Count;
+			if (!force_rebuild
+				&& cache.source_count == source_count
+				&& cache.last_rebuild_tick + GROUP_CACHE_REFRESH_TICKS >= current_tick)
+			{
+				return false;
+			}
+
+			rebuildPreparedCache(cache, map, floor_heatings, current_tick);
+			return true;
+		}
+
+		public static bool isFloorHeatingScheduled(Map map, CompFloorHeating floor_heating)
+		{
+			if (map == null || floor_heating == null)
+			{
+				return true;
+			}
+
+			PreparedFloorHeatingCache cache;
+			return !PREPARED_CACHES_BY_MAP.TryGetValue(map, out cache)
+				|| cache.scheduled_floor_heatings.Contains(floor_heating);
+		}
 
 		public static bool hasFloorHeatingAt(IntVec3 cell, Map map, Thing thing_to_ignore = null)
 		{
@@ -136,6 +181,21 @@ namespace RealRim.WaterAndPumps
 				return;
 			}
 
+			PreparedFloorHeatingCache prepared_cache;
+			CachedFloorHeatingGroup prepared_group;
+			if (PREPARED_CACHES_BY_MAP.TryGetValue(floor_heating.parent.Map, out prepared_cache)
+				&& prepared_cache.group_by_floor_heating.TryGetValue(floor_heating, out prepared_group))
+			{
+				if (prepared_group == null)
+				{
+					tickDisconnectedFloorHeating(floor_heating);
+					return;
+				}
+
+				tickPreparedGroup(prepared_group, elapsed_seconds);
+				return;
+			}
+
 			Map map = floor_heating.parent.Map;
 			Room room = floor_heating.parent.GetRoom();
 			bool outdoor_mode = room == null || room.PsychologicallyOutdoors;
@@ -172,6 +232,125 @@ namespace RealRim.WaterAndPumps
 			{
 				tickIndoorGroup(group, elapsed_seconds);
 			}
+		}
+
+		private static void rebuildPreparedCache(
+			PreparedFloorHeatingCache cache,
+			Map map,
+			List<CompFloorHeating> floor_heatings,
+			int current_tick)
+		{
+			cache.groups_by_network.Clear();
+			cache.group_by_floor_heating.Clear();
+			cache.scheduled_floor_heatings.Clear();
+			cache.last_rebuild_tick = current_tick;
+			cache.source_count = floor_heatings == null ? 0 : floor_heatings.Count;
+
+			if (floor_heatings == null)
+			{
+				return;
+			}
+
+			for (int index = 0; index < floor_heatings.Count; index++)
+			{
+				CompFloorHeating floor_heating = floor_heatings[index];
+				if (floor_heating == null)
+				{
+					continue;
+				}
+				if (floor_heating.parent == null
+					|| !floor_heating.parent.Spawned
+					|| floor_heating.parent.Map != map)
+				{
+					cache.group_by_floor_heating[floor_heating] = null;
+					cache.scheduled_floor_heatings.Add(floor_heating);
+					continue;
+				}
+
+				Room room = floor_heating.parent.GetRoom();
+				bool outdoor_mode = room == null || room.PsychologicallyOutdoors;
+				FluidNetwork network = FluidUtility.getNetwork(
+					floor_heating.parent,
+					FluidNetworkType.Heating);
+				if (network == null)
+				{
+					cache.group_by_floor_heating[floor_heating] = null;
+					cache.scheduled_floor_heatings.Add(floor_heating);
+					continue;
+				}
+
+				Dictionary<int, CachedFloorHeatingGroup> groups_by_room;
+				if (!cache.groups_by_network.TryGetValue(network, out groups_by_room))
+				{
+					groups_by_room = new Dictionary<int, CachedFloorHeatingGroup>();
+					cache.groups_by_network[network] = groups_by_room;
+				}
+
+				int group_id = outdoor_mode ? -1 : room.ID;
+				CachedFloorHeatingGroup group;
+				if (!groups_by_room.TryGetValue(group_id, out group))
+				{
+					group = new CachedFloorHeatingGroup
+					{
+						network = network,
+						room = room,
+						outdoor_mode = outdoor_mode,
+						last_rebuild_tick = current_tick,
+						last_processed_tick = -1,
+						last_seen_tick = current_tick,
+					};
+					groups_by_room[group_id] = group;
+					cache.scheduled_floor_heatings.Add(floor_heating);
+				}
+
+				float surface_m2 = Mathf.Max(0f, floor_heating.Props.heat_exchanger_surface_m2);
+				group.tiles.Add(floor_heating);
+				group.surface_m2 += surface_m2;
+				group.indoor_conductance_w_per_k += surface_m2
+					* Mathf.Max(0f, floor_heating.Props.heat_transfer_w_per_m2_k);
+				group.outdoor_conductance_w_per_k += surface_m2
+					* Mathf.Max(0f, floor_heating.Props.outdoor_heat_transfer_w_per_m2_k);
+				cache.group_by_floor_heating[floor_heating] = group;
+			}
+		}
+
+		private static void tickPreparedGroup(CachedFloorHeatingGroup group, float elapsed_seconds)
+		{
+			int current_tick = Find.TickManager.TicksGame;
+			if (group == null || group.last_processed_tick == current_tick)
+			{
+				return;
+			}
+
+			group.last_processed_tick = current_tick;
+			group.last_seen_tick = current_tick;
+			if (group.outdoor_mode)
+			{
+				tickOutdoorGroup(group, elapsed_seconds);
+			}
+			else
+			{
+				tickIndoorGroup(group, elapsed_seconds);
+			}
+		}
+
+		private static void tickDisconnectedFloorHeating(CompFloorHeating floor_heating)
+		{
+			if (floor_heating == null || floor_heating.parent == null || !floor_heating.parent.Spawned)
+			{
+				resetRuntimeState(floor_heating);
+				return;
+			}
+
+			Map map = floor_heating.parent.Map;
+			Room room = floor_heating.parent.GetRoom();
+			bool outdoor_mode = room == null || room.PsychologicallyOutdoors;
+			resetRuntimeState(floor_heating);
+			floor_heating.last_outdoor_mode = outdoor_mode;
+			floor_heating.last_room_temperature_c = outdoor_mode
+				? map.mapTemperature.OutdoorTemp
+				: GenTemperature.GetTemperatureForCell(floor_heating.parent.Position, map);
+			floor_heating.last_reason = "RealRim_ReasonNoHeatingNetwork".Translate();
 		}
 
 		private static CompFloorHeating getFirstFloorHeatingUnder(Thing thing)
@@ -545,6 +724,20 @@ namespace RealRim.WaterAndPumps
 			public int last_rebuild_tick = -1;
 			public int last_processed_tick = -1;
 			public int last_seen_tick = -1;
+		}
+
+		private sealed class PreparedFloorHeatingCache
+		{
+			public readonly Dictionary<FluidNetwork, Dictionary<int, CachedFloorHeatingGroup>>
+				groups_by_network =
+					new Dictionary<FluidNetwork, Dictionary<int, CachedFloorHeatingGroup>>();
+			public readonly Dictionary<CompFloorHeating, CachedFloorHeatingGroup>
+				group_by_floor_heating =
+					new Dictionary<CompFloorHeating, CachedFloorHeatingGroup>();
+			public readonly HashSet<CompFloorHeating> scheduled_floor_heatings =
+				new HashSet<CompFloorHeating>();
+			public int last_rebuild_tick = -1;
+			public int source_count = -1;
 		}
 	}
 

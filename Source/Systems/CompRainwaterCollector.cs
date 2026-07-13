@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -171,6 +170,28 @@ namespace RealRim.WaterAndPumps
 			return CellRect.CenteredOn(center, Mathf.Max(0, radius));
 		}
 
+		public static void prepareCollectionCache(
+			Map map,
+			IList<CompRainwaterCollector> source_collectors)
+		{
+			if (map == null)
+			{
+				return;
+			}
+
+			RainwaterCollectionCache cache;
+			if (!CACHES_BY_MAP.TryGetValue(map, out cache))
+			{
+				cache = new RainwaterCollectionCache();
+				CACHES_BY_MAP[map] = cache;
+			}
+
+			if (cache.tick != Find.TickManager.TicksGame)
+			{
+				cache.rebuild(map, source_collectors);
+			}
+		}
+
 		private int getAssignedRoofTileCount(Map map)
 		{
 			RainwaterCollectionCache cache;
@@ -182,7 +203,7 @@ namespace RealRim.WaterAndPumps
 
 			if (cache.tick != Find.TickManager.TicksGame)
 			{
-				cache.rebuild(map);
+				cache.rebuild(map, null);
 			}
 
 			int count;
@@ -251,18 +272,33 @@ namespace RealRim.WaterAndPumps
 
 		private sealed class RainwaterCollectionCache
 		{
+			private struct TileAssignment
+			{
+				public CompRainwaterCollector collector;
+				public int distance;
+				public int thing_id;
+			}
+
 			public int tick = -1;
 			public readonly Dictionary<CompRainwaterCollector, int> assigned_tiles_by_collector =
 				new Dictionary<CompRainwaterCollector, int>();
+			private readonly Dictionary<IntVec3, TileAssignment> assignment_by_cell =
+				new Dictionary<IntVec3, TileAssignment>();
+			private readonly List<CompRainwaterCollector> collectors =
+				new List<CompRainwaterCollector>();
 
-			public void rebuild(Map map)
+			public void rebuild(
+				Map map,
+				IList<CompRainwaterCollector> source_collectors)
 			{
 				tick = Find.TickManager.TicksGame;
 				assigned_tiles_by_collector.Clear();
-				List<CompRainwaterCollector> collectors = getCollectors(map);
+				assignment_by_cell.Clear();
+				collectCollectors(map, source_collectors);
 				for (int collector_index = 0; collector_index < collectors.Count; collector_index++)
 				{
 					CompRainwaterCollector collector = collectors[collector_index];
+					assigned_tiles_by_collector[collector] = 0;
 					foreach (IntVec3 cell in collector.getCollectionRect().Cells)
 					{
 						if (!cell.InBounds(map)
@@ -271,57 +307,64 @@ namespace RealRim.WaterAndPumps
 							continue;
 						}
 
-						CompRainwaterCollector best_collector = getClosestCollector(cell, collectors);
-						if (best_collector == collector)
+						int dx = collector.parent.Position.x - cell.x;
+						int dz = collector.parent.Position.z - cell.z;
+						int distance = dx * dx + dz * dz;
+						int thing_id = collector.parent.thingIDNumber;
+						TileAssignment assignment;
+						if (!assignment_by_cell.TryGetValue(cell, out assignment)
+							|| distance < assignment.distance
+							|| (distance == assignment.distance && thing_id < assignment.thing_id))
 						{
-							int count;
-							assigned_tiles_by_collector.TryGetValue(collector, out count);
-							assigned_tiles_by_collector[collector] = count + 1;
+							assignment.collector = collector;
+							assignment.distance = distance;
+							assignment.thing_id = thing_id;
+							assignment_by_cell[cell] = assignment;
 						}
 					}
 				}
+
+				foreach (TileAssignment assignment in assignment_by_cell.Values)
+				{
+					int count;
+					assigned_tiles_by_collector.TryGetValue(assignment.collector, out count);
+					assigned_tiles_by_collector[assignment.collector] = count + 1;
+				}
 			}
 
-			private static List<CompRainwaterCollector> getCollectors(Map map)
+			private void collectCollectors(
+				Map map,
+				IList<CompRainwaterCollector> source_collectors)
 			{
-				return map.listerThings.AllThings
-					.OfType<ThingWithComps>()
-					.Select(thing => thing.TryGetComp<CompRainwaterCollector>())
-					.Where(collector => collector?.parent != null
+				collectors.Clear();
+				if (source_collectors != null)
+				{
+					for (int index = 0; index < source_collectors.Count; index++)
+					{
+						CompRainwaterCollector collector = source_collectors[index];
+						if (collector?.parent != null
+							&& collector.parent.Spawned
+							&& collector.parent.Map == map
+							&& collector.hasConstructedRoofAnchor(map))
+						{
+							collectors.Add(collector);
+						}
+					}
+					return;
+				}
+
+				List<Thing> all_things = map.listerThings.AllThings;
+				for (int index = 0; index < all_things.Count; index++)
+				{
+					ThingWithComps thing = all_things[index] as ThingWithComps;
+					CompRainwaterCollector collector = thing?.TryGetComp<CompRainwaterCollector>();
+					if (collector?.parent != null
 						&& collector.parent.Spawned
 						&& collector.hasConstructedRoofAnchor(map))
-					.ToList();
-			}
-
-			private static CompRainwaterCollector getClosestCollector(
-				IntVec3 cell,
-				List<CompRainwaterCollector> collectors)
-			{
-				CompRainwaterCollector best_collector = null;
-				int best_distance = int.MaxValue;
-				int best_thing_id = int.MaxValue;
-				for (int index = 0; index < collectors.Count; index++)
-				{
-					CompRainwaterCollector collector = collectors[index];
-					if (!collector.getCollectionRect().Contains(cell))
 					{
-						continue;
-					}
-
-					int dx = collector.parent.Position.x - cell.x;
-					int dz = collector.parent.Position.z - cell.z;
-					int distance = dx * dx + dz * dz;
-					int thing_id = collector.parent.thingIDNumber;
-					if (best_collector == null
-						|| distance < best_distance
-						|| (distance == best_distance && thing_id < best_thing_id))
-					{
-						best_collector = collector;
-						best_distance = distance;
-						best_thing_id = thing_id;
+						collectors.Add(collector);
 					}
 				}
-				return best_collector;
 			}
 		}
 	}

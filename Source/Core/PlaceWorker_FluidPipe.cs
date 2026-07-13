@@ -3,6 +3,17 @@ using Verse;
 
 namespace RealRim.WaterAndPumps
 {
+	public sealed class PlaceWorker_CaptureFluidLayer : PlaceWorker
+	{
+		public override void PostPlace(Map map, BuildableDef def, IntVec3 loc, Rot4 rot)
+		{
+			base.PostPlace(map, def, loc, rot);
+			ThingDef thing_def = def as ThingDef;
+			map?.GetComponent<MapComponent_FluidNetworks>()
+				?.recordConstructionPlan(thing_def, loc, rot);
+		}
+	}
+
 	public sealed class PlaceWorker_FluidPipe : PlaceWorker
 	{
 		public override bool ForceAllowPlaceOver(BuildableDef other_def)

@@ -27,6 +27,10 @@ namespace RealRim.WaterAndPumps
 		private const BindingFlags STATIC_FLAGS = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 		private static readonly Dictionary<string, FieldInfo> FIELD_CACHE = new Dictionary<string, FieldInfo>();
 		private static readonly Dictionary<string, MethodInfo> METHOD_CACHE = new Dictionary<string, MethodInfo>();
+		private static readonly Dictionary<Type, FieldInfo[]> CLOSURE_FIELDS_BY_TYPE =
+			new Dictionary<Type, FieldInfo[]>();
+		private static readonly Dictionary<object, bool> COMFORT_STAT_WORKER_CACHE =
+			new Dictionary<object, bool>();
 		[ThreadStatic]
 		private static int floor_heating_comfort_depth;
 		private static FieldInfo vanilla_swimming_job_field;
@@ -113,7 +117,7 @@ namespace RealRim.WaterAndPumps
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "RimWorld.StatWorker", "GetValue", nameof(floorHeatingComfortPostfix), true);
 				patched_methods += patchAllNamed(harmony, patch_method, harmony_method_type, "RimWorld.StatWorker", "GetExplanationUnfinalized", nameof(floorHeatingComfortExplanationPostfix), true);
 
-				Log.Message("[RealRim] Water & Pumps 1.1.78: redirected " + patched_methods
+				Log.Message("[RealRim] Water & Pumps 1.1.80: redirected " + patched_methods
 					+ " DBH runtime methods to RealRim physics.");
 			}
 			catch (Exception exception)
@@ -257,9 +261,17 @@ namespace RealRim.WaterAndPumps
 				return false;
 			}
 
+			bool is_comfort_stat;
+			if (COMFORT_STAT_WORKER_CACHE.TryGetValue(stat_worker, out is_comfort_stat))
+			{
+				return is_comfort_stat;
+			}
+
 			FieldInfo stat_field = getField(stat_worker.GetType(), "stat");
 			StatDef stat = stat_field == null ? null : stat_field.GetValue(stat_worker) as StatDef;
-			return stat != null && stat.defName == "Comfort";
+			is_comfort_stat = stat != null && stat.defName == "Comfort";
+			COMFORT_STAT_WORKER_CACHE[stat_worker] = is_comfort_stat;
+			return is_comfort_stat;
 		}
 
 		private static bool visiblePipeGraphicPrintPrefix(
@@ -930,14 +942,10 @@ namespace RealRim.WaterAndPumps
 				return null;
 			}
 
-			FieldInfo[] fields = instance.GetType().GetFields(INSTANCE_FLAGS);
+			FieldInfo[] fields = getClosureReferenceFields(instance.GetType());
 			for (int index = 0; index < fields.Length; index++)
 			{
 				FieldInfo field = fields[index];
-				if (field.FieldType.IsPrimitive || field.FieldType.IsEnum || field.FieldType == typeof(string))
-				{
-					continue;
-				}
 				object value;
 				try
 				{
@@ -954,6 +962,31 @@ namespace RealRim.WaterAndPumps
 				}
 			}
 			return null;
+		}
+
+		private static FieldInfo[] getClosureReferenceFields(Type type)
+		{
+			FieldInfo[] cached_fields;
+			if (CLOSURE_FIELDS_BY_TYPE.TryGetValue(type, out cached_fields))
+			{
+				return cached_fields;
+			}
+
+			FieldInfo[] all_fields = type.GetFields(INSTANCE_FLAGS);
+			List<FieldInfo> reference_fields = new List<FieldInfo>(all_fields.Length);
+			for (int index = 0; index < all_fields.Length; index++)
+			{
+				FieldInfo field = all_fields[index];
+				if (!field.FieldType.IsPrimitive
+					&& !field.FieldType.IsEnum
+					&& field.FieldType != typeof(string))
+				{
+					reference_fields.Add(field);
+				}
+			}
+			cached_fields = reference_fields.ToArray();
+			CLOSURE_FIELDS_BY_TYPE[type] = cached_fields;
+			return cached_fields;
 		}
 
 		private static void swimTickerPostfix(object __instance)

@@ -34,14 +34,16 @@ namespace RealRim.WaterAndPumps
 			runPatchPhase("waste processing", patchWaste, ref failed_phases);
 			runPatchPhase("work definitions", patchWorkDefinitions, ref failed_phases);
 			runPatchPhase("Rimefeller integration", patchRimefeller, ref failed_phases);
+			runPatchPhase("fluid layer placement capture", patchFluidLayerPlacementCapture, ref failed_phases);
+			FluidNetworkVisuals.clearNodePropertiesCache();
 
 			if (failed_phases == 0)
 			{
-				Log.Message("[RealRim] Water & Pumps 1.1.78: replaced DBH water, heating, cooling, sprinkler and sewage definitions and added supported cross-mod fluid nodes.");
+				Log.Message("[RealRim] Water & Pumps 1.1.80: replaced DBH water, heating, cooling, sprinkler and sewage definitions and added supported cross-mod fluid nodes.");
 			}
 			else
 			{
-				Log.Error("[RealRim] Water & Pumps 1.1.78: definition replacement completed with "
+				Log.Error("[RealRim] Water & Pumps 1.1.80: definition replacement completed with "
 					+ failed_phases + " failed phase(s). Later phases were still applied; see the preceding errors.");
 			}
 		}
@@ -56,6 +58,41 @@ namespace RealRim.WaterAndPumps
 			{
 				failed_phases++;
 				Log.Error("[RealRim] Water & Pumps: failed to patch " + phase_name + ": " + exception);
+			}
+		}
+
+		private static void patchFluidLayerPlacementCapture()
+		{
+			List<ThingDef> all_defs = DefDatabase<ThingDef>.AllDefsListForReading;
+			for (int def_index = 0; def_index < all_defs.Count; def_index++)
+			{
+				ThingDef def = all_defs[def_index];
+				if (def?.comps == null)
+				{
+					continue;
+				}
+
+				bool has_fluid_node = false;
+				for (int comp_index = 0; comp_index < def.comps.Count; comp_index++)
+				{
+					if (def.comps[comp_index] is CompProperties_FluidNode)
+					{
+						has_fluid_node = true;
+						break;
+					}
+				}
+
+				if (!has_fluid_node)
+				{
+					continue;
+				}
+
+				if (def.placeWorkers == null)
+				{
+					def.placeWorkers = new List<Type>();
+				}
+				def.placeWorkers.RemoveAll(type => type == typeof(PlaceWorker_CaptureFluidLayer));
+				def.placeWorkers.Insert(0, typeof(PlaceWorker_CaptureFluidLayer));
 			}
 		}
 

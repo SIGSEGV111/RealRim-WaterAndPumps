@@ -1,0 +1,20 @@
+diff a/BUILD-REQUIRED.txt b/BUILD-REQUIRED.txt	(rejected hunks)
+@@ -1,12 +1,12 @@
+-This archive contains the reviewed 1.1.79 source changes but no 1.1.79 DLL.
++This archive contains the reviewed 1.1.80 source changes but no 1.1.80 DLL.
+ 
+-The build environment used for the review did not contain the .NET SDK and could not download it. The previous 1.1.78 DLL and PDB were intentionally removed so they cannot be mistaken for a compiled 1.1.79 release.
++The review environment does not contain the .NET SDK and cannot access NuGet. The previous binary was intentionally not copied into this archive so it cannot be mistaken for a compiled 1.1.80 release.
+ 
+-Build on a machine with the .NET SDK available:
++Build on a machine with the .NET SDK installed:
+ 
+ 	./build.sh
+ 
+-The project targets net472 and restores these declared packages:
++The project targets net472 and references Krafs.Rimworld.Ref 1.6.4850 through NuGet. A successful build writes:
+ 
+-	Krafs.Rimworld.Ref 1.6.4850
+-	Microsoft.NETFramework.ReferenceAssemblies.net472 1.0.3
++	Assemblies/RealRim.WaterAndPumps.dll
++	Assemblies/RealRim.WaterAndPumps.pdb

@@ -12,6 +12,8 @@ namespace RealRim.WaterAndPumps
 
 		private static readonly Dictionary<FluidNetworkType, Graphic> SUB_GRAPHICS =
 			new Dictionary<FluidNetworkType, Graphic>();
+		private static readonly Dictionary<ThingDef, CompProperties_FluidNode> NODE_PROPERTIES_BY_DEF =
+			new Dictionary<ThingDef, CompProperties_FluidNode>();
 
 		private static readonly MethodInfo LINKED_DRAW_MAT_FROM_METHOD =
 			typeof(Graphic_Linked).GetMethod(
@@ -180,21 +182,37 @@ namespace RealRim.WaterAndPumps
 
 		public static CompProperties_FluidNode getNodeProperties(ThingDef def)
 		{
-			if (def?.comps == null)
+			if (def == null)
 			{
 				return null;
 			}
 
-			for (int index = 0; index < def.comps.Count; index++)
+			CompProperties_FluidNode cached_properties;
+			if (NODE_PROPERTIES_BY_DEF.TryGetValue(def, out cached_properties))
 			{
-				CompProperties_FluidNode node = def.comps[index] as CompProperties_FluidNode;
-				if (node != null)
+				return cached_properties;
+			}
+
+			if (def.comps != null)
+			{
+				for (int index = 0; index < def.comps.Count; index++)
 				{
-					return node;
+					CompProperties_FluidNode node = def.comps[index] as CompProperties_FluidNode;
+					if (node != null)
+					{
+						NODE_PROPERTIES_BY_DEF[def] = node;
+						return node;
+					}
 				}
 			}
 
+			NODE_PROPERTIES_BY_DEF[def] = null;
 			return null;
+		}
+
+		public static void clearNodePropertiesCache()
+		{
+			NODE_PROPERTIES_BY_DEF.Clear();
 		}
 
 		public static bool shouldDrawOverlay(Map map, FluidNetworkType network_type)

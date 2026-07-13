@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.1.80 — Event-driven construction tracking and grouped system ticks
+
+- Replaced the every-tick map-wide `Frame` and `Blueprint` construction-plan scan with a verified `PlaceWorker.PostPlace` capture hook attached to every RealRim fluid-node definition.
+- Retained construction-layer save compatibility and added a low-frequency stale-plan cleanup that checks only the recorded construction cells once every 600 ticks.
+- Reworked floor-heating scheduling so one representative per heating-network/room group performs the group update instead of invoking every floor-heating tile every 60 ticks.
+- Builds floor-heating groups in a single pass and refreshes them after topology changes or after a 250-tick cache window, preserving the original first-tile execution order among other fluid components.
+- Supplies the map component's cached rainwater collectors directly to roof-tile assignment, removing the remaining whole-map thing scan from normal fluid-system ticks.
+- Kept all Verse, RimWorld, and Unity object access on the main thread; no unsafe background simulation was introduced.
+- Updated release metadata and runtime labels to 1.1.80.
+
+## 1.1.79 — Runtime hot-path optimization
+
+- Restricted construction-plan tracking to RimWorld `Frame` and `Blueprint` objects instead of scanning every thing on every map tick, while preserving per-tick capture so fast construction cannot lose replacement metadata.
+- Cached topology-derived fluid tickables, heating networks, heat-exchange networks, component groups, and water-source lists until the topology changes.
+- Removed repeated LINQ allocations and repeated component discovery from fluid storage, heat transfer, coolant, wastewater, and treatment operations.
+- Cached fresh-water route graphs and longest-route results for pumps for the lifetime of each network topology.
+- Reworked rainwater roof-tile assignment from repeated collector-to-collector searches to a single deterministic nearest-collector pass.
+- Cached reflection metadata used by DBH recipe closures, comfort-stat handling, pools, and wind pumps.
+- Cached sprinkler power components, effect definitions, and spray geometry for one fluid simulation interval.
+- Kept all simulation and cache mutation on the main thread. The reviewed hot paths depend on live Verse, RimWorld, and Unity objects, so background processing would add synchronization and stale-state risks inconsistent with the stability priority.
+- Updated release metadata and runtime labels to 1.1.79.
+
 ## 1.1.78 — Preserve hidden pipe transparency
 
 - Restored zero-alpha rendering for stuffed hidden fluid pipes and floor heating.

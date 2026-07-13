@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using RimWorld;
 using UnityEngine;
@@ -39,6 +38,10 @@ namespace RealRim.WaterAndPumps
 		public float last_flow_multiplier = 1f;
 		public float last_drive_multiplier = 1f;
 		public int last_source_count;
+		private ThingComp wind_component;
+		private PropertyInfo wind_pump_percent_property;
+		private FieldInfo wind_blocked_cells_field;
+		private FieldInfo wind_blockers_field;
 
 		public CompProperties_WaterPump Props
 		{
@@ -57,6 +60,7 @@ namespace RealRim.WaterAndPumps
 				stop_fill_fraction = Props.stop_fill_fraction;
 			}
 			setThresholds(start_fill_fraction, stop_fill_fraction);
+			cacheWindComponent();
 		}
 
 		public override void PostExposeData()
@@ -158,7 +162,7 @@ namespace RealRim.WaterAndPumps
 				return;
 			}
 
-			List<CompWaterSource> sources = network.getComponents<CompWaterSource>().ToList();
+			List<CompWaterSource> sources = network.water_sources;
 			last_source_count = sources.Count;
 			if (sources.Count == 0)
 			{
@@ -208,20 +212,44 @@ namespace RealRim.WaterAndPumps
 				: accepted_liters * 3600f / elapsed_seconds;
 		}
 
+		private void cacheWindComponent()
+		{
+			wind_component = null;
+			wind_pump_percent_property = null;
+			wind_blocked_cells_field = null;
+			wind_blockers_field = null;
+			if (parent?.AllComps == null)
+			{
+				return;
+			}
+
+			for (int index = 0; index < parent.AllComps.Count; index++)
+			{
+				ThingComp component = parent.AllComps[index];
+				if (component?.GetType().FullName == "DubsBadHygiene.CompWindPump")
+				{
+					wind_component = component;
+					Type component_type = component.GetType();
+					wind_pump_percent_property = component_type.GetProperty("PumpPercent", REFLECTION_FLAGS);
+					wind_blocked_cells_field = component_type.GetField("windPathBlockedCells", REFLECTION_FLAGS);
+					wind_blockers_field = component_type.GetField("windPathBlockedByThings", REFLECTION_FLAGS);
+					return;
+				}
+			}
+		}
+
 		private float getDriveMultiplier()
 		{
-			ThingComp component = getWindComponent();
-			if (component == null)
+			if (wind_component == null)
 			{
 				return 1f;
 			}
 
-			PropertyInfo property = component.GetType().GetProperty("PumpPercent", REFLECTION_FLAGS);
-			if (property != null)
+			if (wind_pump_percent_property != null)
 			{
 				try
 				{
-					return Mathf.Clamp01(Convert.ToSingle(property.GetValue(component, null)));
+					return Mathf.Clamp01(Convert.ToSingle(wind_pump_percent_property.GetValue(wind_component, null)));
 				}
 				catch
 				{
@@ -231,41 +259,20 @@ namespace RealRim.WaterAndPumps
 			return 0f;
 		}
 
-		private ThingComp getWindComponent()
-		{
-			if (parent?.AllComps == null)
-			{
-				return null;
-			}
-
-			for (int index = 0; index < parent.AllComps.Count; index++)
-			{
-				ThingComp component = parent.AllComps[index];
-				if (component?.GetType().FullName == "DubsBadHygiene.CompWindPump")
-				{
-					return component;
-				}
-			}
-			return null;
-		}
-
 		private string getWindDriveReason()
 		{
-			ThingComp component = getWindComponent();
-			if (component == null)
+			if (wind_component == null)
 			{
 				return string.Empty;
 			}
 
-			FieldInfo blocked_cells_field = component.GetType().GetField("windPathBlockedCells", REFLECTION_FLAGS);
-			ICollection blocked_cells = blocked_cells_field?.GetValue(component) as ICollection;
+			ICollection blocked_cells = wind_blocked_cells_field?.GetValue(wind_component) as ICollection;
 			if (blocked_cells == null || blocked_cells.Count == 0)
 			{
 				return string.Empty;
 			}
 
-			FieldInfo blockers_field = component.GetType().GetField("windPathBlockedByThings", REFLECTION_FLAGS);
-			IList blockers = blockers_field?.GetValue(component) as IList;
+			IList blockers = wind_blockers_field?.GetValue(wind_component) as IList;
 			Thing blocker = blockers != null && blockers.Count > 0 ? blockers[0] as Thing : null;
 			if (blocker != null)
 			{

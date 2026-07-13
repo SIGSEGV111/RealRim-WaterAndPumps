@@ -43,6 +43,9 @@ namespace RealRim.WaterAndPumps
 		public float last_rain_liters_per_day;
 		public float last_refill_liters_per_day;
 
+		private FieldInfo legacy_flow_rate_field;
+		private FieldInfo legacy_fuel_field;
+		private PropertyInfo legacy_capacity_property;
 
 		public ThingWithComps ParentThing
 		{
@@ -85,6 +88,7 @@ namespace RealRim.WaterAndPumps
 		public override void PostSpawnSetup(bool respawning_after_load)
 		{
 			base.PostSpawnSetup(respawning_after_load);
+			cacheLegacyMembers();
 			if (!respawning_after_load)
 			{
 				stored_liters = Props.capacity_liters * Mathf.Clamp01(Props.initial_fill_fraction);
@@ -318,14 +322,13 @@ namespace RealRim.WaterAndPumps
 
 		private int getLegacyFlowRate()
 		{
-			FieldInfo field = findField(parent?.GetType(), "flowRate");
-			if (field == null)
+			if (legacy_flow_rate_field == null)
 			{
 				return 1000;
 			}
 			try
 			{
-				return Mathf.Clamp(Convert.ToInt32(field.GetValue(parent)), 0, 1000);
+				return Mathf.Clamp(Convert.ToInt32(legacy_flow_rate_field.GetValue(parent)), 0, 1000);
 			}
 			catch
 			{
@@ -335,10 +338,9 @@ namespace RealRim.WaterAndPumps
 
 		private void setLegacyFlowRate(int value)
 		{
-			FieldInfo field = findField(parent?.GetType(), "flowRate");
-			if (field != null)
+			if (legacy_flow_rate_field != null)
 			{
-				field.SetValue(parent, Mathf.Clamp(value, 0, 1000));
+				legacy_flow_rate_field.SetValue(parent, Mathf.Clamp(value, 0, 1000));
 			}
 		}
 
@@ -348,20 +350,26 @@ namespace RealRim.WaterAndPumps
 			{
 				return;
 			}
-			FieldInfo fuel_field = findField(parent.GetType(), "fuel");
-			PropertyInfo capacity_property = findProperty(parent.GetType(), "capacity");
-			if (fuel_field == null || capacity_property == null)
+			if (legacy_fuel_field == null || legacy_capacity_property == null)
 			{
 				return;
 			}
 			try
 			{
-				float legacy_capacity = Convert.ToSingle(capacity_property.GetValue(parent, null));
-				fuel_field.SetValue(parent, legacy_capacity * Mathf.Clamp01(stored_liters / Props.capacity_liters));
+				float legacy_capacity = Convert.ToSingle(legacy_capacity_property.GetValue(parent, null));
+				legacy_fuel_field.SetValue(parent, legacy_capacity * Mathf.Clamp01(stored_liters / Props.capacity_liters));
 			}
 			catch
 			{
 			}
+		}
+
+		private void cacheLegacyMembers()
+		{
+			Type parent_type = parent?.GetType();
+			legacy_flow_rate_field = findField(parent_type, "flowRate");
+			legacy_fuel_field = findField(parent_type, "fuel");
+			legacy_capacity_property = findProperty(parent_type, "capacity");
 		}
 
 		private static FieldInfo findField(Type type, string name)

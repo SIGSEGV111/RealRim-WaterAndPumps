@@ -60,6 +60,11 @@ namespace RealRim.WaterAndPumps
 		private float cached_spray_radius = -1f;
 		private readonly List<IntVec3> cached_spray_cells = new List<IntVec3>();
 		private readonly List<IntVec3> cached_fertile_spray_cells = new List<IntVec3>();
+		private CompPowerTrader power_component;
+		private CompFlickable flickable_component;
+		private CompBreakdownable breakdownable_component;
+		private FleckDef irrigation_fleck_def;
+		private SoundDef sprinkler_sound_def;
 		private Sustainer sprinkler_sustainer;
 		private bool was_disabled;
 
@@ -74,6 +79,7 @@ namespace RealRim.WaterAndPumps
 		public override void PostSpawnSetup(bool respawning_after_load)
 		{
 			base.PostSpawnSetup(respawning_after_load);
+			cacheRuntimeReferences();
 			if (radius <= 0f)
 			{
 				radius = Props.maximum_radius;
@@ -82,7 +88,7 @@ namespace RealRim.WaterAndPumps
 			if (Props.kind == SprinklerKind.FireSuppression
 				&& Find.TickManager != null
 				&& Find.TickManager.TicksGame < spray_until_tick
-				&& FluidUtility.isPoweredOn(parent))
+				&& isPoweredOn())
 			{
 				current_flow_liters_per_minute = getFireDesignFlow(getSprayCells(false).Count);
 			}
@@ -119,7 +125,7 @@ namespace RealRim.WaterAndPumps
 			}
 
 			int current_tick = Find.TickManager.TicksGame;
-			if (!FluidUtility.isPoweredOn(parent))
+			if (!isPoweredOn())
 			{
 				if (Props.kind == SprinklerKind.FireSuppression)
 				{
@@ -240,7 +246,7 @@ namespace RealRim.WaterAndPumps
 		public override string CompInspectStringExtra()
 		{
 			int covered_cells = getSprayCells(false).Count;
-			bool is_spraying = FluidUtility.isPoweredOn(parent)
+			bool is_spraying = isPoweredOn()
 				&& Find.TickManager.TicksGame < spray_until_tick;
 			string state = is_spraying
 				? "RealRim_StatusRunning".Translate()
@@ -579,7 +585,8 @@ namespace RealRim.WaterAndPumps
 				cached_fertile_spray_cells.Clear();
 				return fertile_only ? cached_fertile_spray_cells : cached_spray_cells;
 			}
-			if (cached_spray_cells_tick != current_tick
+			if (cached_spray_cells_tick < 0
+				|| current_tick - cached_spray_cells_tick >= OPERATION_INTERVAL_TICKS
 				|| Mathf.Abs(cached_spray_radius - radius) >= 0.001f)
 			{
 				cacheSprayCells(map, current_tick);
@@ -626,8 +633,7 @@ namespace RealRim.WaterAndPumps
 
 		private void spawnSprayFleck()
 		{
-			FleckDef fleck = DefDatabase<FleckDef>.GetNamedSilentFail(IRRIGATION_FLECK_DEF);
-			if (fleck == null || parent.Map == null)
+			if (irrigation_fleck_def == null || parent.Map == null)
 			{
 				return;
 			}
@@ -636,7 +642,7 @@ namespace RealRim.WaterAndPumps
 			FleckCreationData data = FleckMaker.GetDataStatic(
 				parent.Position.ToVector3Shifted(),
 				parent.Map,
-				fleck,
+				irrigation_fleck_def,
 				diameter);
 			data.exactScale = new Vector3(diameter, 1f, diameter);
 			data.rotationRate = Rand.Chance(0.5f) ? 30f : -30f;
@@ -647,11 +653,10 @@ namespace RealRim.WaterAndPumps
 		{
 			if (sprinkler_sustainer == null || sprinkler_sustainer.Ended)
 			{
-				SoundDef sound = DefDatabase<SoundDef>.GetNamedSilentFail(SPRINKLER_SOUND_DEF);
-				if (sound != null)
+				if (sprinkler_sound_def != null)
 				{
 					sprinkler_sustainer = SoundStarter.TrySpawnSustainer(
-						sound,
+						sprinkler_sound_def,
 						SoundInfo.InMap(parent, MaintenanceType.PerTick));
 				}
 			}
@@ -668,6 +673,22 @@ namespace RealRim.WaterAndPumps
 				sprinkler_sustainer.End();
 			}
 			sprinkler_sustainer = null;
+		}
+
+		private void cacheRuntimeReferences()
+		{
+			power_component = parent.TryGetComp<CompPowerTrader>();
+			flickable_component = parent.TryGetComp<CompFlickable>();
+			breakdownable_component = parent.TryGetComp<CompBreakdownable>();
+			irrigation_fleck_def = DefDatabase<FleckDef>.GetNamedSilentFail(IRRIGATION_FLECK_DEF);
+			sprinkler_sound_def = DefDatabase<SoundDef>.GetNamedSilentFail(SPRINKLER_SOUND_DEF);
+		}
+
+		private bool isPoweredOn()
+		{
+			return (power_component == null || power_component.PowerOn)
+				&& (flickable_component == null || flickable_component.SwitchIsOn)
+				&& (breakdownable_component == null || !breakdownable_component.BrokenDown);
 		}
 
 		private void clampRadius()

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -55,6 +54,8 @@ namespace RealRim.WaterAndPumps
 		public Thing linked_thermostat;
 
 		private bool last_room_temperature_valid;
+		private readonly List<FluidNetwork> source_network_buffer = new List<FluidNetwork>();
+		private readonly List<FluidNetwork> receiving_network_buffer = new List<FluidNetwork>();
 
 		public CompProperties_SmartMixingValve Props
 		{
@@ -232,13 +233,13 @@ namespace RealRim.WaterAndPumps
 				return;
 			}
 
-			List<FluidNetwork> source_networks = getAdjacentHeatingNetworks(source_layer);
-			List<FluidNetwork> receiving_networks = getAdjacentHeatingNetworks(receiving_layer);
+			getAdjacentHeatingNetworks(source_layer, source_network_buffer);
+			getAdjacentHeatingNetworks(receiving_layer, receiving_network_buffer);
 			FluidNetwork source_network;
 			FluidNetwork receiving_network;
 			if (!trySelectNetworks(
-				source_networks,
-				receiving_networks,
+				source_network_buffer,
+				receiving_network_buffer,
 				control_mode,
 				target_water_temperature_c,
 				out source_network,
@@ -310,14 +311,16 @@ namespace RealRim.WaterAndPumps
 			}
 		}
 
-		private List<FluidNetwork> getAdjacentHeatingNetworks(FluidNetworkLayer layer)
+		private void getAdjacentHeatingNetworks(
+			FluidNetworkLayer layer,
+			List<FluidNetwork> result)
 		{
-			List<FluidNetwork> result = new List<FluidNetwork>();
+			result.Clear();
 			Map map = parent.MapHeld;
 			MapComponent_FluidNetworks manager = map?.GetComponent<MapComponent_FluidNetworks>();
 			if (map == null || manager == null)
 			{
-				return result;
+				return;
 			}
 
 			CompFluidNode own_node = parent.TryGetComp<CompFluidNode>();
@@ -351,7 +354,6 @@ namespace RealRim.WaterAndPumps
 					}
 				}
 			}
-			return result;
 		}
 
 		private static bool trySelectNetworks(
@@ -369,28 +371,56 @@ namespace RealRim.WaterAndPumps
 				return false;
 			}
 
-			FluidNetwork selected_source_network = source_networks
-				.OrderByDescending(network => network.getAverageThermalTemperature())
-				.FirstOrDefault();
-			if (selected_source_network == null)
+			float source_temperature_c = float.MinValue;
+			for (int index = 0; index < source_networks.Count; index++)
+			{
+				FluidNetwork candidate = source_networks[index];
+				if (candidate == null)
+				{
+					continue;
+				}
+				float candidate_temperature_c = candidate.getAverageThermalTemperature();
+				if (source_network == null || candidate_temperature_c > source_temperature_c)
+				{
+					source_network = candidate;
+					source_temperature_c = candidate_temperature_c;
+				}
+			}
+			if (source_network == null)
 			{
 				return false;
 			}
-			source_network = selected_source_network;
 
-			IEnumerable<FluidNetwork> candidates = receiving_networks.Where(network => network != selected_source_network);
-			if (control_mode == SmartMixingValveControlMode.WaterTemperature)
+			float receiving_temperature_c = float.MaxValue;
+			bool receiving_at_or_above_target = true;
+			for (int index = 0; index < receiving_networks.Count; index++)
 			{
-				receiving_network = candidates
-					.OrderBy(network => network.getAverageThermalTemperature() >= target_water_temperature_c)
-					.ThenBy(network => network.getAverageThermalTemperature())
-					.FirstOrDefault();
-				return receiving_network != null;
-			}
+				FluidNetwork candidate = receiving_networks[index];
+				if (candidate == null || candidate == source_network)
+				{
+					continue;
+				}
 
-			receiving_network = candidates
-				.OrderBy(network => network.getAverageThermalTemperature())
-				.FirstOrDefault();
+				float candidate_temperature_c = candidate.getAverageThermalTemperature();
+				if (control_mode == SmartMixingValveControlMode.WaterTemperature)
+				{
+					bool candidate_at_or_above_target = candidate_temperature_c >= target_water_temperature_c;
+					if (receiving_network == null
+						|| (receiving_at_or_above_target && !candidate_at_or_above_target)
+						|| (receiving_at_or_above_target == candidate_at_or_above_target
+							&& candidate_temperature_c < receiving_temperature_c))
+					{
+						receiving_network = candidate;
+						receiving_temperature_c = candidate_temperature_c;
+						receiving_at_or_above_target = candidate_at_or_above_target;
+					}
+				}
+				else if (receiving_network == null || candidate_temperature_c < receiving_temperature_c)
+				{
+					receiving_network = candidate;
+					receiving_temperature_c = candidate_temperature_c;
+				}
+			}
 			return receiving_network != null;
 		}
 

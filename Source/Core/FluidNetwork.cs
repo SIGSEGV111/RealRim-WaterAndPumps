@@ -1,5 +1,5 @@
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using Verse;
 
@@ -13,6 +13,7 @@ namespace RealRim.WaterAndPumps
 		public readonly List<ThingWithComps> things;
 		public readonly List<ThingComp> components;
 		public readonly List<IHeatingNetworkReportProvider> heating_report_providers;
+		public readonly List<CompWaterSource> water_sources;
 		public readonly string state_key;
 		public readonly int pipe_length_m;
 		public readonly float pipe_heat_transfer_w_per_k;
@@ -28,6 +29,56 @@ namespace RealRim.WaterAndPumps
 		private float pending_mixing_valve_input_kj;
 		private float pending_mixing_valve_output_kj;
 
+		private static readonly IntVec3[] ROUTE_OFFSETS =
+		{
+			IntVec3.Zero,
+			IntVec3.North,
+			IntVec3.East,
+			IntVec3.South,
+			IntVec3.West,
+		};
+
+		private static readonly Comparison<CompWaterTank> WATER_TANK_FILL_ASCENDING =
+			compareWaterTankFillAscending;
+		private static readonly Comparison<CompWaterTank> WATER_TANK_STORED_DESCENDING =
+			compareWaterTankStoredDescending;
+		private static readonly Comparison<CompHotWaterTank> HOT_WATER_TANK_TEMPERATURE_ASCENDING =
+			compareHotWaterTankTemperatureAscending;
+		private static readonly Comparison<CompHotWaterTank> HOT_WATER_TANK_TEMPERATURE_DESCENDING =
+			compareHotWaterTankTemperatureDescending;
+		private static readonly Comparison<CompThermalTank> THERMAL_TANK_TEMPERATURE_ASCENDING =
+			compareThermalTankTemperatureAscending;
+		private static readonly Comparison<CompThermalTank> THERMAL_TANK_TEMPERATURE_DESCENDING =
+			compareThermalTankTemperatureDescending;
+		private static readonly Comparison<CompCoolantTank> COOLANT_TANK_FILL_ASCENDING =
+			compareCoolantTankFillAscending;
+		private static readonly Comparison<CompCoolantTank> COOLANT_TANK_ENERGY_DESCENDING =
+			compareCoolantTankEnergyDescending;
+		private static readonly Comparison<CompWasteStorage> WASTE_STORAGE_FILL_ASCENDING =
+			compareWasteStorageFillAscending;
+		private static readonly Comparison<CompSewageOutlet> SEWAGE_OUTLET_ID_ASCENDING =
+			compareSewageOutletIdAscending;
+
+		private readonly List<CompWaterTank> water_tanks = new List<CompWaterTank>();
+		private readonly List<CompWaterTank> ordered_water_tanks = new List<CompWaterTank>();
+		private readonly List<CompHotWaterTank> hot_water_tanks = new List<CompHotWaterTank>();
+		private readonly List<CompHotWaterTank> ordered_hot_water_tanks = new List<CompHotWaterTank>();
+		private readonly List<CompThermalTank> thermal_tanks = new List<CompThermalTank>();
+		private readonly List<CompThermalTank> ordered_thermal_tanks = new List<CompThermalTank>();
+		private readonly List<CompCoolantTank> coolant_tanks = new List<CompCoolantTank>();
+		private readonly List<CompCoolantTank> ordered_coolant_tanks = new List<CompCoolantTank>();
+		private readonly List<CompWasteStorage> waste_storages = new List<CompWasteStorage>();
+		private readonly List<CompWasteStorage> ordered_waste_storages = new List<CompWasteStorage>();
+		private readonly List<CompSewageOutlet> sewage_outlets = new List<CompSewageOutlet>();
+		private readonly List<CompSewageOutlet> operational_sewage_outlets = new List<CompSewageOutlet>();
+		private readonly List<CompWaterTreatment> water_treatments = new List<CompWaterTreatment>();
+		private readonly Dictionary<Thing, CompFluidNode> node_by_thing =
+			new Dictionary<Thing, CompFluidNode>();
+		private readonly Dictionary<CompFluidNode, List<CompFluidNode>> adjacent_nodes_by_node =
+			new Dictionary<CompFluidNode, List<CompFluidNode>>();
+		private readonly Dictionary<Thing, int> longest_route_by_origin = new Dictionary<Thing, int>();
+		private bool route_graph_built;
+
 		public FluidNetwork(
 			int network_id,
 			FluidNetworkType network_type,
@@ -40,7 +91,9 @@ namespace RealRim.WaterAndPumps
 			this.nodes = nodes;
 			things = collectThings(nodes);
 			components = collectComponents(things);
-			heating_report_providers = components.OfType<IHeatingNetworkReportProvider>().ToList();
+			heating_report_providers = new List<IHeatingNetworkReportProvider>();
+			water_sources = new List<CompWaterSource>();
+			cacheComponents();
 			this.state_key = state_key;
 			int calculated_pipe_length_m;
 			float calculated_pipe_heat_transfer_w_per_k;
@@ -70,13 +123,54 @@ namespace RealRim.WaterAndPumps
 			}
 		}
 
-		private static List<ThingWithComps> collectThings(List<CompFluidNode> nodes)
+		private void cacheComponents()
 		{
-			List<ThingWithComps> result = new List<ThingWithComps>();
 			for (int index = 0; index < nodes.Count; index++)
 			{
 				ThingWithComps thing = nodes[index]?.parent;
-				if (thing != null && !result.Contains(thing))
+				if (thing == null)
+				{
+					continue;
+				}
+
+				addComponent(thing.TryGetComp<CompWaterTank>(), water_tanks);
+				addComponent(thing.TryGetComp<CompHotWaterTank>(), hot_water_tanks);
+				addComponent(thing.TryGetComp<CompThermalTank>(), thermal_tanks);
+				addComponent(thing.TryGetComp<CompCoolantTank>(), coolant_tanks);
+				addComponent(thing.TryGetComp<CompWasteStorage>(), waste_storages);
+				addComponent(thing.TryGetComp<CompSewageOutlet>(), sewage_outlets);
+				addComponent(thing.TryGetComp<CompWaterSource>(), water_sources);
+				addComponent(thing.TryGetComp<CompWaterTreatment>(), water_treatments);
+			}
+
+			for (int index = 0; index < components.Count; index++)
+			{
+				IHeatingNetworkReportProvider report_provider =
+					components[index] as IHeatingNetworkReportProvider;
+				if (report_provider != null)
+				{
+					heating_report_providers.Add(report_provider);
+				}
+			}
+			sewage_outlets.Sort(SEWAGE_OUTLET_ID_ASCENDING);
+		}
+
+		private static void addComponent<T>(T component, List<T> result) where T : ThingComp
+		{
+			if (component != null)
+			{
+				result.Add(component);
+			}
+		}
+
+		private static List<ThingWithComps> collectThings(List<CompFluidNode> nodes)
+		{
+			List<ThingWithComps> result = new List<ThingWithComps>();
+			HashSet<ThingWithComps> recorded = new HashSet<ThingWithComps>();
+			for (int index = 0; index < nodes.Count; index++)
+			{
+				ThingWithComps thing = nodes[index]?.parent;
+				if (thing != null && recorded.Add(thing))
 				{
 					result.Add(thing);
 				}
@@ -87,6 +181,7 @@ namespace RealRim.WaterAndPumps
 		private static List<ThingComp> collectComponents(List<ThingWithComps> things)
 		{
 			List<ThingComp> result = new List<ThingComp>();
+			HashSet<ThingComp> recorded = new HashSet<ThingComp>();
 			for (int thing_index = 0; thing_index < things.Count; thing_index++)
 			{
 				ThingWithComps thing = things[thing_index];
@@ -98,7 +193,7 @@ namespace RealRim.WaterAndPumps
 				for (int comp_index = 0; comp_index < thing.AllComps.Count; comp_index++)
 				{
 					ThingComp component = thing.AllComps[comp_index];
-					if (component != null && !result.Contains(component))
+					if (component != null && recorded.Add(component))
 					{
 						result.Add(component);
 					}
@@ -107,27 +202,84 @@ namespace RealRim.WaterAndPumps
 			return result;
 		}
 
-		public int getLongestRouteMeters(Thing origin)
+		private void buildRouteGraph()
 		{
-			CompFluidNode origin_node = nodes.FirstOrDefault(node => node.parent == origin);
-			if (origin_node == null)
+			if (route_graph_built)
 			{
-				return 0;
+				return;
 			}
-
-			Dictionary<IntVec3, List<CompFluidNode>> by_cell = new Dictionary<IntVec3, List<CompFluidNode>>();
+			route_graph_built = true;
+			Dictionary<IntVec3, List<CompFluidNode>> nodes_by_cell =
+				new Dictionary<IntVec3, List<CompFluidNode>>();
 			for (int index = 0; index < nodes.Count; index++)
 			{
-				foreach (IntVec3 cell in nodes[index].parent.OccupiedRect())
+				CompFluidNode node = nodes[index];
+				if (node?.parent == null)
+				{
+					continue;
+				}
+
+				if (!node_by_thing.ContainsKey(node.parent))
+				{
+					node_by_thing[node.parent] = node;
+				}
+				adjacent_nodes_by_node[node] = new List<CompFluidNode>();
+				foreach (IntVec3 cell in node.parent.OccupiedRect())
 				{
 					List<CompFluidNode> cell_nodes;
-					if (!by_cell.TryGetValue(cell, out cell_nodes))
+					if (!nodes_by_cell.TryGetValue(cell, out cell_nodes))
 					{
 						cell_nodes = new List<CompFluidNode>();
-						by_cell[cell] = cell_nodes;
+						nodes_by_cell[cell] = cell_nodes;
 					}
-					cell_nodes.Add(nodes[index]);
+					cell_nodes.Add(node);
 				}
+			}
+
+			for (int index = 0; index < nodes.Count; index++)
+			{
+				CompFluidNode node = nodes[index];
+				List<CompFluidNode> adjacent_nodes;
+				if (node?.parent == null || !adjacent_nodes_by_node.TryGetValue(node, out adjacent_nodes))
+				{
+					continue;
+				}
+
+				foreach (IntVec3 cell in node.parent.OccupiedRect())
+				{
+					for (int offset_index = 0; offset_index < ROUTE_OFFSETS.Length; offset_index++)
+					{
+						List<CompFluidNode> cell_nodes;
+						if (!nodes_by_cell.TryGetValue(cell + ROUTE_OFFSETS[offset_index], out cell_nodes))
+						{
+							continue;
+						}
+						for (int neighbor_index = 0; neighbor_index < cell_nodes.Count; neighbor_index++)
+						{
+							CompFluidNode neighbor = cell_nodes[neighbor_index];
+							if (neighbor != node && !adjacent_nodes.Contains(neighbor))
+							{
+								adjacent_nodes.Add(neighbor);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		public int getLongestRouteMeters(Thing origin)
+		{
+			int cached_distance;
+			if (origin != null && longest_route_by_origin.TryGetValue(origin, out cached_distance))
+			{
+				return cached_distance;
+			}
+
+			buildRouteGraph();
+			CompFluidNode origin_node;
+			if (origin == null || !node_by_thing.TryGetValue(origin, out origin_node))
+			{
+				return 0;
 			}
 
 			Queue<CompFluidNode> queue = new Queue<CompFluidNode>();
@@ -135,45 +287,51 @@ namespace RealRim.WaterAndPumps
 			queue.Enqueue(origin_node);
 			distance[origin_node] = 0;
 			int longest = 0;
-			IntVec3[] offsets = { IntVec3.Zero, IntVec3.North, IntVec3.East, IntVec3.South, IntVec3.West };
 			while (queue.Count > 0)
 			{
 				CompFluidNode current = queue.Dequeue();
 				int current_distance = distance[current];
 				longest = Mathf.Max(longest, current_distance);
-				foreach (IntVec3 cell in current.parent.OccupiedRect())
+				List<CompFluidNode> adjacent_nodes;
+				if (!adjacent_nodes_by_node.TryGetValue(current, out adjacent_nodes))
 				{
-					for (int offset_index = 0; offset_index < offsets.Length; offset_index++)
+					continue;
+				}
+
+				for (int index = 0; index < adjacent_nodes.Count; index++)
+				{
+					CompFluidNode neighbor = adjacent_nodes[index];
+					if (distance.ContainsKey(neighbor))
 					{
-						List<CompFluidNode> adjacent;
-						if (!by_cell.TryGetValue(cell + offsets[offset_index], out adjacent))
-						{
-							continue;
-						}
-						for (int adjacent_index = 0; adjacent_index < adjacent.Count; adjacent_index++)
-						{
-							CompFluidNode neighbor = adjacent[adjacent_index];
-							if (distance.ContainsKey(neighbor))
-							{
-								continue;
-							}
-							distance[neighbor] = current_distance + 1;
-							queue.Enqueue(neighbor);
-						}
+						continue;
 					}
+					distance[neighbor] = current_distance + 1;
+					queue.Enqueue(neighbor);
 				}
 			}
+
+			longest_route_by_origin[origin] = longest;
 			return longest;
 		}
 
 		public float getStoredFreshWater()
 		{
-			return getComponents<CompWaterTank>().Sum(tank => tank.stored_liters);
+			float stored_liters = 0f;
+			for (int index = 0; index < water_tanks.Count; index++)
+			{
+				stored_liters += water_tanks[index].stored_liters;
+			}
+			return stored_liters;
 		}
 
 		public float getFreshWaterCapacity()
 		{
-			return getComponents<CompWaterTank>().Sum(tank => tank.Props.capacity_liters);
+			float capacity_liters = 0f;
+			for (int index = 0; index < water_tanks.Count; index++)
+			{
+				capacity_liters += water_tanks[index].Props.capacity_liters;
+			}
+			return capacity_liters;
 		}
 
 		public float addFreshWater(float requested_liters)
@@ -186,12 +344,10 @@ namespace RealRim.WaterAndPumps
 			WaterContamination contamination)
 		{
 			float remaining = Mathf.Max(0f, requested_liters);
-			List<CompWaterTank> tanks = getComponents<CompWaterTank>()
-				.OrderBy(tank => tank.getFillFraction())
-				.ToList();
-			for (int index = 0; index < tanks.Count && remaining > 0.0001f; index++)
+			copyAndSortStable(water_tanks, ordered_water_tanks, WATER_TANK_FILL_ASCENDING);
+			for (int index = 0; index < ordered_water_tanks.Count && remaining > 0.0001f; index++)
 			{
-				remaining -= tanks[index].addWater(remaining, contamination);
+				remaining -= ordered_water_tanks[index].addWater(remaining, contamination);
 			}
 
 			return requested_liters - remaining;
@@ -206,12 +362,10 @@ namespace RealRim.WaterAndPumps
 		{
 			float remaining = Mathf.Max(0f, requested_liters);
 			WaterSample result = new WaterSample();
-			List<CompWaterTank> tanks = getComponents<CompWaterTank>()
-				.OrderByDescending(tank => tank.stored_liters)
-				.ToList();
-			for (int index = 0; index < tanks.Count && remaining > 0.0001f; index++)
+			copyAndSortStable(water_tanks, ordered_water_tanks, WATER_TANK_STORED_DESCENDING);
+			for (int index = 0; index < ordered_water_tanks.Count && remaining > 0.0001f; index++)
 			{
-				WaterSample sample = tanks[index].drawWaterSample(remaining);
+				WaterSample sample = ordered_water_tanks[index].drawWaterSample(remaining);
 				remaining -= sample.liters;
 				result.addSample(sample);
 			}
@@ -223,8 +377,9 @@ namespace RealRim.WaterAndPumps
 		public float getPathogenRemovalFraction()
 		{
 			float best_removal = 0f;
-			foreach (CompWaterTreatment treatment in getComponents<CompWaterTreatment>())
+			for (int index = 0; index < water_treatments.Count; index++)
 			{
+				CompWaterTreatment treatment = water_treatments[index];
 				if (treatment.isOperational())
 				{
 					best_removal = Mathf.Max(
@@ -237,7 +392,11 @@ namespace RealRim.WaterAndPumps
 
 		public float getThermalCapacityEnergyKj()
 		{
-			float capacity_kj = getComponents<CompThermalTank>().Sum(tank => tank.getUsableCapacityKj());
+			float capacity_kj = 0f;
+			for (int index = 0; index < thermal_tanks.Count; index++)
+			{
+				capacity_kj += thermal_tanks[index].getUsableCapacityKj();
+			}
 			if (network_type == FluidNetworkType.Heating)
 			{
 				capacity_kj += getVirtualHeatingBufferUsableCapacityKj();
@@ -249,16 +408,27 @@ namespace RealRim.WaterAndPumps
 		{
 			if (network_type == FluidNetworkType.HotWater)
 			{
-				List<CompHotWaterTank> hot_tanks = getComponents<CompHotWaterTank>().ToList();
-				float hot_liters = hot_tanks.Sum(tank => tank.stored_liters);
+				float hot_liters = 0f;
+				float weighted_hot_temperature = 0f;
+				for (int index = 0; index < hot_water_tanks.Count; index++)
+				{
+					CompHotWaterTank tank = hot_water_tanks[index];
+					hot_liters += tank.stored_liters;
+					weighted_hot_temperature += tank.temperature_c * tank.stored_liters;
+				}
 				return hot_liters <= 0.0001f
 					? RealPhysics.COLD_WATER_TEMPERATURE_C
-					: hot_tanks.Sum(tank => tank.temperature_c * tank.stored_liters) / hot_liters;
+					: weighted_hot_temperature / hot_liters;
 			}
 
-			List<CompThermalTank> tanks = getComponents<CompThermalTank>().ToList();
-			float total_liters = tanks.Sum(tank => tank.stored_liters);
-			float weighted_temperature = tanks.Sum(tank => tank.temperature_c * tank.stored_liters);
+			float total_liters = 0f;
+			float weighted_temperature = 0f;
+			for (int index = 0; index < thermal_tanks.Count; index++)
+			{
+				CompThermalTank tank = thermal_tanks[index];
+				total_liters += tank.stored_liters;
+				weighted_temperature += tank.temperature_c * tank.stored_liters;
+			}
 			if (network_type == FluidNetworkType.Heating && virtual_heating_buffer_capacity_liters > 0.001f)
 			{
 				total_liters += virtual_heating_buffer_capacity_liters;
@@ -317,12 +487,22 @@ namespace RealRim.WaterAndPumps
 
 		public float getStoredHotWater()
 		{
-			return getComponents<CompHotWaterTank>().Sum(tank => tank.stored_liters);
+			float stored_liters = 0f;
+			for (int index = 0; index < hot_water_tanks.Count; index++)
+			{
+				stored_liters += hot_water_tanks[index].stored_liters;
+			}
+			return stored_liters;
 		}
 
 		public float getHotWaterCapacity()
 		{
-			return getComponents<CompHotWaterTank>().Sum(tank => tank.Props.capacity_liters);
+			float capacity_liters = 0f;
+			for (int index = 0; index < hot_water_tanks.Count; index++)
+			{
+				capacity_liters += hot_water_tanks[index].Props.capacity_liters;
+			}
+			return capacity_liters;
 		}
 
 		public float addThermalEnergy(float requested_kj)
@@ -335,12 +515,10 @@ namespace RealRim.WaterAndPumps
 			}
 
 			float remaining = Mathf.Max(0f, requested_kj);
-			List<CompThermalTank> tanks = getComponents<CompThermalTank>()
-				.OrderBy(tank => tank.temperature_c)
-				.ToList();
-			for (int index = 0; index < tanks.Count && remaining > 0.001f; index++)
+			copyAndSortStable(thermal_tanks, ordered_thermal_tanks, THERMAL_TANK_TEMPERATURE_ASCENDING);
+			for (int index = 0; index < ordered_thermal_tanks.Count && remaining > 0.001f; index++)
 			{
-				remaining -= tanks[index].addEnergy(remaining);
+				remaining -= ordered_thermal_tanks[index].addEnergy(remaining);
 			}
 
 			return requested_kj - remaining;
@@ -356,12 +534,10 @@ namespace RealRim.WaterAndPumps
 			}
 
 			float remaining = Mathf.Max(0f, requested_kj);
-			List<CompThermalTank> tanks = getComponents<CompThermalTank>()
-				.OrderByDescending(tank => tank.temperature_c)
-				.ToList();
-			for (int index = 0; index < tanks.Count && remaining > 0.001f; index++)
+			copyAndSortStable(thermal_tanks, ordered_thermal_tanks, THERMAL_TANK_TEMPERATURE_DESCENDING);
+			for (int index = 0; index < ordered_thermal_tanks.Count && remaining > 0.001f; index++)
 			{
-				remaining -= tanks[index].drawEnergy(remaining);
+				remaining -= ordered_thermal_tanks[index].drawEnergy(remaining);
 			}
 
 			return requested_kj - remaining;
@@ -394,8 +570,9 @@ namespace RealRim.WaterAndPumps
 				}
 			}
 
-			foreach (CompThermalTank tank in getComponents<CompThermalTank>())
+			for (int index = 0; index < thermal_tanks.Count; index++)
 			{
+				CompThermalTank tank = thermal_tanks[index];
 				if (tank.stored_liters <= 0.001f)
 				{
 					continue;
@@ -428,8 +605,9 @@ namespace RealRim.WaterAndPumps
 				}
 			}
 
-			foreach (CompThermalTank tank in getComponents<CompThermalTank>())
+			for (int index = 0; index < thermal_tanks.Count; index++)
 			{
+				CompThermalTank tank = thermal_tanks[index];
 				if (tank.stored_liters <= 0.001f)
 				{
 					continue;
@@ -458,12 +636,10 @@ namespace RealRim.WaterAndPumps
 		public float drawHotWater(float requested_liters)
 		{
 			float remaining = Mathf.Max(0f, requested_liters);
-			List<CompHotWaterTank> tanks = getComponents<CompHotWaterTank>()
-				.OrderByDescending(tank => tank.temperature_c)
-				.ToList();
-			for (int index = 0; index < tanks.Count && remaining > 0.001f; index++)
+			copyAndSortStable(hot_water_tanks, ordered_hot_water_tanks, HOT_WATER_TANK_TEMPERATURE_DESCENDING);
+			for (int index = 0; index < ordered_hot_water_tanks.Count && remaining > 0.001f; index++)
 			{
-				CompHotWaterTank tank = tanks[index];
+				CompHotWaterTank tank = ordered_hot_water_tanks[index];
 				float delivered_liters = tank.drawHotWater(remaining);
 				remaining -= delivered_liters;
 				pending_hot_water_draw_liters += delivered_liters;
@@ -517,12 +693,22 @@ namespace RealRim.WaterAndPumps
 
 		public float getStoredColdEnergyKj()
 		{
-			return getComponents<CompCoolantTank>().Sum(tank => tank.cold_energy_kj);
+			float stored_kj = 0f;
+			for (int index = 0; index < coolant_tanks.Count; index++)
+			{
+				stored_kj += coolant_tanks[index].cold_energy_kj;
+			}
+			return stored_kj;
 		}
 
 		public float getColdEnergyCapacityKj()
 		{
-			return getComponents<CompCoolantTank>().Sum(tank => tank.getCapacityKj());
+			float capacity_kj = 0f;
+			for (int index = 0; index < coolant_tanks.Count; index++)
+			{
+				capacity_kj += coolant_tanks[index].getCapacityKj();
+			}
+			return capacity_kj;
 		}
 
 		public float getColdEnergySpaceKj()
@@ -533,12 +719,10 @@ namespace RealRim.WaterAndPumps
 		public float addColdEnergy(float requested_kj)
 		{
 			float remaining = Mathf.Max(0f, requested_kj);
-			List<CompCoolantTank> tanks = getComponents<CompCoolantTank>()
-				.OrderBy(tank => tank.getFillFraction())
-				.ToList();
-			for (int index = 0; index < tanks.Count && remaining > 0.001f; index++)
+			copyAndSortStable(coolant_tanks, ordered_coolant_tanks, COOLANT_TANK_FILL_ASCENDING);
+			for (int index = 0; index < ordered_coolant_tanks.Count && remaining > 0.001f; index++)
 			{
-				remaining -= tanks[index].addColdEnergy(remaining);
+				remaining -= ordered_coolant_tanks[index].addColdEnergy(remaining);
 			}
 
 			return requested_kj - remaining;
@@ -547,12 +731,10 @@ namespace RealRim.WaterAndPumps
 		public float drawColdEnergy(float requested_kj)
 		{
 			float remaining = Mathf.Max(0f, requested_kj);
-			List<CompCoolantTank> tanks = getComponents<CompCoolantTank>()
-				.OrderByDescending(tank => tank.cold_energy_kj)
-				.ToList();
-			for (int index = 0; index < tanks.Count && remaining > 0.001f; index++)
+			copyAndSortStable(coolant_tanks, ordered_coolant_tanks, COOLANT_TANK_ENERGY_DESCENDING);
+			for (int index = 0; index < ordered_coolant_tanks.Count && remaining > 0.001f; index++)
 			{
-				remaining -= tanks[index].drawColdEnergy(remaining);
+				remaining -= ordered_coolant_tanks[index].drawColdEnergy(remaining);
 			}
 
 			return requested_kj - remaining;
@@ -567,19 +749,23 @@ namespace RealRim.WaterAndPumps
 				return true;
 			}
 
-			List<CompWasteStorage> storages = getComponents<CompWasteStorage>().ToList();
-			bool has_outlet = getComponents<CompSewageOutlet>().Any(outlet => outlet.isOperational());
-			if (storages.Count == 0)
+			cacheOperationalSewageOutlets();
+			if (waste_storages.Count == 0)
 			{
-				return has_outlet;
+				return operational_sewage_outlets.Count > 0;
 			}
-			if (has_outlet)
+			if (operational_sewage_outlets.Count > 0)
 			{
 				return true;
 			}
 
-			float water_space = storages.Sum(storage => storage.getWaterSpace());
-			float sludge_space = storages.Sum(storage => storage.getSludgeSpace());
+			float water_space = 0f;
+			float sludge_space = 0f;
+			for (int index = 0; index < waste_storages.Count; index++)
+			{
+				water_space += waste_storages[index].getWaterSpace();
+				sludge_space += waste_storages[index].getSludgeSpace();
+			}
 			return water_space + 0.001f >= requested_water
 				&& sludge_space + 0.0001f >= requested_sludge;
 		}
@@ -593,43 +779,62 @@ namespace RealRim.WaterAndPumps
 				return true;
 			}
 
-			List<CompWasteStorage> storages = getComponents<CompWasteStorage>()
-				.OrderBy(storage => storage.getFillFraction())
-				.ToList();
-			List<CompSewageOutlet> outlets = getComponents<CompSewageOutlet>()
-				.Where(outlet => outlet.isOperational())
-				.OrderBy(outlet => outlet.parent.thingIDNumber)
-				.ToList();
-			if (storages.Count == 0)
+			cacheOperationalSewageOutlets();
+			copyAndSortStable(waste_storages, ordered_waste_storages, WASTE_STORAGE_FILL_ASCENDING);
+			if (ordered_waste_storages.Count == 0)
 			{
-				if (outlets.Count == 0)
+				if (operational_sewage_outlets.Count == 0)
 				{
 					return false;
 				}
-				dischargeUntreated(outlets, remaining_water, remaining_sludge);
+				dischargeUntreated(operational_sewage_outlets, remaining_water, remaining_sludge);
 				return true;
 			}
 
-			if (outlets.Count == 0 && !canAcceptWaste(remaining_water, remaining_sludge))
+			if (operational_sewage_outlets.Count == 0)
 			{
-				return false;
+				float water_space = 0f;
+				float sludge_space = 0f;
+				for (int index = 0; index < ordered_waste_storages.Count; index++)
+				{
+					water_space += ordered_waste_storages[index].getWaterSpace();
+					sludge_space += ordered_waste_storages[index].getSludgeSpace();
+				}
+				if (water_space + 0.001f < remaining_water
+					|| sludge_space + 0.0001f < remaining_sludge)
+				{
+					return false;
+				}
 			}
 
-			for (int index = 0; index < storages.Count; index++)
+			for (int index = 0; index < ordered_waste_storages.Count; index++)
 			{
-				remaining_water -= storages[index].addWasteWater(remaining_water);
-				remaining_sludge -= storages[index].addSludge(remaining_sludge);
+				remaining_water -= ordered_waste_storages[index].addWasteWater(remaining_water);
+				remaining_sludge -= ordered_waste_storages[index].addSludge(remaining_sludge);
 			}
 
 			if (remaining_water > 0.001f)
 			{
-				dischargeHarmlessWater(outlets, remaining_water);
+				dischargeHarmlessWater(operational_sewage_outlets, remaining_water);
 			}
 			if (remaining_sludge > 0.0001f)
 			{
-				dischargeUntreated(outlets, 0f, remaining_sludge);
+				dischargeUntreated(operational_sewage_outlets, 0f, remaining_sludge);
 			}
 			return true;
+		}
+
+		private void cacheOperationalSewageOutlets()
+		{
+			operational_sewage_outlets.Clear();
+			for (int index = 0; index < sewage_outlets.Count; index++)
+			{
+				CompSewageOutlet outlet = sewage_outlets[index];
+				if (outlet.isOperational())
+				{
+					operational_sewage_outlets.Add(outlet);
+				}
+			}
 		}
 
 		private static void dischargeHarmlessWater(
@@ -711,8 +916,16 @@ namespace RealRim.WaterAndPumps
 			}
 
 			length_m = pipe_cells.Count;
-			heat_transfer_w_per_k = conductance_by_cell.Values.Sum();
-			virtual_heating_buffer_capacity_liters = buffer_liters_by_cell.Values.Sum();
+			heat_transfer_w_per_k = 0f;
+			foreach (float conductance in conductance_by_cell.Values)
+			{
+				heat_transfer_w_per_k += conductance;
+			}
+			virtual_heating_buffer_capacity_liters = 0f;
+			foreach (float buffer_liters in buffer_liters_by_cell.Values)
+			{
+				virtual_heating_buffer_capacity_liters += buffer_liters;
+			}
 		}
 
 		private void finalizeMixingValveTransfer(float elapsed_seconds)
@@ -750,28 +963,24 @@ namespace RealRim.WaterAndPumps
 			float remaining = Mathf.Max(0f, requested_kj);
 			if (network_type == FluidNetworkType.HotWater)
 			{
-				List<CompHotWaterTank> hot_tanks = getComponents<CompHotWaterTank>()
-					.OrderBy(tank => tank.temperature_c)
-					.ToList();
-				for (int index = 0; index < hot_tanks.Count && remaining > 0.001f; index++)
+				copyAndSortStable(hot_water_tanks, ordered_hot_water_tanks, HOT_WATER_TANK_TEMPERATURE_ASCENDING);
+				for (int index = 0; index < ordered_hot_water_tanks.Count && remaining > 0.001f; index++)
 				{
-					remaining -= hot_tanks[index].addEnergyTowardTemperature(
+					remaining -= ordered_hot_water_tanks[index].addEnergyTowardTemperature(
 						remaining,
 						target_temperature_c);
 				}
 			}
 			else if (network_type == FluidNetworkType.Heating)
 			{
-				List<CompThermalTank> thermal_tanks = getComponents<CompThermalTank>()
-					.OrderBy(tank => tank.temperature_c)
-					.ToList();
+				copyAndSortStable(thermal_tanks, ordered_thermal_tanks, THERMAL_TANK_TEMPERATURE_ASCENDING);
 				int index = 0;
 				bool virtual_buffer_processed = virtual_heating_buffer_capacity_liters <= 0.001f;
-				while (remaining > 0.001f && (index < thermal_tanks.Count || !virtual_buffer_processed))
+				while (remaining > 0.001f && (index < ordered_thermal_tanks.Count || !virtual_buffer_processed))
 				{
 					bool use_virtual_buffer = !virtual_buffer_processed
-						&& (index >= thermal_tanks.Count
-							|| virtual_heating_buffer_temperature_c <= thermal_tanks[index].temperature_c);
+						&& (index >= ordered_thermal_tanks.Count
+							|| virtual_heating_buffer_temperature_c <= ordered_thermal_tanks[index].temperature_c);
 					if (use_virtual_buffer)
 					{
 						remaining -= addVirtualHeatingBufferEnergyTowardTemperature(
@@ -781,7 +990,7 @@ namespace RealRim.WaterAndPumps
 					}
 					else
 					{
-						remaining -= thermal_tanks[index].addEnergyTowardTemperature(
+						remaining -= ordered_thermal_tanks[index].addEnergyTowardTemperature(
 							remaining,
 							target_temperature_c);
 						index++;
@@ -797,28 +1006,24 @@ namespace RealRim.WaterAndPumps
 			float remaining = Mathf.Max(0f, requested_kj);
 			if (network_type == FluidNetworkType.HotWater)
 			{
-				List<CompHotWaterTank> hot_tanks = getComponents<CompHotWaterTank>()
-					.OrderByDescending(tank => tank.temperature_c)
-					.ToList();
-				for (int index = 0; index < hot_tanks.Count && remaining > 0.001f; index++)
+				copyAndSortStable(hot_water_tanks, ordered_hot_water_tanks, HOT_WATER_TANK_TEMPERATURE_DESCENDING);
+				for (int index = 0; index < ordered_hot_water_tanks.Count && remaining > 0.001f; index++)
 				{
-					remaining -= hot_tanks[index].drawEnergyTowardTemperature(
+					remaining -= ordered_hot_water_tanks[index].drawEnergyTowardTemperature(
 						remaining,
 						target_temperature_c);
 				}
 			}
 			else if (network_type == FluidNetworkType.Heating)
 			{
-				List<CompThermalTank> thermal_tanks = getComponents<CompThermalTank>()
-					.OrderByDescending(tank => tank.temperature_c)
-					.ToList();
+				copyAndSortStable(thermal_tanks, ordered_thermal_tanks, THERMAL_TANK_TEMPERATURE_DESCENDING);
 				int index = 0;
 				bool virtual_buffer_processed = virtual_heating_buffer_capacity_liters <= 0.001f;
-				while (remaining > 0.001f && (index < thermal_tanks.Count || !virtual_buffer_processed))
+				while (remaining > 0.001f && (index < ordered_thermal_tanks.Count || !virtual_buffer_processed))
 				{
 					bool use_virtual_buffer = !virtual_buffer_processed
-						&& (index >= thermal_tanks.Count
-							|| virtual_heating_buffer_temperature_c >= thermal_tanks[index].temperature_c);
+						&& (index >= ordered_thermal_tanks.Count
+							|| virtual_heating_buffer_temperature_c >= ordered_thermal_tanks[index].temperature_c);
 					if (use_virtual_buffer)
 					{
 						remaining -= drawVirtualHeatingBufferEnergyTowardTemperature(
@@ -828,7 +1033,7 @@ namespace RealRim.WaterAndPumps
 					}
 					else
 					{
-						remaining -= thermal_tanks[index].drawEnergyTowardTemperature(
+						remaining -= ordered_thermal_tanks[index].drawEnergyTowardTemperature(
 							remaining,
 							target_temperature_c);
 						index++;
@@ -837,6 +1042,76 @@ namespace RealRim.WaterAndPumps
 			}
 
 			return requested_kj - remaining;
+		}
+
+		private static void copyAndSortStable<T>(
+			List<T> source,
+			List<T> result,
+			Comparison<T> comparison)
+		{
+			result.Clear();
+			result.AddRange(source);
+			for (int index = 1; index < result.Count; index++)
+			{
+				T item = result[index];
+				int insert_index = index;
+				while (insert_index > 0 && comparison(item, result[insert_index - 1]) < 0)
+				{
+					result[insert_index] = result[insert_index - 1];
+					insert_index--;
+				}
+				result[insert_index] = item;
+			}
+		}
+
+		private static int compareWaterTankFillAscending(CompWaterTank left, CompWaterTank right)
+		{
+			return left.getFillFraction().CompareTo(right.getFillFraction());
+		}
+
+		private static int compareWaterTankStoredDescending(CompWaterTank left, CompWaterTank right)
+		{
+			return right.stored_liters.CompareTo(left.stored_liters);
+		}
+
+		private static int compareHotWaterTankTemperatureAscending(CompHotWaterTank left, CompHotWaterTank right)
+		{
+			return left.temperature_c.CompareTo(right.temperature_c);
+		}
+
+		private static int compareHotWaterTankTemperatureDescending(CompHotWaterTank left, CompHotWaterTank right)
+		{
+			return right.temperature_c.CompareTo(left.temperature_c);
+		}
+
+		private static int compareThermalTankTemperatureAscending(CompThermalTank left, CompThermalTank right)
+		{
+			return left.temperature_c.CompareTo(right.temperature_c);
+		}
+
+		private static int compareThermalTankTemperatureDescending(CompThermalTank left, CompThermalTank right)
+		{
+			return right.temperature_c.CompareTo(left.temperature_c);
+		}
+
+		private static int compareCoolantTankFillAscending(CompCoolantTank left, CompCoolantTank right)
+		{
+			return left.getFillFraction().CompareTo(right.getFillFraction());
+		}
+
+		private static int compareCoolantTankEnergyDescending(CompCoolantTank left, CompCoolantTank right)
+		{
+			return right.cold_energy_kj.CompareTo(left.cold_energy_kj);
+		}
+
+		private static int compareWasteStorageFillAscending(CompWasteStorage left, CompWasteStorage right)
+		{
+			return left.getFillFraction().CompareTo(right.getFillFraction());
+		}
+
+		private static int compareSewageOutletIdAscending(CompSewageOutlet left, CompSewageOutlet right)
+		{
+			return left.parent.thingIDNumber.CompareTo(right.parent.thingIDNumber);
 		}
 
 		private float addVirtualHeatingBufferEnergyTowardTemperature(

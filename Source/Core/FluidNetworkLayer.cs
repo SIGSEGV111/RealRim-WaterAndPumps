@@ -21,6 +21,9 @@ namespace RealRim.WaterAndPumps
 		public const string CHANGE_LAYER_JOB_DEF_NAME = "RealRim_ChangeFluidLayer";
 		public const int CHANGE_LAYER_WORK_TICKS = 180;
 
+		private static DesignationDef change_layer_designation_def;
+		private static JobDef change_layer_job_def;
+
 		public static readonly FluidNetworkLayer[] LAYERS =
 		{
 			FluidNetworkLayer.Layer1,
@@ -43,12 +46,21 @@ namespace RealRim.WaterAndPumps
 
 		public static DesignationDef getChangeDesignationDef()
 		{
-			return DefDatabase<DesignationDef>.GetNamedSilentFail(CHANGE_LAYER_DESIGNATION_DEF_NAME);
+			if (change_layer_designation_def == null)
+			{
+				change_layer_designation_def = DefDatabase<DesignationDef>.GetNamedSilentFail(
+					CHANGE_LAYER_DESIGNATION_DEF_NAME);
+			}
+			return change_layer_designation_def;
 		}
 
 		public static JobDef getChangeJobDef()
 		{
-			return DefDatabase<JobDef>.GetNamedSilentFail(CHANGE_LAYER_JOB_DEF_NAME);
+			if (change_layer_job_def == null)
+			{
+				change_layer_job_def = DefDatabase<JobDef>.GetNamedSilentFail(CHANGE_LAYER_JOB_DEF_NAME);
+			}
+			return change_layer_job_def;
 		}
 	}
 

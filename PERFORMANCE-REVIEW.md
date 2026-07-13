@@ -43,3 +43,8 @@ No simulation was moved to worker threads. The reviewed operations read and muta
 `tickSystems` should scale with the number of actual devices plus the number of floor-heating groups, rather than the number of floor-heating tiles. Its occasional group-refresh call still scales linearly with floor-heating tiles once per approximately 250–300 ticks.
 
 Actual timings must be measured in the same save and camera/game-speed conditions after compiling 1.1.80.
+## 1.1.81 follow-up: fluid-layer work giver
+
+`WorkGiver_ChangeFluidLayer.PotentialWorkThingsGlobal()` previously enumerated `map.listerThings.AllThings` for every construction-work scan by an eligible pawn. The work giver now enumerates only spawned `RealRim_ChangeFluidLayer` designations and leaves validation to `HasJobOnThing()`. This changes the candidate source from every map thing to only pending layer-change targets.
+
+The layer-change designation and job definitions are cached after the first successful lookup. The job driver also retains its resolved `CompFluidNode` reference while the target remains unchanged. No work cadence, reservation, pathing, or completion behavior was changed.

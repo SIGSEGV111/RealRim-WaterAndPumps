@@ -39,11 +39,11 @@ namespace RealRim.WaterAndPumps
 
 			if (failed_phases == 0)
 			{
-				Log.Message("[RealRim] Water & Pumps 1.1.80: replaced DBH water, heating, cooling, sprinkler and sewage definitions and added supported cross-mod fluid nodes.");
+				Log.Message("[RealRim] Water & Pumps 1.1.81: replaced DBH water, heating, cooling, sprinkler and sewage definitions and added supported cross-mod fluid nodes.");
 			}
 			else
 			{
-				Log.Error("[RealRim] Water & Pumps 1.1.80: definition replacement completed with "
+				Log.Error("[RealRim] Water & Pumps 1.1.81: definition replacement completed with "
 					+ failed_phases + " failed phase(s). Later phases were still applied; see the preceding errors.");
 			}
 		}

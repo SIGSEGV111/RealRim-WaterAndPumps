@@ -116,17 +116,17 @@ namespace RealRim.WaterAndPumps
 
 		public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
 		{
-			if (pawn?.Map == null)
+			Map map = pawn?.Map;
+			DesignationDef designation_def = FluidNetworkLayerUtility.getChangeDesignationDef();
+			if (map == null || designation_def == null)
 			{
 				yield break;
 			}
 
-			List<Thing> things = pawn.Map.listerThings.AllThings;
-			for (int index = 0; index < things.Count; index++)
+			foreach (Designation designation in map.designationManager.SpawnedDesignationsOfDef(designation_def))
 			{
-				ThingWithComps thing = things[index] as ThingWithComps;
-				CompFluidNode node = thing?.TryGetComp<CompFluidNode>();
-				if (node != null && node.hasPendingLayerChange())
+				Thing thing = designation.target.Thing;
+				if (thing != null)
 				{
 					yield return thing;
 				}
@@ -162,6 +162,8 @@ namespace RealRim.WaterAndPumps
 	{
 		private const TargetIndex NODE_INDEX = TargetIndex.A;
 
+		private CompFluidNode target_node;
+
 		public override bool TryMakePreToilReservations(bool error_on_failed)
 		{
 			return pawn.Reserve(job.targetA, job, 1, -1, null, error_on_failed);
@@ -192,8 +194,14 @@ namespace RealRim.WaterAndPumps
 
 		private CompFluidNode getTargetNode()
 		{
-			ThingWithComps thing = job.targetA.Thing as ThingWithComps;
-			return thing?.TryGetComp<CompFluidNode>();
+			Thing target = job.targetA.Thing;
+			if (target_node != null && target_node.parent == target)
+			{
+				return target_node;
+			}
+
+			target_node = (target as ThingWithComps)?.TryGetComp<CompFluidNode>();
+			return target_node;
 		}
 	}
 }

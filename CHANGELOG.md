@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.81 — Restrict fluid-layer work scanning
+
+- Replaced the fluid-layer work giver's whole-map `AllThings` scan with enumeration of only active `RealRim_ChangeFluidLayer` designations.
+- Cached the layer-change `DesignationDef` and `JobDef` after their first successful lookup.
+- Cached the target fluid-node component for the lifetime of each layer-change job driver.
+- Preserved designation, reservation, reachability, work duration and layer-application behavior.
+- Updated release metadata and runtime labels to 1.1.81.
+
 ## 1.1.80 — Event-driven construction tracking and grouped system ticks
 
 - Replaced the every-tick map-wide `Frame` and `Blueprint` construction-plan scan with a verified `PlaceWorker.PostPlace` capture hook attached to every RealRim fluid-node definition.
